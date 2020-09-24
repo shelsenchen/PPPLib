@@ -1,5 +1,9 @@
 NOTE: The program is still under development, and some bugs still exist in PPPLib. Comments and suggestions from users 
-      are welcome, please send them to the author.SOME BUGS EXIST IN INS/GNSS COUPLED!!!
+      are welcome, please send them to the author.
+
+UPDATE LOG
+
+2020/09/24 fixed bugs in LC mode and add PPP qc function
 
 **INTRODUCTION**
 
