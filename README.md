@@ -28,6 +28,7 @@ mode and INS/GNSS loosely coupled mode for real kinematic scene. Detailed inform
 * Triple-frequency ionosphere-free with one combination or two combination/uncombined PPP
 * Multi-GNSS post-kinematic processing
 * Support BDS-3 new satellites and signals
+* Support estimating BD2/BD3 ISB
 * Support INS/GNSS loosely coupled
 * Convenient visualization
 
