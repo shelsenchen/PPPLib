@@ -1074,6 +1074,14 @@ namespace PPPLib{
         }
     }
 
+    cTdcpSolver::cTdcpSolver() {}
+
+    cTdcpSolver::cTdcpSolver(tPPPLibConf conf) {
+        tdcp_conf_=conf;
+    }
+
+    cTdcpSolver::~cTdcpSolver() {}
+
     cPppSolver::cPppSolver() {}
 
     cPppSolver::cPppSolver(tPPPLibConf C) {
@@ -5103,7 +5111,6 @@ namespace PPPLib{
             gnss_solver_->nav_=nav_;
             gnss_solver_->InitSolver(spp_conf);
             gnss_conf_=spp_conf;
-            gnss_solver_->rover_obs_=rover_obs_;
         }
         else if(fs_conf_.mode_opt==MODE_OPT_PPP){
             tPPPLibConf ppp_conf=C;
@@ -5113,7 +5120,6 @@ namespace PPPLib{
             gnss_solver_=new cPppSolver(ppp_conf);
             gnss_solver_->nav_=nav_;
             gnss_solver_->InitSolver(C);
-            gnss_solver_->rover_obs_=rover_obs_;
             gnss_conf_=ppp_conf;
         }
         else if(fs_conf_.mode_opt==MODE_OPT_PPK){
@@ -5125,7 +5131,6 @@ namespace PPPLib{
             gnss_solver_->nav_=nav_;
             gnss_solver_->InitSolver(ppk_conf);
             gnss_conf_=ppk_conf;
-            gnss_solver_->rover_obs_=rover_obs_;
         }
         else if(fs_conf_.mode_opt==MODE_OPT_GSOF){
             cDecodeGsof gsof_decoder;
@@ -5142,6 +5147,8 @@ namespace PPPLib{
             imu_reader.Reading();
             imu_data_=*imu_reader.GetImus();
         }
+
+        if(fs_conf_.mode_opt>MODE_OPT_GSOF) gnss_solver_->rover_obs_=rover_obs_;
 
     }
 
@@ -5573,6 +5580,6 @@ namespace PPPLib{
     }
 
     bool cFusionSolver::TightCouple(tPPPLibConf C) {
-
+        gnss_solver_->SolverEpoch();
     }
 }

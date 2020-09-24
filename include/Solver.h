@@ -122,6 +122,16 @@ namespace PPPLib{
         tPPPLibConf spp_conf_;
     };
 
+    class cTdcpSolver:public cSolver {
+    public:
+        cTdcpSolver();
+        cTdcpSolver(tPPPLibConf conf);
+        ~cTdcpSolver();
+
+    public:
+        tPPPLibConf  tdcp_conf_;
+    };
+
     class cPppSolver:public cSolver {
     public:
         cPppSolver();

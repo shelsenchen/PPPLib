@@ -41,6 +41,15 @@ namespace PPPLib{
     public:
         int Adjustment(VectorXd L,const MatrixXd H,const MatrixXd R,VectorXd& X, MatrixXd& Px,int nl,int nx) override;
     };
+
+    class cRobustKfAdjuster:public cAdjuster{
+    public:
+        cRobustKfAdjuster();
+        ~cRobustKfAdjuster();
+
+    public:
+        int Adjustment(VectorXd L,const MatrixXd H,const MatrixXd R,VectorXd& X, MatrixXd& Px,int nl,int nx) override;
+    };
 }
 
 

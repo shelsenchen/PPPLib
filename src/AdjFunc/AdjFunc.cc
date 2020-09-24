@@ -100,4 +100,13 @@ namespace PPPLib {
 
         return true;
     }
+
+    cRobustKfAdjuster::cRobustKfAdjuster() {}
+
+    cRobustKfAdjuster::~cRobustKfAdjuster() {}
+
+    //refer to Robust Kalman filtering based on Mahalanobis distance Guobin Chang J Geod (2014)
+    int cRobustKfAdjuster::Adjustment(VectorXd L, const MatrixXd H, const MatrixXd R, VectorXd &X, MatrixXd &Px, int nl, int nx) {
+
+    }
 }
