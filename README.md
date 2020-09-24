@@ -3,7 +3,7 @@ NOTE: The program is still under development, and some bugs still exist in PPPLi
 
 UPDATE LOG
 
-2020/09/24 fixed bugs in LC mode and add PPP qc function
+2020/09/24 fixed bugs in LC mode, added PPP qc function, support estimating BD2/BD3 ISB
 
 **INTRODUCTION**
 
@@ -28,6 +28,7 @@ mode and INS/GNSS loosely coupled mode for real kinematic scene. Detailed inform
 * Triple-frequency ionosphere-free with one combination or two combination/uncombined PPP
 * Multi-GNSS post-kinematic processing
 * Support BDS-3 new satellites and signals
+* Support INS/GNSS loosely coupled
 * Convenient visualization
 
 **WILL BE**　
