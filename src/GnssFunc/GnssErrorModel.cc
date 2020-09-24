@@ -1608,7 +1608,7 @@ namespace PPPLib{
             default: mu=MU_GPS;
                 break;
         }
-        return -2.0*mu/SQR(CLIGHT)*log((rr+rs+l)/(rr+rs-l));
+        return 2.0*mu/SQR(CLIGHT)*log((rr+rs+l)/(rr+rs-l));
     }
 
     bool cGnssErrCorr::SatYaw(tSatInfoUnit &sat_info,Vector3d& exs,Vector3d& eys) {

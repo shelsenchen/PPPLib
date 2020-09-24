@@ -350,7 +350,6 @@ namespace PPPLib{
             sig=C.gnssC.code_phase_ratio*(sqrt(SQR(a)+SQR(b))/sin(sat_info.el_az[0]));
             *var=(SQR(i*f1)+SQR(j*f2)+SQR(k*f3))/SQR(i*f1+j*f2+k*f3)*SQR(sig);
         }
-
         return (i*f1*obs1+j*f2*obs2+k*f3*obs2)/(i*f1+j*f2+k*f3);
     }
 
@@ -361,6 +360,8 @@ namespace PPPLib{
 
     void cGnssObsOperator::MwCycleSlip(tPPPLibConf C,double sample_dt,double dt,tSatInfoUnit* sat_info,tSatInfoUnit* base_sat,tTime last_time) {
         if(C.gnssC.frq_opt==FRQ_SINGLE) return;
+
+#if 0
         int del_ep=1;
         double fact=1.0;
         if(sample_dt>0.0) del_ep=Round(dt/sample_dt);
@@ -375,7 +376,27 @@ namespace PPPLib{
             else if(del_ep<=6) fact=1.5;
             else fact=2.0;
         }
+#else
+        double thres_mw=0.0;
+        double R_mw=1.0; //cycle
+        if(0<sample_dt&&sample_dt<=1.0){
+            R_mw=1.0;
+        }
+        else if(sample_dt<=15.0){
+            R_mw=1.5;
+        }
+        else{
+            R_mw=2.0;
+        }
 
+        if(sat_info->el_az[0]*R2D<15.0){
+            thres_mw=(-0.2*sat_info->el_az[0]*R2D+4.0)*R_mw;
+        }
+        else{
+            thres_mw=R_mw;
+        }
+
+#endif
         double el=sat_info->el_az[0]*R2D;
         double P1,P2,L1,L2;
         double lam1,lam2;
@@ -404,9 +425,16 @@ namespace PPPLib{
                 w0=sat_info->sm_mw[0];
             }
             else if(f==1){
-//                if(sat_info->cor_P[2]==0.0||sat_info->raw_L[2]==0.0) continue;
-//                w1=GnssObsMwComb(sat_info->raw_P[0],sat_info->raw_P[2],sat_info->raw_L[0],sat_info->raw_L[2],sat_info->lam[0],sat_info->lam[2]);
-//                w0=sat_info->sm_mw[1];
+                if(base_sat){
+
+                }
+                else{
+                    P1=sat_info->raw_P[0];P2=sat_info->raw_P[2];
+                    L1=sat_info->raw_L[0];L2=sat_info->raw_L[2];
+                    lam1=sat_info->lam[0];lam2=sat_info->lam[2];
+                }
+                w1=GnssObsMwComb(P1,P2,L1,L2,lam1,lam2);
+                w0=sat_info->sm_mw[1];
             }
 
             if(w1==0.0||w0==0.0){
@@ -414,14 +442,21 @@ namespace PPPLib{
                 continue;
             }
 
-            double thres=0.0;
-            if(el>20.0) thres=C.gnssC.cs_thres[0];
-            else thres=-C.gnssC.cs_thres[0]*0.1*el+3.0*C.gnssC.cs_thres[0];
+//            double thres=0.0;
+//            if(el>20.0) thres=C.gnssC.cs_thres[0];
+//            else thres=-C.gnssC.cs_thres[0]*0.1*el+3.0*C.gnssC.cs_thres[0];
             if(el<C.gnssC.ele_min) continue;
             double dmw=w1-w0;
-            if(fabs(dmw)>MIN(thres*fact,6.0)){
-                LOG(WARNING)<<sat_info->t_tag.GetTimeStr(1)<<" "<<sat_info->sat.sat_.id<<" "<<"MW DETECT CYCLE SLIP dmw=mw1-mw0 "<<dmw<<"="<<w1<<"-"<<w0<<" THRESHOLD="<<MIN(thres*fact,6.0);
-                sat_info->slip[f]|=1;
+            if(fabs(dmw)>thres_mw){
+                LOG(WARNING)<<sat_info->t_tag.GetTimeStr(1)<<" "<<sat_info->sat.sat_.id<<" "<<"MW DETECT CYCLE SLIP dmw=mw1-mw0 "<<dmw<<"="<<w1<<"-"<<w0<<" THRESHOLD="<<thres_mw ;
+                if(f==0){
+                    sat_info->slip[0]|=1;
+                    sat_info->slip[1]|=1;
+                }
+                else{
+                    sat_info->slip[0]|=1;
+                    sat_info->slip[2]|=1;
+                }
             }
         }
     }
@@ -454,23 +489,49 @@ namespace PPPLib{
                 g0=sat_info->gf[0];
             }
             else if(f==1){
-//                if(sat_info->cor_L[2]==0.0) continue;
-//                g1=GnssObsGfComb(sat_info->raw_L[0],sat_info->raw_L[2],sat_info->lam[0],sat_info->lam[1]);
-//                g0=sat_info->gf[1];
+                if(sat_info->cor_L[2]==0.0) continue;
+                g1=GnssObsGfComb(sat_info->raw_L[0],sat_info->raw_L[2],sat_info->lam[0],sat_info->lam[2]);
+                g0=sat_info->gf[1];
             }
 
             if(g1==0.0||g0==0.0) continue;
+#if 0
             double thres;
-            if(el<C.gnssC.ele_min) continue;
             if(el>15.0) thres=C.gnssC.cs_thres[1];
             else thres=-C.gnssC.cs_thres[1]/15.0*el+2.0*C.gnssC.cs_thres[1];
-//            thres=C.gnssC.cs_thres[1];
+#else
+            if(el<C.gnssC.ele_min) continue;
 
+            double thres_gf=0.0;
+            double R_gf=0.05;
+            if(0<sample_dt&&sample_dt<=1.0){
+                R_gf=0.05;
+            }
+            else if(sample_dt<=15.0){
+                R_gf=0.10;
+            }
+            else{
+                R_gf=0.15;
+            }
+
+            if(sat_info->el_az[0]*R2D<15.0){
+                thres_gf=(-0.4*sat_info->el_az[0]*R2D+7.0)*R_gf;
+            }
+            else{
+                thres_gf=R_gf;
+            }
+#endif
             double dgf=g1-g0;
-            if(fabs(dgf)>thres){
-                LOG(WARNING)<<sat_info->t_tag.GetTimeStr(1)<<" "<<sat_info->sat.sat_.id<<" "<<"GF DETECT CYCLE SLIP dgf=gf1-gf0 "<<dgf<<"="<<g1<<"-"<<g0<<" THRESHOLD="<<thres;
-                sat_info->slip[0]|=1;
-                sat_info->slip[1]|=1;
+            if(fabs(dgf)>thres_gf){
+                LOG(WARNING)<<sat_info->t_tag.GetTimeStr(1)<<" "<<sat_info->sat.sat_.id<<" "<<"GF DETECT CYCLE SLIP dgf=gf1-gf0 "<<dgf<<"="<<g1<<"-"<<g0<<" THRESHOLD="<<thres_gf;
+                if(f==0) {
+                    sat_info->slip[0]|=1;
+                    sat_info->slip[1]|=1;
+                 }
+                else if(f==1){
+                    sat_info->slip[0]|=1;
+                    sat_info->slip[2]|=1;
+                }
             }
         }
     }
@@ -537,6 +598,14 @@ namespace PPPLib{
         return slip_flag;
     }
 
+    bool cGnssObsOperator::CodeMinuPhase(tPPPLibConf C, tSatInfoUnit &sat_info,tSatInfoUnit &pre_sat_info) {
+        if(pre_sat_info.raw_P[0]==0.0||pre_sat_info.raw_L[0]==0.0||sat_info.raw_P[0]==0.0||sat_info.raw_L[0]==0.0) return false;
+        double delta_N=0.0;
+
+        delta_N=(sat_info.raw_L[0]-pre_sat_info.raw_L[0])-(sat_info.raw_P[0]-pre_sat_info.raw_P[0])/sat_info.lam[0];
+        if(fabs(delta_N)>30.0) sat_info.slip[0]|=1;
+    }
+
     void cGnssObsOperator::SmoothMw(tPPPLibConf C,PPPLib::tSatInfoUnit *sat_info,tSatInfoUnit *base_sat) {
 
         sat_info->raw_mw[0]=sat_info->raw_mw[1];
@@ -566,10 +635,10 @@ namespace PPPLib{
                 sat_info->raw_mw[0]=mw;
             }
             else if(f==1){
-//                if((gf=GnssObsGfComb(sat_info->raw_L[0],sat_info->raw_L[2],sat_info->lam[0],sat_info->lam[1]))!=0.0) sat_info->gf[1]=gf;
-//                if((mw=GnssObsMwComb(sat_info->raw_P[0],sat_info->raw_P[2],sat_info->raw_L[0],sat_info->raw_L[2],sat_info->lam[0],sat_info->lam[2]))==0.0) continue;
-//                w0=sat_info->sm_mw[1];
-//                sat_info->raw_mw[1]=mw;
+                if((gf=GnssObsGfComb(sat_info->raw_L[0],sat_info->raw_L[2],sat_info->lam[0],sat_info->lam[2]))!=0.0) sat_info->gf[1]=gf;
+                if((mw=GnssObsMwComb(sat_info->raw_P[0],sat_info->raw_P[2],sat_info->raw_L[0],sat_info->raw_L[2],sat_info->lam[0],sat_info->lam[2]))==0.0) continue;
+                w0=sat_info->sm_mw[1];
+                sat_info->raw_mw[1]=mw;
             }
 
             if(sat_info->mw_idx[f]>0){
@@ -618,8 +687,10 @@ namespace PPPLib{
         double fact=obs_type==GNSS_OBS_CODE?C.gnssC.code_phase_ratio:1.0;
         int sys=sat_info.sat.sat_.sys;
         int prn=sat_info.sat.sat_.prn;
+        double a=C.gnssC.meas_err_factor[1],b=C.gnssC.meas_err_factor[2];
 
         if(sys==SYS_BDS){
+            if(sat_info.sat.sat_.prn<19) a=b=0.006;
             if(std::binary_search(kBD2_GEO,kBD2_GEO+NUM_BD2_GEO,prn)){
                 fact*=4.0;
             }
@@ -627,27 +698,34 @@ namespace PPPLib{
                 fact*=2.0;
             }
         }
-
-#if 0
-        double el=sat_info.el_az[0]*R2D;
-        double var=1.0;
-        if(el>=30){
-            var=SQR(0.003);
+        if(sys==SYS_GLO){
+            fact=obs_type==GNSS_OBS_CODE?150:1.0;
         }
-        else{
-            var=SQR(0.003)/(4*SQR(sin(el*D2R)));
-        }
-#else
         double var=0.0;
-        double a=C.gnssC.meas_err_factor[1],b=C.gnssC.meas_err_factor[2];
+
         double sin_el=sin(sat_info.el_az[0]);
         if(obs_type==GNSS_OBS_DOPPLER) a=b=10;
         var=(SQR(a)+SQR(b/sin_el));
-#endif
 
         if(C.gnssC.ion_opt==ION_IF){
             if(C.gnssC.frq_opt==FRQ_SINGLE) fact*=0.5;
-            else fact*=3.0;
+            else if(C.gnssC.frq_opt==FRQ_DUAL) fact*=3.0;
+            else if(C.gnssC.frq_opt==FRQ_TRIPLE&&sat_info.tf_if_idx[0]==1){
+                double f1=sat_info.frq[0],f2=sat_info.frq[1],f3=sat_info.frq[2];
+                double gam1=(SQR(f1)/SQR(f1)),gam2=SQR(f1)/SQR(f2),gam3=SQR(f1)/SQR(f3);
+                double e=2*(SQR(gam2)+SQR(gam3)-gam2*gam3-gam2-gam3+1.0);
+                double e1=(SQR(gam2)+SQR(gam3)-gam2-gam3)/e;
+                double e2=(SQR(gam3)-gam2*gam3-gam2+1.0)/e;
+                double e3=(SQR(gam2)-gam2*gam3-gam3+1.0)/e;
+                fact*=(SQR(e1)+SQR(e2)+SQR(e3));
+            }
+            else if(C.gnssC.frq_opt==FRQ_TRIPLE&&(sat_info.tf_if_idx[1]==1||sat_info.tf_if_idx[2]==1)){
+                fact*=3.0;
+            }
+        }
+
+        if(C.gnssC.ion_opt==ION_IF_DUAL){
+            fact*=3.0;
         }
 
         if(C.mode==MODE_PPK||C.mode_opt==MODE_OPT_PPK) fact*=sqrt(2.0);

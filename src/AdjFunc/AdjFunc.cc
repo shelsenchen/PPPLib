@@ -23,6 +23,11 @@ namespace PPPLib {
         Eigen::MatrixXd HTWH=H*W*H.transpose();
         Eigen::MatrixXd HTWL=H*W*L;
 
+#if 0
+        cout<<X.transpose()<<endl;
+        cout<<H.transpose()<<endl;
+#endif
+
         dx_=HTWH.inverse()*HTWL;
         for(int i=0;i<nx;i++) X[i]+=dx_[i];
         v_=H.transpose()*dx_-L;
@@ -51,7 +56,9 @@ namespace PPPLib {
         unit_weight_STD_=0.0;
 
         for(i=0;i<nx;i++){
+//            if(X[i]!=0.0&&Px(i,i)>0.0&&X[i]!=DIS_FLAG&&H.row(i).norm()) zip_idx.push_back(i);
             if(X[i]!=0.0&&Px(i,i)>0.0&&X[i]!=DIS_FLAG) zip_idx.push_back(i);
+
         }
         MatrixXd H_,Px_;
         VectorXd X_;
@@ -66,7 +73,7 @@ namespace PPPLib {
 #if 0
         cout<<X_.transpose()<<endl;
         cout<<H_.transpose()<<endl;
-
+        cout<<Px_.transpose()<<endl;
 #endif
 
         MatrixXd Kk=(H_.transpose()*Px_*H_+R);

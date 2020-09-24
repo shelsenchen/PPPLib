@@ -112,6 +112,8 @@ static void LoadConf()
     frqs=config->GetArray<int>("bd3_frq");
     for(i=0;i<frqs.size();i++) gnssC->gnss_frq[SYS_INDEX_QZS+1][i]=frqs[i];
     frqs.clear();
+    gnssC->use_bd3=config->Get<int>("use_bd3");
+    gnssC->est_bd3_isb=config->Get<int>("est_bd3_isb");
     gnssC->adj_obs=config->Get<int>("adj_obs");
     gnssC->use_doppler=config->Get<int>("use_doppler");
     gnssC->code_phase_ratio=config->Get<double>("code_phase_ratio");
@@ -138,6 +140,7 @@ static void LoadConf()
     for(i=0;i<ratio.size();i++) gnssC->ait_psd[i]=ratio[i];
     gnssC->check_dual_phase=config->Get<int>("check_dual_phase");
     gnssC->ar_mode= static_cast<GNSS_AR_MODE>(config->Get<int>("ar_mode"));
+    gnssC->ar_prod= static_cast<GNSS_AR_PROD>(config->Get<int>("ar_prod"));
     gnssC->glo_ar_mode= static_cast<GLO_AR_MODE>(config->Get<int>("glo_ar_mode"));
     gnssC->bds_ar_mode= config->Get<int>("bds_ar_mode");
     ratio.clear();
@@ -186,14 +189,17 @@ static void LoadConf()
     insC->psd_bg=config->Get<double>("bg");
 
     tSolConf *solC=&kConf.solC;
+    solC->out_sol=config->Get<int>("out_sol");
     solC->out_head=config->Get<int>("out_head");
     solC->out_vel=config->Get<int>("out_vel");
+    solC->out_bias=config->Get<int>("out_bias");
+    solC->out_trp=config->Get<int>("out_trp");
+    solC->out_ion=config->Get<int>("out_ion");
     solC->out_att=config->Get<int>("out_att");
     solC->out_ba=config->Get<int>("out_ba");
     solC->out_bg=config->Get<int>("out_bg");
     solC->out_stat=config->Get<int>("out_stat");
     solC->out_ins_mech_frq=config->Get<int>("out_ins_mech_frq");
-
 }
 
 static int ParsePara(int arc,char *arv[], string& conf_file)
@@ -367,11 +373,9 @@ static int Processer()
         long t2=clock();
         double t=(double)(t2-t1)/CLOCKS_PER_SEC;
         cout<<"total(s): "<<t;
-
     }
 
     return 1;
-
 }
 
 int main(int argc, char** argv)

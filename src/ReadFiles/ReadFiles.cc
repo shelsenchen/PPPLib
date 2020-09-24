@@ -27,10 +27,13 @@ namespace PPPLib{
         if(!MatchProd()){
             return 0;
         }
-        if(!MatchPrec()){
+        if((C_->mode==MODE_PPP||C_->mode_opt==MODE_OPT_PPP)&&!MatchPrec()){
             return 0;
         }
-        if(!MatchCmn()){
+        if((C_->mode==MODE_PPP||C_->mode_opt==MODE_OPT_PPP)&&!MatchCmn()){
+            return 0;
+        }
+        if(!MatchCodeDcb()){
             return 0;
         }
         if(!MatchOut()){
@@ -79,6 +82,20 @@ namespace PPPLib{
         C_->fileC.cbias=f;f[0]='\0';
         LOG(DEBUG)<<"CAS DCB FILE: "<<C_->fileC.cbias;
 
+        if((C_->mode==MODE_PPP||C_->mode_opt==MODE_OPT_PPP)&&C_->gnssC.ar_mode==AR_PPP_AR){
+            if(C_->gnssC.ar_prod==AR_PROD_FCB){
+                sprintf(f,"%s%csgg%04d%d_%s.fcb",prods_dir.c_str(),sep_,week_,wod_,kGnssAcStr[C_->gnssC.ac_opt].c_str());
+                if(access(f,0)==-1){
+                    LOG(ERROR)<<"FCB NO FOUND: "<<f;
+                    return 0;
+                }
+            }
+            else if(C_->gnssC.ar_prod==AR_PROD_OSB_CODE){
+
+            }
+            C_->fileC.fcb=f;f[0]='\0';
+            LOG(DEBUG)<<"FCB FILE: "<<C_->fileC.fcb;
+        }
         return 1;
     }
 
@@ -148,9 +165,9 @@ namespace PPPLib{
                 LOG(DEBUG)<<"ERP FILE: "<<C_->fileC.erp;
             }
             else{
-                sprintf(f,"%s%c%d%c%digs%2dP%d.erp",C_->data_dir.c_str(),sep_,year_,sep_,week_,yy_,week_);
+                sprintf(f,"%s%c%d%c%d%cigs%2dP%d.erp",C_->data_dir.c_str(),sep_,year_,sep_,week_,sep_,yy_,week_);
                 if((access(f,0))==-1){
-                    LOG(DEBUG)<<"ERP FILE NO FOUND "<<f;
+                    LOG(WARNING)<<"ERP FILE NO FOUND "<<f;
                 }
                 C_->fileC.erp=f;
                 LOG(DEBUG)<<"ERP FILE: "<<C_->fileC.erp;
@@ -189,6 +206,18 @@ namespace PPPLib{
         return 1;
     }
 
+    int cMatchFile::MatchCodeDcb() {
+        int no_match=C_->mode==MODE_PPK||C_->mode_opt==MODE_OPT_PPK;
+        char f[1024]={'\0'};
+
+        if(!no_match){
+            sprintf(f,"%s%c%d%ccode_dcb%c*.DCB",C_->data_dir.c_str(),sep_,year_,sep_,sep_);
+            C_->fileC.cod_dcb=f;
+            LOG(DEBUG)<<"CODE DCB DIR:"<<C_->fileC.cod_dcb;
+        }
+        return 1;
+    }
+
     int cMatchFile::MatchOut() {
         string sys_str;
         string out_dir,mode_dir,par_dir,name;
@@ -198,7 +227,10 @@ namespace PPPLib{
             sys_str+="G";
         }
         if(C_->gnssC.nav_sys&SYS_BDS){
-            sys_str+="B";
+            if(C_->gnssC.est_bd3_isb){
+                sys_str+="B2B3";
+            }
+            else sys_str+="B";
         }
         if(C_->gnssC.nav_sys&SYS_GAL){
             sys_str+="E";
@@ -228,7 +260,21 @@ namespace PPPLib{
         }
         C_->fileC.sol_stat=f;
         LOG(DEBUG)<<"SOLUTION FILE: "<<C_->fileC.sol;
-
+        f[0]='\0';
+        if(C_->solC.out_bias){
+            sprintf(f,"%s%s.bias",par_dir.c_str(),C_->site_name.c_str());
+        }
+        C_->fileC.sol_bias=f;
+        f[0]='\0';
+        if(C_->solC.out_trp){
+            sprintf(f,"%s%s.trp",par_dir.c_str(),C_->site_name.c_str());
+        }
+        C_->fileC.sol_trp=f;
+        f[0]='\0';
+        if(C_->solC.out_ion){
+            sprintf(f,"%s%s.ion",par_dir.c_str(),C_->site_name.c_str());
+        }
+        C_->fileC.sol_ion=f;
         return 1;
     }
 
@@ -1401,6 +1447,7 @@ namespace PPPLib{
                         sat=cSat(line_str_.substr(3,3));
                         sat.SatId2No();
                         if(sat.sat_.no>0&&sscanf(line_str_.c_str()+40,"%lf",&bias)==1){
+//                            Str2Double(line_str_.substr( 40,15),bias);
                             nav_->wide_line_bias[sat.sat_.no-1]=bias;
                         }
                     }
@@ -1462,9 +1509,10 @@ namespace PPPLib{
 
     cReadGnssCodeBias::cReadGnssCodeBias() {}
 
-    cReadGnssCodeBias::cReadGnssCodeBias(string file_path, PPPLib::tNav &nav) {
+    cReadGnssCodeBias::cReadGnssCodeBias(string file_path, PPPLib::tNav &nav,int type) {
         file_=file_path;
         nav_=&nav;
+        type_=type;
     }
 
     cReadGnssCodeBias::~cReadGnssCodeBias() {}
@@ -1483,6 +1531,7 @@ namespace PPPLib{
                 code_pair=line_str_.substr(25,3)+"-"+line_str_.substr(30,3);
                 Str2Double(line_str_.substr(80,10),cbias);
                 if(sat.sat_.sys==SYS_GPS){
+                    break;
                     for(i=0;i<MAX_GNSS_CODE_BIAS_PAIRS;i++){
                         if(code_pair==kGnssCodeBiasPairs[SYS_INDEX_GPS][i]) break;
                     }
@@ -1507,6 +1556,7 @@ namespace PPPLib{
                     nav_->code_bias[sat.sat_.no-1][i]=cbias*1E-9*CLIGHT;
                 }
                 else if(sat.sat_.sys==SYS_GLO){
+                    break;
                     for(i=0;i<MAX_GNSS_CODE_BIAS_PAIRS;i++){
                         if(code_pair==kGnssCodeBiasPairs[SYS_INDEX_GLO][i]) break;
                     }
@@ -1523,13 +1573,87 @@ namespace PPPLib{
         }
     }
 
+    void cReadGnssCodeBias::DecodeCodeDcb() {
+        cSat sat;
+        string code_pair;
+        double cbias=0.0;
+        int i,j=0,type=0;
+        char str1[5]={0},str2[10]={0};
+
+        while(getline(inf_,line_str_)&&!inf_.eof()){
+            if      (!line_str_.find("DIFFERENTIAL (P1-P2) CODE BIASES")) type=1;
+            else if (!line_str_.find("DIFFERENTIAL (P1-C1) CODE BIASES")) type=2;
+            else if (!line_str_.find("DIFFERENTIAL (P2-C2) CODE BIASES")) type=3;
+            if (!type||sscanf(line_str_.c_str(),"%s %s",str1,str2)<1) continue;
+            Str2Double(line_str_.substr(26,9),cbias);
+            if(cbias==0) continue;
+            if(line_str_.compare(6,4,"    ")) continue;
+            sat=cSat(str1);
+            sat.SatId2No();
+            if(sat.sat_.no!=0){
+                if(type==1){ // P1_P2
+                    code_pair="C1W-C2W";
+                    if(sat.sat_.sys==SYS_GPS){
+                        for(i=0;i<MAX_GNSS_CODE_BIAS_PAIRS;i++){
+                            if(code_pair==kGnssCodeBiasPairs[SYS_INDEX_GPS][i]) break;
+                        }
+                        nav_->code_bias[sat.sat_.no-1][i]=cbias*1E-9*CLIGHT;
+                    }
+                    else if(sat.sat_.sys==SYS_GLO){
+                        code_pair="C1P-C2P";
+                        for(i=0;i<MAX_GNSS_CODE_BIAS_PAIRS;i++){
+                            if(code_pair==kGnssCodeBiasPairs[SYS_INDEX_GLO][i]) break;
+                        }
+                        nav_->code_bias[sat.sat_.no-1][i]=cbias*1E-9*CLIGHT;
+                    }
+                }
+                else if(type==2){ // P1_C1
+                    code_pair="C1C-C1W";  //转换与CAS一致
+                    if(sat.sat_.sys==SYS_GPS){
+                        for(i=0;i<MAX_GNSS_CODE_BIAS_PAIRS;i++){
+                            if(code_pair==kGnssCodeBiasPairs[SYS_INDEX_GPS][i]) break;
+                        }
+                        nav_->code_bias[sat.sat_.no-1][i]=-cbias*1E-9*CLIGHT;
+                    }
+                    else if(sat.sat_.sys==SYS_GLO){
+                        code_pair="C1C-C1P"; //转换与CAS一致
+                        for(i=0;i<MAX_GNSS_CODE_BIAS_PAIRS;i++){
+                            if(code_pair==kGnssCodeBiasPairs[SYS_INDEX_GLO][i]) break;
+                        }
+                        nav_->code_bias[sat.sat_.no-1][i]=-cbias*1E-9*CLIGHT;
+                    }
+                }
+                else if(type==3){ // P2_C2
+                    code_pair="C2W-C2L";
+                    if(sat.sat_.sys==SYS_GPS){
+                        for(i=0;i<MAX_GNSS_CODE_BIAS_PAIRS;i++){
+                            if(code_pair==kGnssCodeBiasPairs[SYS_INDEX_GPS][i]) break;
+                        }
+                        nav_->code_bias[sat.sat_.no-1][i]=cbias*1E-9*CLIGHT;
+                    }
+                    else if(sat.sat_.sys==SYS_GLO){
+                        code_pair="C2C-C2P";
+                        for(i=0;i<MAX_GNSS_CODE_BIAS_PAIRS;i++){
+                            if(code_pair==kGnssCodeBiasPairs[SYS_INDEX_GLO][i]) break;
+                        }
+                        nav_->code_bias[sat.sat_.no-1][i]=cbias*1E-9*CLIGHT;
+                    }
+                }
+            }
+        }
+    }
+
     bool cReadGnssCodeBias::Reading() {
         if(!OpenFile()){
             LOG(ERROR)<<"Open gnss code bias file error: "<<file_;
             return false;
         }
-
-        DecodeCasMgexDcb();
+        if(type_){
+            DecodeCasMgexDcb();
+        }
+        else{
+            DecodeCodeDcb();
+        }
 
         if(OpenFile()) CloseFile();
         return true;
@@ -1984,6 +2108,115 @@ namespace PPPLib{
 
         if(OpenFile()) CloseFile();
         return true;
+    }
+
+    cReadFcb::cReadFcb() {
+
+    }
+
+    cReadFcb::cReadFcb(string path, PPPLib::tNav &nav) {
+        file_=path;
+        nav_=&nav;
+    }
+
+    bool cReadFcb::Reading() {
+        if(!OpenFile()){
+            LOG(ERROR)<<"Open fcb file error: "<<file_;
+            return false;
+        }
+        if(!ReadHead()) return false;
+        DecodeFcb();
+
+        if(OpenFile()) CloseFile();
+        return true;
+    }
+
+    bool cReadFcb::ReadHead() {
+        cSat sat;
+        double bias;
+        while(getline(inf_,line_str_)&&!inf_.eof()){
+            if(line_str_.length()<60) continue;
+            if(!line_str_.compare(0,2,"WL")){
+                sat=cSat(line_str_.substr(4,3));
+                sat.SatId2No();
+                if(sat.sat_.no>0&& Str2Double(line_str_.substr(14,6), bias)){
+                    nav_->wide_line_bias[sat.sat_.no-1]=bias;
+                }
+            }
+            else if (line_str_.find("END OF HEADER")!=string::npos){
+                return true;
+            }
+        }
+    }
+
+    void cReadFcb::DecodeFcb() {
+        tFcbUnit fcb={0};
+        cSat sat;
+        cTime epoch_t;
+        double bias=0.0;
+
+        while(getline(inf_,line_str_)&&!inf_.eof()){
+            if(line_str_[0]=='*'&&!epoch_t.Str2Time(line_str_.substr(1,28))){
+                while(getline(inf_,line_str_)&&!inf_.eof()&&line_str_[0]=='P'){
+                    sat=cSat(line_str_.substr(1,3));
+                    sat.SatId2No();
+                    if(!(sat.sat_.no)) continue;
+                    Str2Double(line_str_.substr(24,6),bias);
+                    fcb.nl_fcb[sat.sat_.no-1]=bias;
+                }
+                fcb.ts=epoch_t;
+                fcb.te=epoch_t+15*60.0; //sgg nl bias every 15 min
+                nav_->nl_fcbs.push_back(fcb);
+                epoch_t.Str2Time(line_str_.substr(1,28));
+            }
+            else if(line_str_[0]=='P'){
+                while(!inf_.eof()&&line_str_[0]=='P'){
+                    sat=cSat(line_str_.substr(1,3));
+                    sat.SatId2No();
+                    if(!(sat.sat_.no)) continue;
+                    Str2Double(line_str_.substr(24,6),bias);
+                    fcb.nl_fcb[sat.sat_.no-1]=bias;
+                    getline(inf_,line_str_);
+                }
+                fcb.ts=epoch_t;
+                fcb.te=epoch_t+15*60.0; //sgg nl bias every 15 min
+                nav_->nl_fcbs.push_back(fcb);
+                if(!inf_.eof())epoch_t.Str2Time(line_str_.substr(1,28));
+            }
+        }
+    }
+
+    cReadFcb::~cReadFcb() {
+
+    }
+
+    cReadOsb::cReadOsb() {
+
+    }
+
+    cReadOsb::cReadOsb(string path, PPPLib::tNav &nav) {
+        file_=path;
+        nav_=&nav;
+    }
+
+    void cReadOsb::DecodeOsb() {
+
+    }
+
+    bool cReadOsb::Reading() {
+        if(!OpenFile()){
+            LOG(ERROR)<<"Open osb file error: "<<file_;
+            return false;
+        }
+
+        DecodeOsb();
+
+        if(OpenFile()) CloseFile();
+        return true;
+    }
+
+    cReadOsb::~cReadOsb() {
+
     }
 
     cReadRefSol::cReadRefSol() {}

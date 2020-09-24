@@ -78,7 +78,7 @@ namespace PPPLib{
     vector<string> MultiSplitStr(const string &s, const string &seperator);
     vector<string> TextSplit(const string &in, const string &delim);
     extern void CreateDir(const char *path);
-
+    extern int ExPath(char *path,char *paths[],int nmax);
     typedef struct {
         time_t long_time;
         double sec;
@@ -187,6 +187,8 @@ namespace PPPLib{
         double ele_min;
         GNSS_FRQ_OPT frq_opt;
         int gnss_frq[NSYS+1][MAX_GNSS_USED_FRQ_NUM];
+        bool use_bd3;
+        bool est_bd3_isb;
         bool adj_obs;
         bool csc;
         bool use_doppler;
@@ -208,6 +210,7 @@ namespace PPPLib{
         double ait_psd[3];
         bool check_dual_phase;
         GNSS_AR_MODE ar_mode;
+        GNSS_AR_PROD ar_prod;
         GLO_AR_MODE glo_ar_mode;
         bool bds_ar_mode;
         double ar_thres[8];
@@ -246,6 +249,8 @@ namespace PPPLib{
         string base;
         string brd;
         string cbias;
+        string cod_dcb;
+        string fcb;
         string clk;
         string sp3[3];
         string erp;
@@ -257,12 +262,18 @@ namespace PPPLib{
         string ref;
         string sol;
         string sol_stat;
+        string sol_bias;
+        string sol_trp;
+        string sol_ion;
     }tFileConf;
 
     typedef struct{
         bool out_sol;
         bool out_head;
         bool out_vel;
+        bool out_bias; //clock, isb and ifcb
+        bool out_trp;
+        bool out_ion;
         bool out_att;
         bool out_ba;
         bool out_bg;
@@ -296,10 +307,10 @@ namespace PPPLib{
         Vector3d vel;
         double q_pos[6];
         double q_vel[6];
-        double clk_error[NSYS];
-        double rec_dcb[NSYS];
-        double rec_ifb[NSYS];
-        Vector2d zenith_trp_delay; // dry and wet
+        double clk_error[NSYS+1]; //clock+isb
+        double rec_dcb[NSYS+1];
+        double rec_ifcb[NSYS+1];   // inter-frequency code bias
+        double zenith_trp_delay[4]; // ZHD ZWD ge gn
         double dops[4];
         float ratio;
         double age;

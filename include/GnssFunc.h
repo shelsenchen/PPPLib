@@ -119,13 +119,23 @@ namespace PPPLib{
         double ant_hgt;
     }tStaInfoUnit;
 
+    typedef struct {
+        cTime ts,te;
+        double nl_fcb[MAX_SAT_NUM];
+    }tFcbUnit;
+
+    typedef struct {
+        cTime ts,te;
+        double code_osb[MAX_GNSS_CODE_TYPE];
+        double phase_osb[MAX_GNSS_CODE_TYPE];
+    }tOsbUnit;
+
     typedef struct{
         vector<tBrdEphUnit>    brd_eph;
         vector<tBrdGloEphUnit> brd_glo_eph;
         vector<tPreOrbUnit> pre_eph;
         vector<tPreClkUnit> pre_clk;
         vector<tErpUnit>erp_paras;
-//        vector<tAntUnit>ant_paras;
         vector<tTecUnit>tec_paras;
 
         tStaInfoUnit sta_paras[2];
@@ -141,6 +151,8 @@ namespace PPPLib{
         double ocean_paras[2][6*11];
 
         double wide_line_bias[MAX_SAT_NUM];
+        vector<tFcbUnit> nl_fcbs;
+        vector<tOsbUnit> obs_osbs;
     }tNav;
 
     typedef struct{
@@ -212,6 +224,11 @@ namespace PPPLib{
         int f;
         int inherit_flag;
     }tDdAmb;
+
+    typedef struct {
+        int ref_sat_idx,sat_idx;
+        int f;
+    }tSdAmb;
 
     typedef struct{
         cSat sat;
@@ -285,11 +302,15 @@ namespace PPPLib{
         double p_var_factor[MAX_GNSS_USED_FRQ_NUM];
         int outc[MAX_GNSS_USED_FRQ_NUM];
         int lock[MAX_GNSS_USED_FRQ_NUM];
-        unsigned char rejc[MAX_GNSS_USED_FRQ_NUM]; // reject flag for residual
+        unsigned char rejc[MAX_GNSS_USED_FRQ_NUM]; // reject flag for exclude satellite
+        unsigned char rejc_phase[MAX_GNSS_USED_FRQ_NUM]; // reject flag for exclude satellite due to phase residual
         unsigned char slip[MAX_GNSS_USED_FRQ_NUM];
         unsigned char fix[MAX_GNSS_USED_FRQ_NUM];
         unsigned char vsat[MAX_GNSS_USED_FRQ_NUM];
         unsigned char res_idx[MAX_GNSS_USED_FRQ_NUM];
+
+        double res_wl;  // for ppp-ar, cycle;
+        double res_nl;
     }tSatInfoUnit;
 
     class cGnssObsOperator {
@@ -311,9 +332,10 @@ namespace PPPLib{
         double GnssObsLinearComb(tPPPLibConf C,int i,int j,int k,tSatInfoUnit& sat_info, GNSS_OBS type,double* var);
         double LinearCombLam(int i,int j,int k,tSatInfoUnit& sat_info);
 
+        bool CodeMinuPhase(tPPPLibConf C, tSatInfoUnit& sat_info,tSatInfoUnit& pre_sat_info);
+        bool LliCycleSlip(tPPPLibConf C, tSatInfoUnit& sat_info,int nf,double tt,RECEIVER_INDEX rcv);
         void MwCycleSlip(tPPPLibConf C,double sample_dt,double dt,tSatInfoUnit* sat_info,tSatInfoUnit* base_sat,tTime last_time);
         void GfCycleSlip(tPPPLibConf C,double sample_dt,double dt,tSatInfoUnit* sat_info,tSatInfoUnit* base_sat);
-        bool LliCycleSlip(tPPPLibConf C, tSatInfoUnit& sat_info,int nf,double tt,RECEIVER_INDEX rcv);
         void SmoothMw(tPPPLibConf C,tSatInfoUnit* sat_info,tSatInfoUnit* base_sat);
 
     };

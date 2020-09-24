@@ -84,7 +84,7 @@ namespace PPPLib{
         MatrixXd H_;
         MatrixXd R_;
         MatrixXd F_; //for coupled
-        int sys_mask_[NSYS]={0};
+        int sys_mask_[NSYS+1]={0};
         int num_real_x_fix_;
         VectorXd real_x_fix_;
         MatrixXd real_Px_fix_;
@@ -106,6 +106,7 @@ namespace PPPLib{
         double Dops();
         bool ValidateSol(tPPPLibConf C);
         bool PostResidualQc(vector<double>omcs,vector<double>R);
+        bool RaimFde();
 
     public:
         int GnssObsRes(int post,tPPPLibConf C,double* x) override;
@@ -138,6 +139,7 @@ namespace PPPLib{
         void InitSppSolver();
         void Spp2Ppp();
         void PppCycSlip(tPPPLibConf C);
+        void ClockJumpRepair();
         void PosUpdate(tPPPLibConf C);
         void ClkUpdate(tPPPLibConf C,double tt);
         void IfbUpdate(tPPPLibConf C,double tt);
@@ -149,22 +151,49 @@ namespace PPPLib{
         int GnssObsRes(int post,tPPPLibConf C,double *x) override;
 
         void DisableX(int iter,VectorXd& x,vector<int>&par_idx,vector<double>& back_values);
-        bool PppResidualQc(vector<double>omcs,vector<double>R);
-        bool PppResIGG3Control(int iter,vector<double>omcs,vector<double> R);
-        void AverageLcAmb();
-        bool ResolvePppAmb(int nf,double *xa);
-        bool FixWlAmb(int sat1,int sat2,int *fix_wl);
-        bool FixNlAmbRound(int *sat1,int *sat2,int *fix_wls,int n);
-        bool FixNlAmbILS(int *sat1,int *sat2,int *fix_wls,int n);
-        bool AmbLinearDependCheck(int sat1,int sat2,int *flag,int *max_flg);
-        bool FixPppSol(int *sat1,int *sat2,double *NC,int n);
 
+        // quality control
+        bool PppResidualQc(int iter,vector<double>omcs,vector<double>var);
+        bool PppResidualQcStep(int iter,vector<double>omcs,vector<double>R);
+        bool PppResIGG3Control(int iter,vector<double>omcs,vector<double> R);
+
+        // PPP-AR
+        bool ResolvePppAmb(int nf,VectorXd& x,MatrixXd& P);
+        bool FixPppSol(int *sat1,int *sat2,double *NC,int n,VectorXd& x,MatrixXd& P);
+        bool AmbLinearDependCheck(int sat1,int sat2,int *flag,int *max_flg);
+        int SelectAmb(int *sat1,int *sat2,double *N,double *var,int n);
+
+        // fix wide-lane ambiguity
+        void AverageLcAmb();
+        bool FixWlAmb(int sat1,int sat2,int *fix_wl,double *res_wl);
+
+        // fix narrow-lane ambiguity with CNES IRC
+        bool FixNlAmbILS_IRC(int *sat1,int *sat2,int *fix_wls,double *res_wls,int n,VectorXd& x,MatrixXd& P);
+
+        // fix narrow-lane ambiguity with SGG FCB
+        bool MatchNlFcb(int sat1,int sat2,double *nl_fcb1,double *nl_fcb2);
+        bool FixNlAmbILS_FCB(int *sat1,int *sat2,int *fix_wls,double *res_wls,int n,VectorXd& x,MatrixXd& P);
+
+        // ppp-ar with fcb correction and select high-ele satellite
+        bool ResolvePppAmb_FCB_EL(int nf,VectorXd& x,MatrixXd& P);
+
+        // ppp-ar use ppk-ar function
+        void ResetAmb(double *bias,double *xa,int nb);
+        bool FixNlAmbILS1(int *sat1,int *sat2,int *fix_wls,int n,double *xa);
+        int SelectFixSat(double *D,int gps,int glo);
+        int ResolveAmbLambda(double *xa,int gps,int glo);
+        bool ResolverPppAmb1(int nf,double *xa);
     private:
         tPPPLibConf ppp_conf_;
         int max_iter_=8;
+        vector<tSdAmb> sdambs_;
 
     public:
         cSppSolver *spp_solver_;
+        int exc_sat_index_=0;
+        double pre_epoch_ar_ratio1_=0.0;
+        double pre_epoch_ar_ratio2_=0.0;
+
     };
 
     class cPpkSolver:public cSolver {

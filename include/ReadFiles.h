@@ -17,12 +17,10 @@ namespace PPPLib {
         ~cMatchFile();
 
     protected:
-        int GetPosFrmSnx(string file);
-        int GetPosFrmCrd(string file);
-        int GetPosFrmSta(string file);
         int MatchProd();
         int MatchPrec();
         int MatchCmn();
+        int MatchCodeDcb();
 
     public:
         void InitMatchFile(tPPPLibConf &C,char sep);
@@ -216,18 +214,20 @@ namespace PPPLib {
     class cReadGnssCodeBias:public cReadFile {
     public:
         cReadGnssCodeBias();
-        cReadGnssCodeBias(string file_path,tNav& nav);
+        cReadGnssCodeBias(string file_path,tNav& nav,int type);
         ~cReadGnssCodeBias();
 
     private:
         void DecodeCasMgexDcb();
-
+        void DecodeCodeDcb();
     public:
         bool Reading() override;
 
     private:
         tNav* nav_;
+        int type_=0;    //type==0: code_dcb type==1 cas_dcb
     };
+
 
     class cReadGnssErp:public cReadFile {
     public:
@@ -304,6 +304,39 @@ namespace PPPLib {
         cTime ion_time_;
         double factor_,re_;
         double lats_[3],lons_[3],hgts_[3];
+    };
+
+    class cReadFcb:public cReadFile {
+    public:
+        cReadFcb();
+        cReadFcb(string path,tNav& nav);
+        ~cReadFcb();
+
+    private:
+        bool ReadHead() override ;
+        void DecodeFcb();
+
+    public:
+        bool Reading() override;
+
+    private:
+        tNav *nav_;
+    };
+
+    class cReadOsb:public cReadFile {
+    public:
+        cReadOsb();
+        cReadOsb(string path,tNav& nav);
+        ~cReadOsb();
+
+    private:
+        void DecodeOsb();
+
+    public:
+        bool Reading() override;
+
+    private:
+        tNav *nav_;
     };
 
     class cReadRefSol:public cReadFile {

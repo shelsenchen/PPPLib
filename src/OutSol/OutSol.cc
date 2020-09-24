@@ -53,42 +53,66 @@ namespace PPPLib{
     int cOutSol::OutSolStat(tSolInfoUnit *sol,tSatInfoUnit *sat_infos, char *buff) {
         if(sol->stat<=SOL_NONE) return 0;
 
-        if(C_.mode==MODE_PPP||C_.mode_opt==MODE_OPT_PPP){
-            return 0;
-        }
+//        if(C_.mode==MODE_PPP||C_.mode_opt==MODE_OPT_PPP){
+//            return 0;
+//        }
 
         char *p=buff;
 
         int week;
         double tow;
         tow=sol->t_tag.Time2Gpst(&week, nullptr,SYS_GPS);
+
+        // position
         p+=sprintf(p,"$POS,%d,%.3f,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n",week,tow,
                    sol->stat,sol->pos[0],sol->pos[1],sol->pos[2],
                    0.0,0.0,0.0);
 
-        if(C_.gnssC.ion_opt>ION_IF_DUAL){
+        // clock
+        p+=sprintf(p,"$CLK,%d,%.3f,%d,%.4f %.4f %.4f %.4f %.4f\n",week,tow,sol->stat,sol->clk_error[0],sol->clk_error[1],sol->clk_error[2],sol->clk_error[3],sol->clk_error[4]);
 
+        // ifb
+        if(C_.gnssC.frq_opt==FRQ_TRIPLE){
+            p+=sprintf(p,"$IFB,%d,%.3f,%d,%.4f %.4f %.4f %.4f %.4f\n",week,tow,sol->stat,sol->rec_ifcb[0],sol->rec_ifcb[1],sol->rec_ifcb[2],sol->rec_ifcb[3],sol->rec_ifcb[4]);
         }
 
-        if(C_.gnssC.trp_opt>TRP_SAAS){
+        // dcb
 
+        // trp
+        if(C_.gnssC.trp_opt>=TRP_EST_WET){
+            p+=sprintf(p,"$TRP,%d,%.3f,%d,%.4f,%.4f\n",week,tow,sol->stat,sol->zenith_trp_delay[0],sol->zenith_trp_delay[1]);
         }
-
 
         return (int)(p-buff);
+    }
+
+    int cOutSol::OutSolStat1(tSolInfoUnit *sol, tSatInfoUnit *sat_infos, char *buff) {
+        if(sol->stat<=SOL_NONE) return 0;
+
+        char *p=buff;
     }
 
     void cOutSol::WriteSatStat(tSolInfoUnit *sol,tSatInfoUnit *sat_infos) {
         char buff[8191+1];
 
         int n=OutSolStat(sol,sat_infos,buff);
-        buff[n]='\0';
 
         fputs(buff,fout_stat_);
+        buff[n]='\0';
         if(sol->stat<=SOL_NONE) return;
 
+        int ion_flag=0;
+        double ion;
+        if(C_.gnssC.ion_opt>=ION_EST){
+            ion_flag=1;
+        }
+
         tSatInfoUnit *sat_info= nullptr;
-        int nf=2;
+        int nf=C_.gnssC.frq_opt+1;
+        if(C_.gnssC.ion_opt==ION_IF&&C_.gnssC.frq_opt<=FRQ_DUAL) nf=1;
+        else if(C_.gnssC.ion_opt==ION_IF&&C_.gnssC.frq_opt==FRQ_TRIPLE) nf=2;
+        if(C_.gnssC.ion_opt==ION_IF_DUAL&&C_.gnssC.frq_opt==FRQ_TRIPLE) nf=2;
+
         int i,j,week;
         double tow,amb;
         tow=sol->t_tag.Time2Gpst(&week, nullptr,SYS_GPS);
@@ -97,14 +121,27 @@ namespace PPPLib{
             if(!sat_info->vsat[0]) continue;
             for(j=0;j<nf;j++){
                 for (j=0;j<nf;j++) {
-                    fprintf(fout_stat_,"$SAT,%d,%.3f,%s,%d,%.1f,%.1f,%.4f,%.4f,%d,%.0f,%d,%d,%d,%d,%d,%d,%.4f,%.4f,%.4f,%.4f\n",
+                    fprintf(fout_stat_,"$SAT,%d,%.3f,%s,%d,%.1f,%.1f,%.4f,%.4f,%d,%.0f,%d,%d,%d,%d,%d,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f",
                                week,tow,sat_info->sat.sat_.id.c_str(),j+1,sat_info->el_az[1]*R2D,sat_info->el_az[0]*R2D,
                                sat_info->post_res_P[j],sat_info->post_res_L[j],sat_info->vsat[j],sat_info->raw_S[j]*0.25,
                                sat_info->fix[j],sat_info->slip[j]&3,sat_info->lock[j],sat_info->outc[j],
-                               0,sat_info->rejc[j],sat_info->float_amb[j],sat_info->fix_amb[j],sat_info->raw_mw[0],sat_info->sm_mw[0]);
+                               0,sat_info->rejc[j],sat_info->float_amb[j],sat_info->fix_amb[j],sat_info->raw_mw[0],sat_info->sm_mw[0],sat_info->res_wl,sat_info->res_nl);
+                    if(ion_flag){
+                        fprintf(fout_stat_,",%.4f",sat_info->ion_delay[0]);
+                    }
+                    fprintf(fout_stat_,"\n");
                 }
             }
         }
+    }
+
+    void cOutSol::WriteBias(tSolInfoUnit &sol) {
+        int week;
+        double wos;
+        wos=sol.t_tag.Time2Gpst(&week, nullptr,SYS_GPS);
+        fprintf(fout_bias_,"%4d, %6.1f, %10.3f, %10.3f, %10.3f, %10.3f, %10.3f, %5.2f, %5.2f, %5.2f, %5.2f, %5.3f\n",
+                week,wos,sol.clk_error[0],sol.clk_error[1],sol.clk_error[2],sol.clk_error[3],sol.clk_error[4],
+                sol.rec_ifcb[0],sol.rec_ifcb[1],sol.rec_ifcb[2],sol.rec_ifcb[3],sol.rec_ifcb[4]);
     }
 
     int cOutSol::OutEcef(unsigned char *buff, const char *s, tSolInfoUnit &sol) {
@@ -149,8 +186,17 @@ namespace PPPLib{
         C_=C;
         fout_=fopen(file.c_str(),"w");
         if(C_.solC.out_stat&&!C_.fileC.sol_stat.empty()){
-            fout_stat_=fout_stat_=fopen(C_.fileC.sol_stat.c_str(),"w");
+            fout_stat_=fopen(C_.fileC.sol_stat.c_str(),"w");
         }
+
+        if(C_.solC.out_bias&&!C_.fileC.sol_bias.empty()){
+            fout_bias_=fopen(C_.fileC.sol_bias.c_str(),"w");
+        }
+
+        if(C_.solC.out_trp&&!C_.fileC.sol_trp.empty()){
+            fout_trp_=fopen(C_.fileC.sol_trp.c_str(),"w");
+        }
+
     }
 
     void cOutSol::WriteHead() {

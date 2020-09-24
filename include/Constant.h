@@ -97,7 +97,7 @@ namespace PPPLib {
     const int MAX_GNSS_OBS_TYPE=36;
     const int MAX_GNSS_FRQ_NUM=6;
     const int MAX_GNSS_USED_FRQ_NUM=3;
-    static const string kSatSysCode="GCERJI";
+    static const string kSatSysCode="GCERJ";
     static const string kGnssObsCode="CLDS";
 
     enum GPS{
@@ -401,7 +401,7 @@ namespace PPPLib {
             {"CWPYMNSL", "CWPYMNDSLX",      "IQX",         "",        "",    ""},
             {     "IQX",      "IQXA",      "IQX",     "DPXA",     "DPX", "DPZ"},
             {   "CABXZ",       "IQX",      "IQX",      "IQX",   "CABXZ",    ""},
-            {      "PC",        "PC",      "IQX",      "ABX",    "ABXP",    ""},
+            {      "CP",        "CP",      "IQX",      "ABX",    "ABXP",    ""},
             {   "CSLXZ",       "SLX",   "IQXDPZ",    "SLXEZ",        "",    ""},
     };
 
@@ -456,7 +456,7 @@ namespace PPPLib {
     };
 
     const string kGnssAcStr[]={
-            "brd","wum","gbm","com"
+            "brd","wum","gbm","com","grm"
     };
 
     enum GNSS_ION_OPT {
@@ -545,7 +545,13 @@ namespace PPPLib {
         AR_INST,
         AR_FIX_HOLD,
         AR_PPP_AR,
-        AR_PPP_AR_ILS,
+    };
+
+    enum GNSS_AR_PROD {
+        AR_PROD_FCB,
+        AR_PROD_OSB_CODE,
+        AR_PROD_OSB_WUH,
+        AR_PROD_IC_CNES,
     };
 
     enum GLO_AR_MODE {
@@ -666,6 +672,9 @@ namespace PPPLib {
         STATISTICAL_RW,
         STATISTICAL_WN,
     };
+
+    #define SWAP_I(x,y) do {int z=x;x=y;y=z;} while(0)
+    #define SWAP_D(x,y) do {double z=x;x=y;y=z;} while(0)
 }
 
 #endif //PPPLIB_CONSTANT_H

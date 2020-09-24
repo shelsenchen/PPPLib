@@ -45,7 +45,7 @@ namespace PPPLib{
         Vector4d EstTrpWet(double humi,double *x,int it);
         void TrpMapNeil(cTime t,double el);
 
-    private:
+    public:
         Vector2d zenith_trp_={0,0};                   //dry, wet
         Vector2d slant_trp_dry_={0,0};                //dry, map_dry
         Vector4d slant_trp_wet_={0,0,0,0};      //wet, map_wet,grand_e,grand_n
