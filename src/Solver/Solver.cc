@@ -213,6 +213,7 @@ namespace PPPLib{
         int sys,i,j,k;
         int *frqs;
         int f1,f2,f3;
+        bool ppp=C.mode==MODE_PPP||C.mode_opt==MODE_OPT_PPP;
 
         for(i=0;i<epoch_sat_obs.sat_num;i++){
 
@@ -252,8 +253,10 @@ namespace PPPLib{
                 if(sat_info.sat.sat_.sys==SYS_GLO) gnss_obs_operator_.ReAlignObs(C,sat_info,epoch_sat_obs.epoch_data.at(i),1,frqs[1],f2,nav_.glo_frq_num);
                 else gnss_obs_operator_.ReAlignObs(C,sat_info,epoch_sat_obs.epoch_data.at(i),1,frqs[1],f2,nullptr);
                 sat_info.c_var_factor[1]=1.0;
-                if(sat_info.raw_L[0]*sat_info.raw_L[1]==0.0) sat_info.stat=SAT_NO_USE;
-                if(fabs(sat_info.raw_P[0]-sat_info.raw_P[1])>=200.0) sat_info.stat=SAT_NO_USE;
+                if(ppp){
+                    if(sat_info.raw_L[0]*sat_info.raw_L[1]==0.0) sat_info.stat=SAT_NO_USE;
+                    if(fabs(sat_info.raw_P[0]-sat_info.raw_P[1])>=200.0) sat_info.stat=SAT_NO_USE;
+                }
             }
             // third frequency
             else if(C.gnssC.frq_opt==FRQ_TRIPLE){
@@ -4757,7 +4760,6 @@ namespace PPPLib{
 
             // validation by popular ratio-test of residuals
             if(s[0]<=0.0||s[1]/s[0]>=ppk_conf_.gnssC.ar_thres[0]){
-                cout<<Qb<<endl<<endl;
                 // init non phase-bias states and covariance with float solution values
                 for(i=0;i<na;i++){
                     real_x_fix_[i]=full_x_[i];
@@ -5487,7 +5489,6 @@ namespace PPPLib{
             cout<<full_Px_<<endl;
 #endif
             kf_.Adjustment(omc_L_,H_.transpose(),R_,x,Px,num_L_,num_full_x_);
-            cout<<H_.transpose()<<endl;
 
             CloseLoopState(x,&imu_corr);
 
@@ -5580,6 +5581,7 @@ namespace PPPLib{
     }
 
     bool cFusionSolver::TightCouple(tPPPLibConf C) {
+
         gnss_solver_->SolverEpoch();
     }
 }

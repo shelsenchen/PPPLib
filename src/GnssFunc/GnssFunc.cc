@@ -361,42 +361,44 @@ namespace PPPLib{
     void cGnssObsOperator::MwCycleSlip(tPPPLibConf C,double sample_dt,double dt,tSatInfoUnit* sat_info,tSatInfoUnit* base_sat,tTime last_time) {
         if(C.gnssC.frq_opt==FRQ_SINGLE) return;
 
-#if 0
         int del_ep=1;
         double fact=1.0;
-        if(sample_dt>0.0) del_ep=Round(dt/sample_dt);
-        if(sample_dt<=1.5){
-            if(fabs(dt)<=10.0) del_ep=1;
-            else if(fabs(dt)<=15.0) del_ep=2;
-            else if(fabs(dt)<=22.0) del_ep=3;
-        }
-        if(sample_dt>=29.5){
-            if(del_ep<=2) fact=1.0;
-            else if(del_ep<=4) fact=1.25;
-            else if(del_ep<=6) fact=1.5;
-            else fact=2.0;
-        }
-#else
         double thres_mw=0.0;
-        double R_mw=1.0; //cycle
-        if(0<sample_dt&&sample_dt<=1.0){
-            R_mw=1.0;
+        double R_mw=1.0;
+        if(C.mode==MODE_PPK||C.mode_opt==MODE_OPT_PPK){
+
+            if(sample_dt>0.0) del_ep=Round(dt/sample_dt);
+            if(sample_dt<=1.5){
+                if(fabs(dt)<=10.0) del_ep=1;
+                else if(fabs(dt)<=15.0) del_ep=2;
+                else if(fabs(dt)<=22.0) del_ep=3;
+            }
+            if(sample_dt>=29.5){
+                if(del_ep<=2) fact=1.0;
+                else if(del_ep<=4) fact=1.25;
+                else if(del_ep<=6) fact=1.5;
+                else fact=2.0;
+            }
         }
-        else if(sample_dt<=15.0){
-            R_mw=1.5;
-        }
-        else{
-            R_mw=2.0;
+        else if(C.mode==MODE_PPP||C.mode_opt==MODE_OPT_PPP){
+            if(0<sample_dt&&sample_dt<=1.0){
+                R_mw=1.0;
+            }
+            else if(sample_dt<=15.0){
+                R_mw=1.5;
+            }
+            else{
+                R_mw=2.0;
+            }
+
+            if(sat_info->el_az[0]*R2D<15.0){
+                thres_mw=(-0.2*sat_info->el_az[0]*R2D+4.0)*R_mw;
+            }
+            else{
+                thres_mw=R_mw;
+            }
         }
 
-        if(sat_info->el_az[0]*R2D<15.0){
-            thres_mw=(-0.2*sat_info->el_az[0]*R2D+4.0)*R_mw;
-        }
-        else{
-            thres_mw=R_mw;
-        }
-
-#endif
         double el=sat_info->el_az[0]*R2D;
         double P1,P2,L1,L2;
         double lam1,lam2;
@@ -442,9 +444,8 @@ namespace PPPLib{
                 continue;
             }
 
-//            double thres=0.0;
-//            if(el>20.0) thres=C.gnssC.cs_thres[0];
-//            else thres=-C.gnssC.cs_thres[0]*0.1*el+3.0*C.gnssC.cs_thres[0];
+            if(el>20.0) thres_mw=C.gnssC.cs_thres[0];
+            else thres_mw=-C.gnssC.cs_thres[0]*0.1*el+3.0*C.gnssC.cs_thres[0];
             if(el<C.gnssC.ele_min) continue;
             double dmw=w1-w0;
             if(fabs(dmw)>thres_mw){
@@ -495,10 +496,12 @@ namespace PPPLib{
             }
 
             if(g1==0.0||g0==0.0) continue;
-#if 0
-            double thres;
-            if(el>15.0) thres=C.gnssC.cs_thres[1];
-            else thres=-C.gnssC.cs_thres[1]/15.0*el+2.0*C.gnssC.cs_thres[1];
+
+            double thres_gf;
+
+#if 1
+            if(el>15.0) thres_gf=C.gnssC.cs_thres[1];
+            else thres_gf=-C.gnssC.cs_thres[1]/15.0*el+2.0*C.gnssC.cs_thres[1];
 #else
             if(el<C.gnssC.ele_min) continue;
 
