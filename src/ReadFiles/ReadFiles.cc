@@ -1921,13 +1921,15 @@ namespace PPPLib{
         }
 
         int dgnss=(C.mode==MODE_DGNSS||C.mode==MODE_PPK);
-        for(i=0;i<dgnss?2:1;i++){
-            if(!(ant=SearchAntPar(t,0,sta[i].ant_desc))){
-                return;
-            }
-            else {
-                rec_ant[i]=*ant;
-                rec_ant[i].rec_ant_del[i]=sta->del;
+        if(C.gnssC.rec_ant){
+            for(i=0;i<dgnss?2:1;i++){
+                if(!(ant=SearchAntPar(t,0,sta[i].ant_desc))){
+                    return;
+                }
+                else {
+                    rec_ant[i]=*ant;
+                    rec_ant[i].rec_ant_del[i]=sta->del;
+                }
             }
         }
     }
