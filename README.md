@@ -1,5 +1,5 @@
 NOTE: The program is still under development, and some bugs still exist in PPPLib. Comments and suggestions from users 
-      are welcome, please send them to the author.
+      are welcome, please send them to the author.SOME BUGS EXIST IN INS/GNSS COUPLED!!!
 
 **INTRODUCTION**
 
@@ -23,7 +23,6 @@ mode and INS/GNSS loosely coupled mode for real kinematic scene. Detailed inform
 * Dual-frequency ionosphere-free/uncombined PPP
 * Triple-frequency ionosphere-free with one combination or two combination/uncombined PPP
 * Multi-GNSS post-kinematic processing
-* INS/GNSS loosely coupled
 * Support BDS-3 new satellites and signals
 * Convenient visualization
 
