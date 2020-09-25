@@ -151,10 +151,13 @@ namespace PPPLib{
         if(sat_obs.L[*f]==0.0||sat_obs.P[*f]==0.0){
             ps=rover_obs_.signal_[sat_obs.sat.sat_.sys_idx];
             for(n=0,p=-1;n<ps->n;n++){
-                if(ps->frq[n]==*f+1&&ps->pri[n]&&(p<0||ps->pri[n]>ps->pri[p])&&sat_obs.L[ps->pos[n]]&&sat_obs.P[ps->pos[n]]) p=n;
+                if(ps->frq[n]==*f+1&&ps->pri[n]&&(p<0||ps->pri[n]>ps->pri[p])&&sat_obs.L[ps->pos[n]]&&sat_obs.P[ps->pos[n]]){
+                    p=n;
+                }
             }
             if(p<0) return 0;
             *f=ps->pos[p];
+
             return 1;
         }
         else return 0;
@@ -249,7 +252,6 @@ namespace PPPLib{
 
             //second frequency
             if(C.gnssC.frq_opt==FRQ_DUAL){
-                f2=frqs[1];
                 if(sat_info.sat.sat_.sys==SYS_GLO) gnss_obs_operator_.ReAlignObs(C,sat_info,epoch_sat_obs.epoch_data.at(i),1,frqs[1],f2,nav_.glo_frq_num);
                 else gnss_obs_operator_.ReAlignObs(C,sat_info,epoch_sat_obs.epoch_data.at(i),1,frqs[1],f2,nullptr);
                 sat_info.c_var_factor[1]=1.0;
@@ -260,7 +262,6 @@ namespace PPPLib{
             }
             // third frequency
             else if(C.gnssC.frq_opt==FRQ_TRIPLE){
-                f2=frqs[1];
                 if(sat_info.sat.sat_.sys==SYS_GLO) gnss_obs_operator_.ReAlignObs(C,sat_info,epoch_sat_obs.epoch_data.at(i),1,frqs[1],f2,nav_.glo_frq_num);
                 else gnss_obs_operator_.ReAlignObs(C,sat_info,epoch_sat_obs.epoch_data.at(i),1,frqs[1],f2,nullptr);
                 sat_info.c_var_factor[1]=1.0;
@@ -317,9 +318,10 @@ namespace PPPLib{
 
     bool cSolver::InitReader(tPPPLibConf C) {
         if(!C.fileC.rover.empty()){
-            cReadGnssObs rover_reader(C.fileC.rover,nav_,rover_obs_,REC_ROVER);
-            rover_reader.SetGnssSysMask(C.gnssC.nav_sys);
-            rover_reader.Reading();
+            cReadGnssObs *rover_reader;
+            rover_reader=new cReadGnssObs(C.fileC.rover,nav_,rover_obs_,REC_ROVER);
+            rover_reader->SetGnssSysMask(C.gnssC.nav_sys);
+            rover_reader->Reading();
         }
 
         if(!C.fileC.brd.empty()){
@@ -3669,7 +3671,7 @@ namespace PPPLib{
                 ppplib_sol_.stat=SOL_NONE;
                 ppplib_sol_.t_tag=epoch_sat_obs_.obs_time;
                 epoch_fail_++;
-                LOG(WARNING)<<"MATCH BASE STATION OBSERVATIONS FAILED";
+                LOG(DEBUG)<<"MATCH BASE STATION OBSERVATIONS FAILED";
             }
 
             epoch_sat_info_collect_.clear();
@@ -4627,6 +4629,9 @@ namespace PPPLib{
             sat1=(vflag_[i]>>16)&0xFF;
             sat2=(vflag_[i]>> 8)&0xFF;
             f=vflag_[i]&0xF;
+            if(previous_sat_info_[sat1-1].sat.sat_.sys==SYS_BDS){
+                continue;
+            }
 
             no_fix=(m==0&&gps==0)||(m==1&&ppk_conf_.gnssC.bds_ar_mode==0)||(m==3&&glo==0);
             ref_sat_info=&previous_sat_info_[sat1-1];
@@ -4696,7 +4701,6 @@ namespace PPPLib{
             LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<"NO ENOUGH VALID SATELLITE MAKING DOUBLE DIFFERENCE MATRIX";
             return -1;
         }
-//        cout<<D<<endl;
         ppplib_sol_.num_ar_sat=nb;
 
         ny=na+nb;
@@ -5037,7 +5041,7 @@ namespace PPPLib{
         if(use_raw_gnss_obs){
 
             if(gnss_solver_->SolverProcess(gnss_conf_,rover_idx_)) {
-                LOG(INFO)<<"USING GNSS TO ALIGN INS("<<sols.size()<<"): "<<gnss_solver_->ppplib_sol_.pos.transpose();
+                LOG(DEBUG)<<"USING GNSS TO ALIGN INS("<<sols.size()<<"): "<<gnss_solver_->ppplib_sol_.pos.transpose();
                 if(gnss_solver_->ppplib_sol_.stat==SOL_FIX){
                     sols.push_back(gnss_solver_->ppplib_sol_);
                 }
