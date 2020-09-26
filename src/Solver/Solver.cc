@@ -2883,8 +2883,8 @@ namespace PPPLib{
         buff.clear();
         ss[0]='\0';
 
-        cout<<Q<<endl;
-        cout<<B1<<endl;
+//        cout<<Q<<endl;
+//        cout<<B1<<endl;
         N1=MatrixXd::Zero(n,2);
         if((info=lambda_.IntegerAmb(B1,Q,N1,m,2,s))){
             LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" PPP LAMBDA ERROR";
