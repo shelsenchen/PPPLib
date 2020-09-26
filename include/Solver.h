@@ -41,7 +41,7 @@ namespace PPPLib{
         virtual bool Estimator(tPPPLibConf C);
         virtual bool SolutionUpdate();
 
-        void InitFullPx(tPPPLibConf C);
+        void InitFullPx(tPPPLibConf C,int nx,MatrixXd& Px);
         void InitX(double xi,double var,int idx,double *x,double *xp);
         Eigen::MatrixXd InitQ(tPPPLibConf,double dt);
 
@@ -300,6 +300,7 @@ namespace PPPLib{
 
     private:
         cInsMech ins_mech_;
+        cSolver *gnss_alginor_;
         cSolver *gnss_solver_;
         tPPPLibConf fs_conf_;
         tPPPLibConf gnss_conf_;

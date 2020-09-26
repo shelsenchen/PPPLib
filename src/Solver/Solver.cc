@@ -390,8 +390,8 @@ namespace PPPLib{
         P.block<3,3>(row_s,col_s)=vec.asDiagonal();
     }
 
-    void cSolver::InitFullPx(tPPPLibConf C) {
-        full_Px_=MatrixXd::Zero(num_full_x_,num_full_x_);
+    void cSolver::InitFullPx(tPPPLibConf C,int nx,MatrixXd& Px) {
+        Px=MatrixXd::Zero(nx,nx);
         Vector3d vec(0,0,0);
         int ip=para_.IndexPos();
         int iv=para_.IndexVel();
@@ -399,19 +399,19 @@ namespace PPPLib{
         int iba=para_.IndexBa();
         int ibg=para_.IndexBg();
         if(para_.NumPos()>0){
-            InitP(C.insC.init_pos_unc,UNC_POS,ip,ip,full_Px_);
+            InitP(C.insC.init_pos_unc,UNC_POS,ip,ip,Px);
         }
         if(para_.NumVel()>0){
-            InitP(C.insC.init_vel_unc,UNC_VEL,iv,iv,full_Px_);
+            InitP(C.insC.init_vel_unc,UNC_VEL,iv,iv,Px);
         }
         if(para_.NumAtt()>0){
-            InitP(C.insC.init_att_unc,UNC_ATT,ia,ia,full_Px_);
+            InitP(C.insC.init_att_unc,UNC_ATT,ia,ia,Px);
         }
         if(para_.NumBa()>0){
-            InitP(C.insC.init_ba_unc,UNC_BA,iba,iba,full_Px_);
+            InitP(C.insC.init_ba_unc,UNC_BA,iba,iba,Px);
         }
         if(para_.NumBg()>0){
-            InitP(C.insC.init_bg_unc,UNC_BG,ibg,ibg,full_Px_);
+            InitP(C.insC.init_bg_unc,UNC_BG,ibg,ibg,Px);
         }
     }
 
@@ -5109,7 +5109,20 @@ namespace PPPLib{
         out_=new cOutSol(C);
         out_->InitOutSol(C,C.fileC.sol);
         out_->WriteHead();
-        InitFullPx(C);
+        InitFullPx(C,num_full_x_,full_Px_);
+
+        if(fs_conf_.mode==MODE_IGTC) tc_mode_=true;
+
+        if(fs_conf_.insC.ins_align==ALIGN_GNSS_OBS){
+            tPPPLibConf align_conf=C;
+            switch(C.mode_opt){
+                case MODE_OPT_SPP: align_conf.mode=MODE_SPP;break;
+                case MODE_OPT_PPP: align_conf.mode=MODE_PPP;break;
+                case MODE_OPT_PPK: align_conf.mode=MODE_PPK;break;
+            }
+            align_conf.mode_opt=MODE_OPT_KINEMATIC;
+            gnss_alginor_=new
+        }
 
         if(fs_conf_.mode_opt==MODE_OPT_SPP){
             tPPPLibConf spp_conf=C;

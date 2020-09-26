@@ -228,6 +228,7 @@ namespace PPPLib{
         IMU_COORD_TYPE coord_type;
         IMU_DATA_FORMAT data_format;
         GYRO_DATA_FORMAT gyro_val_format;
+        INS_ALIGN ins_align;
         double sample_rate;
         Vector3d lever;
         double correction_time_ba;
