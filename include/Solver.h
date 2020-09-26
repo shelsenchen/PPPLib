@@ -43,7 +43,11 @@ namespace PPPLib{
 
         void InitFullPx(tPPPLibConf C,int nx,MatrixXd& Px);
         void InitX(double xi,double var,int idx,double *x,double *xp);
-        Eigen::MatrixXd InitQ(tPPPLibConf,double dt);
+        Eigen::MatrixXd InitQ(tPPPLibConf,double dt,int nx);
+
+        void RemoveLever(const tImuInfoUnit& imu_info,Vector3d& lever,Vector3d& gnss_re,Vector3d& gnss_ve);
+        void CloseLoopState(VectorXd& x,tImuInfoUnit* imu_info_corr);
+
 
     public:
         cGnssObsOperator gnss_obs_operator_;
@@ -225,7 +229,7 @@ namespace PPPLib{
     private:
         void InitSppSolver();
         void Spp2Ppk();
-        bool GnssZeroRes(tPPPLibConf C,RECEIVER_INDEX rec,vector<int>sat_idx,double* x);
+        bool GnssZeroRes(tPPPLibConf C,RECEIVER_INDEX rec,vector<int>sat_idx,double* x,Vector3d rr);
         int GnssDdRes(int post,tPPPLibConf C,vector<int>ir,vector<int>ib,vector<int>cmn_sat_no,double* x,int refsat[NSYS][2*MAX_GNSS_USED_FRQ_NUM]);
         bool ValidObs(int i,int nf,int f);
         bool MatchBaseObs(cTime t);
@@ -276,7 +280,7 @@ namespace PPPLib{
         double Vel2Yaw(Vector3d vn);
         bool GnssSol2Ins(Vector3d re,Vector3d ve);
         Vector3d Pos2Vel(tSolInfoUnit& sol1,tSolInfoUnit& sol2);
-        bool InsAlign(int use_raw_gnss_obs);
+        bool InsAlign();
 
     public:
         void InitSolver(tPPPLibConf C) override;
@@ -285,11 +289,9 @@ namespace PPPLib{
         bool SolutionUpdate() override;
 
     private:
-        void CloseLoopState(VectorXd& x,tImuInfoUnit* imu_info_corr);
         void DisableX(VectorXd& x,int idx);
         void StateTimeUpdate();
-        void PropVariance(MatrixXd& F,MatrixXd& Q,int nx);
-        void RemoveLever(const tImuInfoUnit& imu_info,Vector3d& lever,Vector3d& gnss_re,Vector3d& gnss_ve);
+        void PropVariance(MatrixXd& F,MatrixXd& Q,int nx,MatrixXd& Px);
         int BuildLcHVR(int post,tPPPLibConf C,tImuInfoUnit& imu_info,double *meas_pos,double *meas_vel,Vector3d& q_pos,Vector3d& q_vel);
         bool LcFilter(tPPPLibConf C);
         bool ValidSol(VectorXd& x, double thres);
@@ -300,7 +302,7 @@ namespace PPPLib{
 
     private:
         cInsMech ins_mech_;
-        cSolver *gnss_alginor_;
+        cSolver *gnss_alignor_;
         cSolver *gnss_solver_;
         tPPPLibConf fs_conf_;
         tPPPLibConf gnss_conf_;
