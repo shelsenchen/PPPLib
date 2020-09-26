@@ -319,7 +319,9 @@ static int Processer()
         case MODE_SPP:  solver=new cSppSolver(kConf);break;
         case MODE_PPP:  solver=new cPppSolver(kConf);break;
         case MODE_PPK:  solver=new cPpkSolver(kConf);break;
-        case MODE_IGLC: solver=new cFusionSolver(kConf);break;
+        case MODE_IGLC:
+        case MODE_IGTC:
+                        solver=new cFusionSolver(kConf);break;
     }
 
     if(kConf.mode==MODE_IGLC&&kConf.mode_opt==MODE_OPT_GSOF){
