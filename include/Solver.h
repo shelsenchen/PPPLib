@@ -89,6 +89,9 @@ namespace PPPLib{
         VectorXd real_x_fix_;
         MatrixXd real_Px_fix_;
         vector<double>code_sigma,phase_sigma;
+
+        bool tc_mode_=false;
+        tImuInfoUnit cur_imu_info_;
     };
 
     class cSppSolver:public cSolver {
