@@ -5,7 +5,5 @@ CMAKE_POLICY(SET CMP0015 NEW)
 add_executable(PPPLibMain PPPLibMain.cc)
 target_link_libraries(PPPLibMain PPPLib)
 
-add_executable(test test.cc)
-target_link_libraries(test PPPLib)
 
 

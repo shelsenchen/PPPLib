@@ -336,7 +336,7 @@ namespace PPPLib{
             char *ex_files[36]={nullptr};
             string file_name,sep;
 #if WIN32
-            sep="\\.";
+            sep="//.";
 #else
             sep="/.";
 #endif
@@ -350,9 +350,11 @@ namespace PPPLib{
 
             cReadGnssCodeBias dcb_reader(C.fileC.cod_dcb, nav_,0);
             for(i=0;i<n;i++){
+#if 0
                 vector<string> splits=MultiSplitStr(ex_files[i],sep);
                 m=atoi(((splits.end()-2)->substr(6,2)).c_str());
                 if(mon!=m) continue;
+#endif
                 dcb_reader.file_=ex_files[i];
                 dcb_reader.Reading();
             }

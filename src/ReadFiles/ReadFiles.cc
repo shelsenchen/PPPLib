@@ -209,10 +209,22 @@ namespace PPPLib{
     int cMatchFile::MatchCodeDcb() {
         int no_match=C_->mode==MODE_PPK||C_->mode_opt==MODE_OPT_PPK;
         char f[1024]={'\0'};
+        string dcb_dir;
+
+        if(!C_->use_custom_dir){
+            sprintf(f,"%s%c%d%c%d%c%03d%c%s",C_->data_dir.c_str(),sep_,year_,sep_,week_,sep_,doy_,sep_,"prods");
+            dcb_dir=f;f[0]='\0';
+        }else dcb_dir=C_->data_dir;
 
         if(!no_match){
-            sprintf(f,"%s%c%d%ccode_dcb%c*.DCB",C_->data_dir.c_str(),sep_,year_,sep_,sep_);
-            C_->fileC.cod_dcb=f;
+            if(!C_->use_custom_dir){
+                sprintf(f,"%s%c%d%ccode_dcb%c*.DCB",C_->data_dir.c_str(),sep_,year_,sep_,sep_);
+            }
+            else{
+                sprintf(f,"%s%c*.DCB",C_->data_dir.c_str(),sep_);
+            }
+            dcb_dir=f;f[0]='\0';
+            C_->fileC.cod_dcb=dcb_dir;
             LOG(DEBUG)<<"CODE DCB DIR:"<<C_->fileC.cod_dcb;
         }
         return 1;
