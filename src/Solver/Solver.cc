@@ -5305,7 +5305,7 @@ namespace PPPLib{
         }
 
         if(fs_conf_.mode_opt>MODE_OPT_GSOF) gnss_solver_->rover_obs_=rover_obs_;
-
+        if(tc_mode_) gnss_solver_->full_Px_=full_Px_;
     }
 
     bool cFusionSolver::SolverProcess(tPPPLibConf C,int idx) {
@@ -5407,11 +5407,15 @@ namespace PPPLib{
         F=ins_mech_.StateTransferMat(fs_conf_,pre_imu_info_,cur_imu_info_,nx,dt);
         Q=InitQ(fs_conf_,dt,nx);
 
-        VectorXd x=full_x_;
-        MatrixXd Px=full_Px_;
+        VectorXd x;
+        MatrixXd Px;
         if(tc_mode_){
             x=gnss_solver_->full_x_;
             Px=gnss_solver_->full_Px_;
+        }
+        else{
+            x=full_x_;
+            Px=full_Px_;
         }
 
         if(fabs(dt)>60.0){
@@ -5422,8 +5426,14 @@ namespace PPPLib{
         }
 
         for(int i=0;i<nx;i++) x[i]=1E-20;
-        full_Px_=Px;
-        if(tc_mode_) gnss_solver_->full_Px_=Px;
+        if(tc_mode_){
+            gnss_solver_->full_x_=x;
+            gnss_solver_->full_Px_=Px;
+        }
+        else{
+            full_x_=x;
+            full_Px_=Px;
+        }
     }
 
     void cFusionSolver::PropVariance(MatrixXd& F,MatrixXd& Q,int nx,MatrixXd& Px) {
@@ -5433,12 +5443,14 @@ namespace PPPLib{
 
         PQ=MatrixXd::Zero(nx,nx);FPF=MatrixXd::Zero(nx,nx);
 
-        int i,j;
-        for(i=0;i<nx;i++){
-            for(j=0;j<nx;j++){
-                PQ.data()[i+j*nx]=prior_P.data()[i+j*nx]+0.5*Q.data()[i+j*nx];
-            }
-        }
+//        int i,j;
+//        for(i=0;i<nx;i++){
+//            for(j=0;j<nx;j++){
+//                PQ.data()[i+j*nx]=prior_P.data()[i+j*nx]+0.5*Q.data()[i+j*nx];
+//            }
+//        }
+        PQ.block<15,15>(0,0)=prior_P.block<15,15>(0,0)+0.5*Q.block<15,15>(0,0);
+
 
         FPF=F*PQ*F.transpose();
 
@@ -5454,11 +5466,13 @@ namespace PPPLib{
         cout<<std::fixed<<setprecision(10)<<FPF<<endl<<endl;
 #endif
 
-        for(i=0;i<nx;i++){
-            for(j=0;j<nx;j++){
-                Px.data()[i+j*nx]=FPF.data()[i+j*nx]+0.5*Q.data()[i+j*nx];
-            }
-        }
+//        for(i=0;i<nx;i++){
+//            for(j=0;j<nx;j++){
+//                Px.data()[i+j*nx]=FPF.data()[i+j*nx]+0.5*Q.data()[i+j*nx];
+//            }
+//        }
+        Px.block<15,15>(0,0)=FPF+0.5*Q;
+
     }
 
     int cFusionSolver::BuildLcHVR(int post,tPPPLibConf C,tImuInfoUnit& imu_info,double *meas_pos,double *meas_vel,Vector3d& q_pos,Vector3d& q_vel) {
@@ -5702,12 +5716,16 @@ namespace PPPLib{
         ppplib_sol_.ins_stat=SOL_INS_MECH;
         ppplib_sol_.valid_sat_num=0;
 
+        cout<<gnss_solver_->full_Px_.block<15,15>(0,0)<<endl<<endl;
+        cout<<gnss_solver_->full_x_.transpose()<<endl<<endl;
+
         epoch_idx_++;
         gnss_solver_->cur_imu_info_=cur_imu_info_;
         gnss_solver_->tc_mode_= true;
-        if(!gnss_solver_->SolverProcess(fs_conf_,-1)){
+        if(!gnss_solver_->SolverProcess(fs_conf_,rover_idx_)){
             LOG(WARNING)<<"WARNING";
         }
         cur_imu_info_=gnss_solver_->cur_imu_info_;
+        InsSol2PpplibSol(cur_imu_info_,ppplib_sol_);
     }
 }

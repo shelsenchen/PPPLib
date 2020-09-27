@@ -111,8 +111,6 @@ namespace PPPLib {
         cImuData *imu_data_;
         tPPPLibConf C_;
 
-
-
     public:
         int imu_idx=0;
     };

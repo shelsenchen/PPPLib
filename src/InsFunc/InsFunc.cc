@@ -285,9 +285,11 @@ namespace PPPLib {
         F.block<3,3>(ia,ibg)=Cbe;
 
         //ba-ba
-        F.block<3,3>(iba,iba)=Matrix3d::Identity()*(-1.0/C.insC.correction_time_ba);
+//        F.block<3,3>(iba,iba)=Matrix3d::Identity()*(-1.0/C.insC.correction_time_ba);
+        F.block<3,3>(iba,iba)=Matrix3d::Zero();
         //bg-bg
-        F.block<3,3>(ibg,ibg)=Matrix3d::Identity()*(-1.0/C.insC.correction_time_bg);
+//        F.block<3,3>(ibg,ibg)=Matrix3d::Identity()*(-1.0/C.insC.correction_time_bg);
+        F.block<3,3>(ibg,ibg)=Matrix3d::Zero();
 
         return MatrixXd::Identity(nx,nx)+F*dt;
     }

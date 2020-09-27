@@ -186,8 +186,8 @@ static void LoadConf()
     insC->init_bg_unc=config->Get<double>("init_bg_unc");
     insC->psd_acce=config->Get<double>("psd_acce");
     insC->psd_gyro=config->Get<double>("psd_gyro");
-    insC->psd_ba=config->Get<double>("ba");
-    insC->psd_bg=config->Get<double>("bg");
+    insC->psd_ba=config->Get<double>("psd_ba");
+    insC->psd_bg=config->Get<double>("psd_bg");
 
     tSolConf *solC=&kConf.solC;
     solC->out_sol=config->Get<int>("out_sol");
@@ -341,6 +341,7 @@ static int Processer()
         kConf.fileC.sol=config->Get<string>("sol");
 
         solver->SolverProcess(kConf,0);
+        return true;
     }
 
     struct dirent *file;
