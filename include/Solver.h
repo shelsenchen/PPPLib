@@ -41,7 +41,7 @@ namespace PPPLib{
         virtual bool Estimator(tPPPLibConf C);
         virtual bool SolutionUpdate();
 
-        void InitFullPx(tPPPLibConf C,int nx,MatrixXd& Px);
+        void InitInsPx(tPPPLibConf C,int nx,MatrixXd& Px);
         void InitX(double xi,double var,int idx,double *x,double *xp);
         Eigen::MatrixXd InitQ(tPPPLibConf,double dt,int nx);
 
@@ -165,7 +165,7 @@ namespace PPPLib{
         void IonUpdate(tPPPLibConf C,double tt);
         void AmbUpdate(tPPPLibConf C,double tt);
         void StateTimeUpdate(tPPPLibConf C);
-        int GnssObsRes(int post,tPPPLibConf C,double *x) override;
+        int GnssObsRes(int post,tPPPLibConf C,double *x,Vector3d re);
 
         void DisableX(int iter,VectorXd& x,vector<int>&par_idx,vector<double>& back_values);
 
@@ -295,6 +295,7 @@ namespace PPPLib{
         int BuildLcHVR(int post,tPPPLibConf C,tImuInfoUnit& imu_info,double *meas_pos,double *meas_vel,Vector3d& q_pos,Vector3d& q_vel);
         bool LcFilter(tPPPLibConf C);
         bool ValidSol(VectorXd& x, double thres);
+        void ControlPx(int nx,MatrixXd& Px);
 
     public:
         bool LooseCouple(tPPPLibConf C);

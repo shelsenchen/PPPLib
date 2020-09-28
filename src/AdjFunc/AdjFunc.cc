@@ -85,6 +85,9 @@ namespace PPPLib {
         MatrixXd I=MatrixXd::Identity(zip_idx.size(),zip_idx.size());
         Px_=(I-K*H_.transpose())*Px_;
 
+        cout<<endl;
+        cout<<X_.transpose()<<endl;
+
         v_=H_.transpose()*dx_-L;
         MatrixXd Rr=R;
         if(MatInv(Rr.data(),R.cols())!=-1){
