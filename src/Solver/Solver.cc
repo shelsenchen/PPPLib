@@ -461,11 +461,17 @@ namespace PPPLib{
     }
 
     void cSolver::CloseLoopState(VectorXd& x,tImuInfoUnit* imu_info_corr) {
+        char buff[1024]={'\0'};
         int ip=para_.IndexPos();
         imu_info_corr->re[0]-=x[ip+0];
         imu_info_corr->re[1]-=x[ip+1];
         imu_info_corr->re[2]-=x[ip+2];
         imu_info_corr->rn=Xyz2Blh(imu_info_corr->re);
+        sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
+                imu_info_corr->re[0],x[ip],imu_info_corr->re[1],x[ip+1],imu_info_corr->re[2],x[ip+2]);
+        LOG(DEBUG)<<imu_info_corr->t_tag.GetTimeStr(1)<<" CLOSE LOOP STATE: ";
+        LOG(DEBUG)<<"POSITION: "<<buff;
+        buff[0]='\0';
 
         int iv=para_.IndexVel();
         imu_info_corr->ve[0]-=x[iv+0];
@@ -473,6 +479,10 @@ namespace PPPLib{
         imu_info_corr->ve[2]-=x[iv+2];
         Matrix3d Cne=CalcCen(imu_info_corr->rn,COORD_NED).transpose();
         imu_info_corr->vn=Cne.transpose()*imu_info_corr->ve;
+        sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
+                imu_info_corr->ve[0],x[iv],imu_info_corr->ve[1],x[iv+1],imu_info_corr->ve[2],x[iv+2]);
+        LOG(DEBUG)<<"VELOCITY: "<<buff;
+        buff[0]='\0';
 
         int ia=para_.IndexAtt();
         if(x[ia]!=DIS_FLAG){
@@ -486,6 +496,10 @@ namespace PPPLib{
             imu_info_corr->ba[0]+=x[iba+0];
             imu_info_corr->ba[1]+=x[iba+1];
             imu_info_corr->ba[2]+=x[iba+2];
+            sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
+                    imu_info_corr->ba[0],x[iba],imu_info_corr->ba[1],x[iba+1],imu_info_corr->ba[2],x[iba+2]);
+            LOG(DEBUG)<<"Ba: "<<buff;
+            buff[0]='\0';
         }
 
         int ibg=para_.IndexBg();
@@ -493,6 +507,10 @@ namespace PPPLib{
             imu_info_corr->bg[0]+=x[ibg+0];
             imu_info_corr->bg[1]+=x[ibg+1];
             imu_info_corr->bg[2]+=x[ibg+2];
+            sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
+                    imu_info_corr->bg[0],x[ibg],imu_info_corr->bg[1],x[ibg+1],imu_info_corr->bg[2],x[ibg+2]);
+            LOG(DEBUG)<<"Bg: "<<buff;
+            buff[0]='\0';
         }
     }
 
@@ -1340,7 +1358,7 @@ namespace PPPLib{
                 RemoveLever(cor_imu_info,C.insC.lever,re,ve);
             }
             else{
-                re<<full_x_[0],full_x_[1],full_x_[2];
+                re<<x[0],x[1],x[2];
             }
 
             if(GnssObsRes(iter+1,C,x.data(),re)) {
@@ -1585,7 +1603,7 @@ namespace PPPLib{
 
                 if(bias[i]==0.0||(full_x_[ia]!=0.0&&!slip[i]&&full_x_[ia]!=DIS_FLAG)) continue;
 
-                InitX(bias[i],SQR(60.0),ia,full_x_.data(),full_Px_.data());
+                InitX(bias[i],SQR(5.0),ia,full_x_.data(),full_Px_.data());
                 string s="UC-L";
                 if(C.gnssC.frq_opt==FRQ_TRIPLE&&C.gnssC.ion_opt==ION_IF){
                     if(sat_info->tf_if_idx[0]==1){
@@ -5761,7 +5779,7 @@ namespace PPPLib{
         epoch_idx_++;
         gnss_solver_->cur_imu_info_=cur_imu_info_;
         gnss_solver_->tc_mode_= true;
-         if(!gnss_solver_->SolverProcess(fs_conf_,rover_idx_)){
+        if(!gnss_solver_->SolverProcess(fs_conf_,rover_idx_)){
             LOG(WARNING)<<"WARNING";
         }
         cur_imu_info_=gnss_solver_->cur_imu_info_;
