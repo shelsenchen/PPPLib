@@ -155,7 +155,7 @@ static void LoadConf()
     gnssC->min_sat_num2fix=config->Get<int>("min_sat_num2fix");
     gnssC->min_sat_num2drop=config->Get<int>("min_sat_num2drop");
     gnssC->min_lock2fix=config->Get<int>("min_lock2fix");
-    gnssC->partial_ar=config->Get<int>("partial_ar");
+    gnssC->ar_filter=config->Get<int>("ar_filter");
     gnssC->res_qc= config->Get<int>("res_qc");
     ratio.clear();
     ratio=config->GetArray<double>("base_coord");

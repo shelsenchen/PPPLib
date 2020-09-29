@@ -218,7 +218,7 @@ namespace PPPLib{
         int min_sat_num2fix;
         int min_sat_num2drop;
         int min_lock2fix;
-        bool partial_ar;
+        bool ar_filter;
         bool res_qc;
         Vector3d rb;
     }tGnssConf;
@@ -302,8 +302,10 @@ namespace PPPLib{
 
     typedef struct {
         cTime t_tag;
+        int epoch_idx;
         SOL_STAT stat;
         SOL_INS_STAT ins_stat;
+        int observed_sat_num;
         int valid_sat_num;
         Vector3d pos;
         Vector3d vel;

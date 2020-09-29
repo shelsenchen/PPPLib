@@ -248,7 +248,7 @@ namespace PPPLib{
 
         void ReSetAmb(double *bias,double *xa,int nb);
         int DdMat(double *D,int gps,int glo);
-        int ResolveAmbLambda(double *xa,int gps,int glo);
+        int ResolveAmbLambda(double *xa,int gps, int bds,int glo,int gal, int qzs);
         bool ResolvePpkAmb(vector<int>cmn_sat,int nf,double *xa);
 
     private:

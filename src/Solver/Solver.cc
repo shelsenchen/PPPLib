@@ -235,7 +235,7 @@ namespace PPPLib{
             if(sat_info.sat.sat_.no==4) continue;
             if(sat_info.sat.sat_.no==28) continue;
             if(sat_info.sat.sat_.no==50) continue;
-            if(sat_info.sat.sat_.no>32&&sat_info.sat.sat_.no<38) continue;
+//            if(sat_info.sat.sat_.no>32&&sat_info.sat.sat_.no<38) continue;
             if(!C.gnssC.use_bd3&&sat_info.sat.sat_.sys==SYS_BDS&&sat_info.sat.sat_.prn>18) continue;
             sat_info.stat=SAT_USED;
             switch(sys){
@@ -331,7 +331,6 @@ namespace PPPLib{
             rover_reader=new cReadGnssObs(C.fileC.rover,nav_,rover_obs_,REC_ROVER);
             rover_reader->SetGnssSysMask(C.gnssC.nav_sys);
             rover_reader->Reading();
-            delete  rover_reader;
         }
 
         if(!C.fileC.brd.empty()&&C.site_idx==1){
@@ -1280,6 +1279,7 @@ namespace PPPLib{
 
             epoch_idx_+=1;
             UpdateGnssObs(C,epoch_sat_obs_,REC_ROVER);
+            ppplib_sol_.observed_sat_num=epoch_sat_obs_.sat_num;
             InitEpochSatInfo(epoch_sat_info_collect_);
 
             if(SolverEpoch()){
@@ -1349,6 +1349,7 @@ namespace PPPLib{
         MatrixXd Px;
         vector<int>par_idx;
         vector<double>back_values;
+        ppplib_sol_.epoch_idx=epoch_idx_;
 
         Vector3d re,ve;
         if(tc_mode_){
@@ -1476,7 +1477,6 @@ namespace PPPLib{
 
         if(ppp_conf_.solC.out_sol) out_->WriteSol(ppplib_sol_,epoch_idx_);
         if(ppp_conf_.solC.out_stat) out_->WriteSatStat(&ppplib_sol_,previous_sat_info_);
-        if(ppp_conf_.solC.out_bias) out_->WriteBias(ppplib_sol_);
     }
 
     void cPppSolver::AmbUpdate(tPPPLibConf C,double tt) {
@@ -3710,7 +3710,7 @@ namespace PPPLib{
             nb=ResolveAmbLambda(xa,1,0);
 
             ratio1=ppplib_sol_.ratio;
-            if(ppp_conf_.gnssC.partial_ar){
+            if(ppp_conf_.gnssC.ar_filter){
                 if(nb>=0&&pre_epoch_ar_ratio2_>=ppp_conf_.gnssC.ar_thres[0]&&(ppplib_sol_.ratio<ppp_conf_.gnssC.ar_thres[0])||
                    (ppplib_sol_.ratio<ppp_conf_.gnssC.ar_thres[0]*1.1&&ppplib_sol_.ratio<pre_epoch_ar_ratio1_/2.0)){
                     LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1);
@@ -4304,7 +4304,7 @@ namespace PPPLib{
             omc_L_=Map<VectorXd>(omcs.data(),num_L_);
         }
 
-        if(post&&post!=5&&C.gnssC.res_qc==RES_QC_STEP){
+        if(post&&post!=5&&C.gnssC.res_qc){
 //           if(PpkResStepControl(post,ir,cmn_sat_no,omcs,kf_.v_,kf_.Qvv_)){
 //               need_iter=0;
 //           }
@@ -4865,7 +4865,7 @@ namespace PPPLib{
         return nb;
     }
 
-    int cPpkSolver::ResolveAmbLambda(double *xa, int gps, int glo) {
+    int cPpkSolver::ResolveAmbLambda(double *xa, int gps, int bds,int glo,int gal, int qzs) {
         int i,j,ny,nb,info,na=num_real_x_fix_;
         VectorXd QQb(MAX_SAT_NUM);
         double var=0.0;
@@ -5028,13 +5028,13 @@ namespace PPPLib{
         bool rerun=false;
         if(ppk_conf_.gnssC.glo_ar_mode!=GLO_AR_FIXHOLD){
 
-            nb=ResolveAmbLambda(xa,1,0);
+            nb=ResolveAmbLambda(xa,1,0,0,0,0);
 
             ratio1=ppplib_sol_.ratio;
-            if(ppk_conf_.gnssC.partial_ar){
-                if(nb>=0&&pre_epoch_ar_ratio2>=ppk_conf_.gnssC.ar_thres[0]&&(ppplib_sol_.ratio<ppk_conf_.gnssC.ar_thres[0])||
+            if(ppk_conf_.gnssC.ar_filter){
+                if((nb>=0&&pre_epoch_ar_ratio2>=ppk_conf_.gnssC.ar_thres[0]&&(ppplib_sol_.ratio<ppk_conf_.gnssC.ar_thres[0]))||
                         (ppplib_sol_.ratio<ppk_conf_.gnssC.ar_thres[0]*1.1&&ppplib_sol_.ratio<pre_epoch_ar_ratio1/2.0)){
-                    LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1);
+                    LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" AR filter";
                     dly=2;
                     for(i=0;i<cmn_sat.size();i++){
                         for(f=0;f<nf;f++){
@@ -5050,7 +5050,7 @@ namespace PPPLib{
                 }
 
                 if(rerun){
-                    if((nb=ResolveAmbLambda(xa,1,0))<2){
+                    if((nb=ResolveAmbLambda(xa,1,0,0,0,0))<2){
                         pre_epoch_ar_ratio1=pre_epoch_ar_ratio2=ratio1;
                         return false;
                     }

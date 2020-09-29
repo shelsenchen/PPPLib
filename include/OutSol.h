@@ -22,17 +22,20 @@ namespace PPPLib {
     private:
         int MatchRefSol(cTime sol_time);
         tSolInfoUnit CompareSol(tSolInfoUnit& sol,tSolInfoUnit& ref_sol);
+
         int OutEcef(unsigned char* buff,const char *s,tSolInfoUnit& sol);
         int OutSolStat(tSolInfoUnit *sol,tSatInfoUnit *sat_infos,char *buff);
         int OutSolStat1(tSolInfoUnit *sol, tSatInfoUnit *sat_infos, char *buff);
+
     public:
         bool InitOutSol(tPPPLibConf C,string file);
         void WriteHead();
+
         void WriteSol(tSolInfoUnit sol,int epoch);
+
         void WriteSatStat(tSolInfoUnit *sol,tSatInfoUnit *sat_infos);
 
-        void WriteBias(tSolInfoUnit &sol);
-
+        void WriteSolStat(tSolInfoUnit *sol,tSatInfoUnit *sat_infos);
 
         void WriteImuHead();
         void WriteImuObs();
@@ -46,6 +49,7 @@ namespace PPPLib {
         FILE *fout_bias_;
         FILE *fout_trp_;
         FILE *fout_ion_;
+        ofstream  f_stat_;
 
     public:
         vector<tSolInfoUnit> ref_sols_;
