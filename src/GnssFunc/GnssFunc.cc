@@ -1020,10 +1020,12 @@ namespace PPPLib{
         Vector3d rs,rm;
         double gmst0;
         Matrix3d U;
+        cTime ttt=ut1t;
         cTime t=ut1t+erp_val[2];
 
+
         SunMoonPosEci(t,rs,rm);
-        Eci2Ecef(ut1t,erp_val,U,&gmst0);
+        Eci2Ecef(ttt,erp_val,U,&gmst0);
 
         sun_pos=U*rs; moon_pos=U*rm;
         return gmst0;
