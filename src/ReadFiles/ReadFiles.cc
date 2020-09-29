@@ -165,7 +165,7 @@ namespace PPPLib{
                 LOG(DEBUG)<<"ERP FILE: "<<C_->fileC.erp;
             }
             else{
-                sprintf(f,"%s%c%d%c%d%cigs%2dP%d.erp",C_->data_dir.c_str(),sep_,year_,sep_,week_,sep_,yy_,week_);
+                sprintf(f,"%s%cigs%2dP%d.erp",C_->data_dir.c_str(),sep_,yy_,week_);
                 if((access(f,0))==-1){
                     LOG(WARNING)<<"ERP FILE NO FOUND "<<f;
                 }
@@ -1543,7 +1543,7 @@ namespace PPPLib{
                 code_pair=line_str_.substr(25,3)+"-"+line_str_.substr(30,3);
                 Str2Double(line_str_.substr(80,10),cbias);
                 if(sat.sat_.sys==SYS_GPS){
-                    break;
+                    continue;
                     for(i=0;i<MAX_GNSS_CODE_BIAS_PAIRS;i++){
                         if(code_pair==kGnssCodeBiasPairs[SYS_INDEX_GPS][i]) break;
                     }
@@ -1568,7 +1568,7 @@ namespace PPPLib{
                     nav_->code_bias[sat.sat_.no-1][i]=cbias*1E-9*CLIGHT;
                 }
                 else if(sat.sat_.sys==SYS_GLO){
-                    break;
+                    continue;
                     for(i=0;i<MAX_GNSS_CODE_BIAS_PAIRS;i++){
                         if(code_pair==kGnssCodeBiasPairs[SYS_INDEX_GLO][i]) break;
                     }

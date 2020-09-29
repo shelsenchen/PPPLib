@@ -391,12 +391,13 @@ namespace PPPLib{
 
     cTime cTime::operator+(double sec){
 #if 1
+        cTime t=*this;
         double tt;
-        this->t_.sec+=sec;
+        t.t_.sec+=sec;
         tt=floor(this->t_.sec);
-        this->t_.long_time+=(int)tt;
-        this->t_.sec-=tt;
-        return *this;
+        t.t_.long_time+=(int)tt;
+        t.t_.sec-=tt;
+        return t;
 #endif
 
     }

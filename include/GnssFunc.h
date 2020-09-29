@@ -195,7 +195,7 @@ namespace PPPLib{
         void SetRcvIdx(RECEIVER_INDEX rcv);
         vector<tEpochSatUnit>& GetGnssObs();
         tStaInfoUnit* GetStation();
-
+        void ResetGnssObs();
         void CarrierSmoothCode(int smooth_length);
 
     public:

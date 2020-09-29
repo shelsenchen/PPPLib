@@ -89,6 +89,11 @@ static void LoadConf()
     kConf.data_dir=config->Get<string>("data_dir");
     kConf.use_custom_dir=config->Get<int>("use_custom_dir");
     kConf.site_name=config->Get<string>("site_name");
+    vector<int> epoch;
+    epoch=config->GetArray<int>("prc_date");
+    double ep[6]={0};
+    for(int i=0;i<3;i++) ep[i]=epoch[i];
+    kConf.prc_date.Epoch2Time(ep);
 
     tGnssConf *gnssC=&kConf.gnssC;
     gnssC->ele_min=config->Get<double>("ele_min");
@@ -222,12 +227,12 @@ static int ParsePara(int arc,char *arv[], string& conf_file)
         else if(!strcmp(arv[i],"-M")&&i+1<arc){
             mode=arv[++i];
         }
-        else if(!strcmp(arv[i],"-T")&&i+1<arc){
-            if(sscanf(arv[++i],"%lf/%lf/%lf",ep,ep+1,ep+2)<3){
-                fprintf(stderr, "PROCESS DATE FORMAT ERROR: yyyy/mm/dd\n");
-                return 0;
-            }
-        }
+//        else if(!strcmp(arv[i],"-T")&&i+1<arc){
+//            if(sscanf(arv[++i],"%lf/%lf/%lf",ep,ep+1,ep+2)<3){
+//                fprintf(stderr, "PROCESS DATE FORMAT ERROR: yyyy/mm/dd\n");
+//                return 0;
+//            }
+//        }
         else if(!strcmp(arv[i],"-S")&&i+1<arc){
             p=arv[++i];
             for(;*p&&*p!=' ';p++){
@@ -271,7 +276,7 @@ static int ParsePara(int arc,char *arv[], string& conf_file)
     string logini_path = SetLogConfPath("");
     InitLog(arc,arv,logini_path,level);
 
-    kConf.prc_date.Epoch2Time(ep);
+//    kConf.prc_date.Epoch2Time(ep);
 
     Config::Ptr_ config=Config::GetInstance();
     if(!config->Open(conf_file)){
@@ -346,12 +351,14 @@ static int Processer()
 
     struct dirent *file;
     char *ext;
+    kConf.site_idx=0;
+    bool single_flag=kConf.site_name.empty()?false:true;
     while((file=readdir(dir))!= nullptr){
         if(strncmp(file->d_name,".",1)==0) continue;
         else if(strstr(file->d_name,"base")) continue;
         else if(!(ext=strrchr(file->d_name,'.'))) continue;
         else if(!strstr(ext+3,"o")) continue;
-        else if(!kConf.site_name.empty()&&!strstr(file->d_name,kConf.site_name.c_str())) continue;
+        else if(kConf.use_custom_dir&&!kConf.site_name.empty()&&!strstr(file->d_name,kConf.site_name.c_str())) continue;
 
         f[0]='\0';
         sprintf(f,"%s%c%s",data_dir.c_str(),FILEPATHSEP,file->d_name);
@@ -362,21 +369,34 @@ static int Processer()
             string name=file->d_name;
             kConf.site_name=name.substr(0,4);
         }
+        kConf.site_idx++;
 
         LOG(INFO)<<"==== START PROCESS: "<<kConf.site_name;
-        if(!AutoMatchFile(kConf.fileC.rover)){
-            kConf.site_name.clear();
-            LOG(INFO)<<"==== PROCESS FAIL: "<<kConf.site_name;
-            continue;
+
+        if(kConf.site_idx==1){
+            if(!AutoMatchFile(kConf.fileC.rover)){
+                kConf.site_name.clear();
+                LOG(INFO)<<"==== PROCESS FAIL, MISSING FILE: "<<kConf.site_name;
+                continue;
+            }
+        }
+        else{
+            cMatchFile match_file;
+            match_file.InitMatchFile(kConf,FILEPATHSEP);
+            match_file.MatchOut();
         }
 
         long t1=clock();
+
         solver->InitReader(kConf);
         kConf.gnssC.sample_rate=solver->rover_obs_.GetGnssObs()[1].obs_time.TimeDiff(solver->rover_obs_.GetGnssObs()[0].obs_time.t_);
         solver->SolverProcess(kConf,-1);
+        if(single_flag) break;
+
+        kConf.site_name.clear();
         long t2=clock();
         double t=(double)(t2-t1)/CLOCKS_PER_SEC;
-        cout<<"total(s): "<<t;
+        cout<<"total(s): "<<t<<endl;
     }
 
     return 1;

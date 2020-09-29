@@ -166,6 +166,7 @@ namespace PPPLib{
         void AmbUpdate(tPPPLibConf C,double tt);
         void StateTimeUpdate(tPPPLibConf C);
         int GnssObsRes(int post,tPPPLibConf C,double *x,Vector3d re);
+        void ReInitPppSolver(tPPPLibConf C);
 
         void DisableX(int iter,VectorXd& x,vector<int>&par_idx,vector<double>& back_values);
 

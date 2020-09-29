@@ -288,6 +288,7 @@ namespace PPPLib{
         cTime prc_date;
         string data_dir;
         string site_name;
+        int site_idx;
         bool use_custom_dir;
         PPPLIB_MODE mode;
         PPPLIB_MODE_OPT mode_opt;

@@ -1338,13 +1338,16 @@ namespace PPPLib{
             erp_val_[3]=erp_[n].lod;
             return 1;
         }
-        for(j=0,k=n;j<k-1;){
+        for(j=0,k=n;j<=k;){
             i=(j+k)/2;
-            if(mjd<erp_[i].mjd) k=i;else j=i;
+            if(mjd<erp_[i].mjd) k=i-1;
+            else if(mjd>erp_[i+1].mjd) j=i+1;
+            else break;
         }
-        if(erp_[j].mjd==erp_[j+1].mjd) a=0.5;
+
+        if(erp_[i].mjd==mjd-erp_[i+1].mjd) a=0.5;
         else{
-            a=(mjd-erp_[j].mjd)/(erp_[j+1].mjd-erp_[j].mjd);
+            a=(mjd-erp_[i+1].mjd)/(erp_[i].mjd-mjd-erp_[i+1].mjd);
         }
         erp_val_[0]=(1.0-a)*erp_[j].xp+a*erp_[j+1].xp;
         erp_val_[1]=(1.0-a)*erp_[j].yp+a*erp_[j+1].yp;
@@ -1409,12 +1412,14 @@ namespace PPPLib{
         tid_dr_[0][2]=dr1[2]+dr2[2]+du*E_(2,2);
 
         /* eliminate permanent deformation */
+#if 0
         sinl=sin(blh_[0]);
         du=0.1196*(1.5*sinl*sinl-0.5);
         dn=0.0247*sin2l;
         tid_dr_[0][0]+=du*E_(2,0)+dn*E_(1,0);
         tid_dr_[0][1]+=du*E_(2,1)+dn*E_(1,1);
         tid_dr_[0][2]+=du*E_(2,2)+dn*E_(1,2);
+#endif
     }
 
     void cTidModel::TidOcean() {
@@ -1500,7 +1505,7 @@ namespace PPPLib{
 
     void cTidModel::TidCorr(cTime t, Vector3d rec_xyz, Vector3d& dr) {
         dr<<0,0,0;
-        if(erp_.size()) GetErpVal(t);
+        if(erp_.size()) GetErpVal(t.Utc2Gpst());
         tut_=t;tut_+=erp_val_[2];
         if((re_=rec_xyz.norm())<=0.0) return;
 

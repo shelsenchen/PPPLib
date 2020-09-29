@@ -182,6 +182,14 @@ namespace PPPLib{
                 previous_sat_info_[j].vsat[k]=0;
                 previous_sat_info_[j].outc[k]++;
                 previous_sat_info_[j].p_var_factor[k]=previous_sat_info_[j].c_var_factor[k]=1.0;
+                if(k<2){
+                    previous_sat_info_[j].sm_mw[k]=0.0;
+                    previous_sat_info_[j].mw_idx[k]=0.0;
+                    previous_sat_info_[j].var_mw[k]=0.0;
+                    previous_sat_info_[j].gf[k]=0.0;
+                    previous_sat_info_[j].phase_wp=0.0;
+                    previous_sat_info_[j].lc_amb={0};
+                }
             }
         }
 
@@ -227,6 +235,7 @@ namespace PPPLib{
             if(sat_info.sat.sat_.no==4) continue;
             if(sat_info.sat.sat_.no==28) continue;
             if(sat_info.sat.sat_.no==50) continue;
+            if(sat_info.sat.sat_.no>32&&sat_info.sat.sat_.no<38) continue;
             if(!C.gnssC.use_bd3&&sat_info.sat.sat_.sys==SYS_BDS&&sat_info.sat.sat_.prn>18) continue;
             sat_info.stat=SAT_USED;
             switch(sys){
@@ -317,20 +326,22 @@ namespace PPPLib{
 
     bool cSolver::InitReader(tPPPLibConf C) {
         if(!C.fileC.rover.empty()){
+            rover_obs_.ResetGnssObs();
             cReadGnssObs *rover_reader;
             rover_reader=new cReadGnssObs(C.fileC.rover,nav_,rover_obs_,REC_ROVER);
             rover_reader->SetGnssSysMask(C.gnssC.nav_sys);
             rover_reader->Reading();
+            delete  rover_reader;
         }
 
-        if(!C.fileC.brd.empty()){
+        if(!C.fileC.brd.empty()&&C.site_idx==1){
             cReadGnssBrdEph brd_reader(C.fileC.brd, nav_);
             brd_reader.SetGnssSysMask(C.gnssC.nav_sys);
             brd_reader.Reading();
         }
 
         // code dcb
-        if(!C.fileC.cod_dcb.empty()){
+        if(!C.fileC.cod_dcb.empty()&&C.site_idx==1){
             int i,j,n,mon=C.prc_date.GetEpoch()[1],m;
             char *ex_files[36]={nullptr};
             string file_name,sep;
@@ -342,7 +353,7 @@ namespace PPPLib{
             for(i=0;i<36;i++){
                 if(!(ex_files[i]=(char *)malloc(1024))){
                     for(i--;i>=0;i--) free(ex_files[i]);
-                    return 0;
+                    return false;
                 }
             }
             n=ExPath((char *)C.fileC.cod_dcb.c_str(),ex_files,36);
@@ -359,13 +370,12 @@ namespace PPPLib{
             }
 
             for(i=0;i<36;i++) free(ex_files[i]);
-            return 1;
         }
 
         // cas dcb
-        if(!C.fileC.cbias.empty()){
-//            cReadGnssCodeBias cbias_reader(C.fileC.cbias, nav_,1);
-//            cbias_reader.Reading();
+        if(!C.fileC.cbias.empty()&&C.site_idx==1){
+            cReadGnssCodeBias cbias_reader(C.fileC.cbias, nav_,1);
+            cbias_reader.Reading();
         }
         return true;
     }
@@ -930,7 +940,7 @@ namespace PPPLib{
                 double cod_bia=sat_info->code_bias[f];
 
                 omc=cor_P-(r+sag_err+(rec_clk-CLIGHT*sat_info->brd_clk[0])+sat_info->trp_dry_delay[0]+sat_info->trp_wet_delay[0]+sat_info->ion_delay[0]);
-                if(epoch_idx_>20&&fabs(omc)>500){
+                if(epoch_idx_>20&&fabs(omc)>500&&sat_info->sat.sat_.sys==SYS_BDS){ //500
                     sat_info->stat=SAT_NO_USE;
                     continue;
                 }
@@ -1194,35 +1204,37 @@ namespace PPPLib{
     void cPppSolver::InitSolver(tPPPLibConf C) {
         ppp_conf_=C;
 
-        cReadGnssPreEph clk_reader(C.fileC.clk,nav_);
-        clk_reader.Reading(1);
+        if(C.site_idx==1){
+            cReadGnssPreEph clk_reader(C.fileC.clk,nav_);
+            clk_reader.Reading(1);
 
-        cReadGnssPreEph orb_reader(C.fileC.sp3[1], nav_);
-        for(int i=0;i<3;i++){
-            if(C.fileC.sp3[i].empty()) continue;
-            orb_reader.file_=C.fileC.sp3[i];
-            orb_reader.Reading(0);
-        }
+            cReadGnssPreEph orb_reader(C.fileC.sp3[1], nav_);
+            for(int i=0;i<3;i++){
+                if(C.fileC.sp3[i].empty()) continue;
+                orb_reader.file_=C.fileC.sp3[i];
+                orb_reader.Reading(0);
+            }
 
-        if(C.gnssC.tid_opt){
-            cReadGnssErp erp_reader(C.fileC.erp,nav_);
-            erp_reader.Reading();
+            if(C.gnssC.tid_opt){
+                cReadGnssErp erp_reader(C.fileC.erp,nav_);
+                erp_reader.Reading();
 
-            cReadGnssOcean blq_reader(C.fileC.blq, nav_,C.site_name,REC_ROVER);
-            blq_reader.Reading();
+                cReadGnssOcean blq_reader(C.fileC.blq, nav_,C.site_name,REC_ROVER);
+                blq_reader.Reading();
+            }
+
+            if((C.mode==MODE_PPP||C.mode_opt==MODE_OPT_PPP)&&C.gnssC.ar_mode==AR_PPP_AR&&C.gnssC.ar_prod==AR_PROD_FCB){
+                cReadFcb fcb_reader(C.fileC.fcb,nav_);
+                fcb_reader.Reading();
+            }
+
+            para_=cParSetting(C);
+            gnss_err_corr_.InitGnssErrCorr(C,&nav_);
         }
 
         cReadGnssAntex atx_reader(C.fileC.atx,nav_);
         atx_reader.Reading();
         atx_reader.AlignAntPar2Sat(C,*rover_obs_.GetStartTime(),nav_.sta_paras,nav_.sat_ant,nav_.rec_ant);
-
-        if((C.mode==MODE_PPP||C.mode_opt==MODE_OPT_PPP)&&C.gnssC.ar_mode==AR_PPP_AR&&C.gnssC.ar_prod==AR_PROD_FCB){
-            cReadFcb fcb_reader(C.fileC.fcb,nav_);
-            fcb_reader.Reading();
-        }
-
-        para_=cParSetting(C);
-        gnss_err_corr_.InitGnssErrCorr(C,&nav_);
 
         out_=new cOutSol(ppp_conf_);
         out_->InitOutSol(ppp_conf_,ppp_conf_.fileC.sol);
@@ -1252,6 +1264,13 @@ namespace PPPLib{
         int i=0,num_epochs=rover_obs_.epoch_num;
         if(idx!=-1){
             num_epochs=idx+1;
+        }
+
+        if(C.site_idx!=1){
+            epoch_ok_=0;
+            epoch_idx_=0;
+            epoch_fail_=0;
+            ReInitPppSolver(C);
         }
 
         for(i=idx==-1?0:idx;i<num_epochs;i++){
@@ -1995,6 +2014,7 @@ namespace PPPLib{
         Vector3d dr;
         LOG(DEBUG)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<(post==0?" PRIOR(":(" POST("))<<post<<")"<<" RESIDUAL, PRIOR ROVER COORDINATE "<<rover_xyz.transpose();
 
+//        rover_xyz<<-2279829.6238,5004706.8701,3219778.7313;
         if(C.gnssC.tid_opt>TID_OFF){
             gnss_err_corr_.tid_model_.TidCorr(t.Gpst2Utc(),rover_xyz,dr);
             rover_xyz+=dr;
@@ -2275,14 +2295,14 @@ namespace PPPLib{
                 omcs.push_back(omc);
                 meas_var_vec.push_back(meas_var);
                 double el=sat_info->el_az[0];
-                if(post&&C.gnssC.res_qc&&fabs(omc)>sqrt(meas_var)/sin(el)*3.0){
+                if(post&&fabs(omc)>sqrt(meas_var)/sin(el)*3.0){
                     have_larger_res=true;
                     larger_omcs.push_back(omc);
                     idxs.push_back(i);
                     frqs.push_back(frq);
                     types.push_back(obs_type);
                     LOG(DEBUG)<<sat_info->t_tag.GetTimeStr(1)<<"("<<epoch_idx_<<") "<<sat_info->sat.sat_.id<<" "<<(obs_type==GNSS_OBS_CODE?"P":"L")
-                                <<frq+1<<" LARGER POST RESIDUAL res="<<omc<<" thres="<<sqrt(meas_var)*3.0;
+                                <<frq+1<<" LARGER POST RESIDUAL res="<<omc<<" thres="<<sqrt(meas_var)*5.0;
                 }
 
                 if(!post){
@@ -2341,7 +2361,7 @@ namespace PPPLib{
             R_=var_vec.asDiagonal();
         }
 
-        if(post&&C.gnssC.res_qc&&have_larger_res&&larger_omcs.size()>0){
+        if(post&&have_larger_res&&larger_omcs.size()>0){
             for(int i=0;i<larger_omcs.size();i++) larger_omcs[i]=fabs(larger_omcs[i]);
             auto max_omc=max_element(larger_omcs.begin(),larger_omcs.end());
             int idx_max_omc=distance(begin(larger_omcs),max_omc);
@@ -2372,6 +2392,18 @@ namespace PPPLib{
         H.clear();omcs.clear();meas_var_vec.clear();types.clear();frqs.clear();idxs.clear();larger_omcs.clear();
 
         return post?have_larger_res:num_valid_sat_;
+    }
+
+    void cPppSolver::ReInitPppSolver(tPPPLibConf C) {
+        ppp_conf_=C;
+        para_=cParSetting(ppp_conf_);
+        num_full_x_=para_.GetPPPLibPar(ppp_conf_);
+        full_x_=VectorXd::Zero(num_full_x_);
+        full_Px_=MatrixXd::Zero(num_full_x_,num_full_x_);
+
+        num_real_x_fix_=para_.GetRealFixParNum(ppp_conf_);
+        real_x_fix_=VectorXd::Zero(num_real_x_fix_);
+        real_Px_fix_=MatrixXd::Zero(num_real_x_fix_,num_real_x_fix_);
     }
 
     void cPppSolver::DisableX(int iter,VectorXd &x, vector<int> &par_idx, vector<double> &back_values) {
