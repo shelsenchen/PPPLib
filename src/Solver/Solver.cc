@@ -859,8 +859,8 @@ namespace PPPLib{
 
                 omc=cor_P-(r+sag_err+(rec_clk-CLIGHT*sat_info->brd_clk[0])+sat_info->trp_dry_delay[0]+sat_info->trp_wet_delay[0]+sat_info->ion_delay[0]);
                 if(epoch_idx_>20&&fabs(omc)>500){
-                    sat_info->stat=SAT_NO_USE;
-                    continue;
+//                    sat_info->stat=SAT_NO_USE;
+//                    continue;
                 }
                 meas_var=GnssMeasVar(C,GNSS_OBS_CODE,*sat_info)+sat_info->brd_eph_var+sat_info->trp_var+sat_info->ion_var;
                 meas_var*=sat_info->c_var_factor[f];
