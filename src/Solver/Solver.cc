@@ -182,7 +182,7 @@ namespace PPPLib{
                 previous_sat_info_[j].vsat[k]=0;
                 previous_sat_info_[j].outc[k]++;
                 previous_sat_info_[j].p_var_factor[k]=previous_sat_info_[j].c_var_factor[k]=1.0;
-                if(k<2){
+                if(k<2&&epoch_idx_==1){
                     previous_sat_info_[j].sm_mw[k]=0.0;
                     previous_sat_info_[j].mw_idx[k]=0.0;
                     previous_sat_info_[j].var_mw[k]=0.0;
@@ -1622,7 +1622,7 @@ namespace PPPLib{
 
                 if(bias[i]==0.0||(full_x_[ia]!=0.0&&!slip[i]&&full_x_[ia]!=DIS_FLAG)) continue;
 
-                InitX(bias[i],SQR(5.0),ia,full_x_.data(),full_Px_.data());
+                InitX(bias[i],SQR(60),ia,full_x_.data(),full_Px_.data());
                 string s="UC-L";
                 if(C.gnssC.frq_opt==FRQ_TRIPLE&&C.gnssC.ion_opt==ION_IF){
                     if(sat_info->tf_if_idx[0]==1){
