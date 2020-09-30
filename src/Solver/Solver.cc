@@ -19,131 +19,6 @@ namespace PPPLib{
 
     }
 
-    bool cSolver::DetectCodeOutlier(tPPPLibConf C, int post, vector<double> omcs, vector<double> &R) {
-        int m,i;
-        int sat1,sat2;
-        vector<int>idx;
-        vector<double>vc;
-        cSat sat;
-        double s0,k0=ReNorm(0.95),k1=ReNorm(0.99),fact;
-        bool flag=false;
-
-        for(m=0;m<NSYS;m++){
-            if(C.mode==MODE_PPK||C.mode_opt==MODE_OPT_PPK){
-                for(i=0,s0=0.0;i<omcs.size();i++){
-                    if(((vflag_[i]>>4)&0xF)==0) continue;
-
-                    sat1=(vflag_[i]>>16)&0xFF;
-                    sat2=(vflag_[i]>> 8)&0xFF;
-
-                    if(previous_sat_info_[sat1-1].sat.sat_.sys_idx!=m) continue;
-                    if(previous_sat_info_[sat2-1].sat.sat_.sys_idx!=m) continue;
-                    s0+=omcs[i];
-                    vc.push_back(omcs[i]);
-                    idx.push_back(i);
-                }
-            }
-            else if(C.mode==MODE_PPP||C.mode_opt==MODE_OPT_PPP){
-                for(i=0,s0=0.0;i<omcs.size();i++){
-                    if(((vflag_[i]>>4)&0xF)!=GNSS_OBS_CODE) continue;
-
-                    sat1=(vflag_[i]>> 8)&0xFF;
-
-                    if(previous_sat_info_[sat1-1].sat.sat_.sys_idx!=m) continue;
-                    s0+=omcs[i];
-                    vc.push_back(omcs[i]);
-                    idx.push_back(i);
-                }
-            }
-
-            if(idx.size()>2){
-#if 0
-                s0/=idx.size();
-                for(i=0;i<idx.size();i++) vc[i]-=s0;
-#endif
-                MatMul("NT",1,1,idx.size(),1.0/(idx.size()-1),vc.data(),vc.data(),0.0,&s0);
-
-                for(i=0;i<idx.size();i++){
-                    sat1=vflag_[idx[i]]>>8&0xFF;
-                    sat=cSat(sat1);
-                    sat.SatNo2Id();
-                    double a=fabs(vc[i])/SQRT(s0);
-                    if(fabs(vc[i])/SQRT(s0)>=k1){
-                        // zero-weight segment
-                        LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<sat.sat_.id<<" PSEUDORANGE RESIDUAL OUTLIER DETECTED, outlier="<<omcs[idx[i]]<<" ZERO-WEIGHT SEGMENT, factor="<<100.0;
-                        flag=true;
-                    }
-                    else if(fabs(vc[i])/SQRT(s0)>=k0){
-                        // weight-reduced segment
-                        fact=k0/fabs(vc[i]/SQRT(s0))*SQR((k1-fabs(vc[i]/SQRT(s0)))/(k1-k0));
-//                        previous_sat_info_[sat1-1].var_factor=1.0/fact;
-                        LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<sat.sat_.id<<" PSEUDORANGE RESIDUAL OUTLIER DETECTED, outlier="<<omcs[idx[i]]<<" WEIGHT-REDUCED SEGMENT, factor="<<1.0/fact;
-                        flag=true;
-                    }
-                    else{
-                        // weight-reserved segment
-//                        previous_sat_info_[sat1-1].var_factor=1.0;
-                    }
-                }
-            }
-            idx.clear();vc.clear();
-        }
-        return flag;
-    }
-
-    bool cSolver::IGG3(tPPPLibConf C, int post, vector<double> omcs,vector<double> R) {
-//        double s0;
-//        MatMul("NT",1,1,omcs.size(),1.0/(omcs.size()-1),omcs.data(),omcs.data(),0.0,&s0);
-//
-//        int i, sat1;
-//        cSat sat;
-//        double k0=ReNorm(0.95),k1=ReNorm(0.99),fact;
-//        bool flag=false;
-//        double obs_type;
-//        int ppp=0;
-//
-//        for(i=0;i<omcs.size();i++){
-//            sat1=vflag_[i]>>8&0xFF;
-//            sat=cSat(sat1);
-//            sat.SatNo2Id();
-//            double a=fabs(omcs[i])/SQRT(R[i]);
-//
-//            if(C.mode==MODE_PPP||C.mode_opt==MODE_OPT_PPP){
-//                ppp=1;
-//                obs_type=vflag_[i]>>4&0xF;
-//            }
-//            else{
-//
-//            }
-//
-//            if(a>=k1){
-//                // zero-weight segment
-//                if(obs_type==GNSS_OBS_CODE) previous_sat_info_[sat1-1].c_var_factor[]=1000;
-//                else if(obs_type==GNSS_OBS_PHASE) previous_sat_info_[sat1-1].p_var_factor=1000;
-//                LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<sat.sat_.id<<" "<<(ppp?(obs_type==0?"P":"L"):"RTK")<<" RESIDUAL OUTLIER DETECTED, outlier="<<omcs[i]<<" ZERO-WEIGHT SEGMENT, factor="<<100.0;
-//                flag=true;
-//            }
-//            else if(a>=k0){
-//                // weight-reduced segment
-//                fact=(k0/fabs(a))*SQR((k1-a)/(k1-k0));
-//
-//                if(obs_type==GNSS_OBS_CODE) previous_sat_info_[sat1-1].c_var_factor*=1.0/fact;
-//                else if(obs_type==GNSS_OBS_PHASE) previous_sat_info_[sat1-1].p_var_factor*=1.0/fact;
-//
-//                LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<sat.sat_.id<<" "<<(ppp?(obs_type==0?"P":"L"):"RTK")<<" RESIDUAL OUTLIER DETECTED, outlier="<<omcs[i]<<" WEIGHT-REDUCED SEGMENT, factor="<<1.0/fact;
-//                flag=true;
-//            }
-//            else{
-//                // weight-reserved segment
-//                if(obs_type==GNSS_OBS_CODE) previous_sat_info_[sat1-1].c_var_factor=1.0;
-//                else if(obs_type==GNSS_OBS_PHASE) previous_sat_info_[sat1-1].p_var_factor=1.0;
-//            }
-//        }
-//
-//        return flag;
-    }
-
-
     int cSolver::GetSingalInd(tSatObsUnit& sat_obs,int *f){
         const tGnssSignal *ps= nullptr;
         int n,p;
@@ -3752,12 +3627,7 @@ namespace PPPLib{
         }
 
         Vector3d rover_xyz,ve;
-        if(tc_mode_){
-            RemoveLever(cur_imu_info_,C.insC.lever,rover_xyz,ve);
-        }
-        else{
-            rover_xyz<<full_x_[0],full_x_[1],full_x_[2];
-        }
+
         static int ref_sat[NSYS][2*MAX_GNSS_USED_FRQ_NUM]={0};
         VectorXd x;
         tImuInfoUnit cor_imu_info;
@@ -3766,6 +3636,14 @@ namespace PPPLib{
             cor_imu_info=cur_imu_info_;
             x=full_x_;
             MatrixXd Px=full_Px_;
+
+            if(tc_mode_){
+                RemoveLever(cur_imu_info_,C.insC.lever,rover_xyz,ve);
+            }
+            else{
+                rover_xyz<<full_x_[0],full_x_[1],full_x_[2];
+            }
+
             if(!GnssZeroRes(C,REC_ROVER,ir,x.data(),rover_xyz)){
                 break;
             }
@@ -3790,6 +3668,8 @@ namespace PPPLib{
 
             if(GnssZeroRes(C,REC_ROVER,ir,x.data(),rover_xyz)){
                 if(GnssDdRes(1,C,ir,ib,cmn_sat_no,x.data(),ref_sat)){
+
+
                     if(tc_mode_){
                         ppplib_sol_.stat=SOL_FLOAT;
                         ppplib_sol_.ins_stat=SOL_IG_TC;

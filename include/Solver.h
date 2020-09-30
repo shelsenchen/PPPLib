@@ -31,9 +31,6 @@ namespace PPPLib{
         void CorrGnssObs(tPPPLibConf C,Vector3d& rr);
         virtual int GnssObsRes(int post,tPPPLibConf C,double* x);
 
-        bool DetectCodeOutlier(tPPPLibConf C,int post,vector<double> omcs,vector<double>& R);
-        bool IGG3(tPPPLibConf C,int post,vector<double> omcs,vector<double> R);
-
         virtual void InitSolver(tPPPLibConf C);
         virtual bool InitReader(tPPPLibConf C);
         virtual bool SolverProcess(tPPPLibConf C,int idx);
