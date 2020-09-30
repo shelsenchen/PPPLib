@@ -172,8 +172,6 @@ namespace PPPLib{
 
         // quality control
         bool PppResidualQc(int iter,vector<double>omcs,vector<double>var);
-        bool PppResidualQcStep(int iter,vector<double>omcs,vector<double>R);
-        bool PppResIGG3Control(int iter,vector<double>omcs,vector<double> R);
 
         // PPP-AR
         bool ResolvePppAmb(int nf,VectorXd& x,MatrixXd& P);
@@ -238,18 +236,19 @@ namespace PPPLib{
         void PpkCycleSlip(tPPPLibConf C,vector<int>& iu,vector<int>& ib,vector<int>& cmn_sat_no);
         void StateTimeUpdate(tPPPLibConf C,vector<int>& iu,vector<int>& ib,vector<int>& cmn_sat_no);
         void PosUpdate(tPPPLibConf C);
+        void GloIfpbUpdate(tPPPLibConf C,double tt);
         void TrpUpdate(tPPPLibConf C,double tt);
         void IonUpdate(tPPPLibConf C,double tt);
         void AmbUpdate(tPPPLibConf C, double tt,vector<int>& ir,vector<int>& ib,vector<int>& cmn_sat_no);
 
         bool CheckDualFrq(tSatInfoUnit& sat_info);
-        void DetectPhaseOutlier(int post,vector<int> cmn_sat,vector<double> omcs,int refsat[NSYS][2*MAX_GNSS_USED_FRQ_NUM],vector<double>& R);
-        bool PpkResStepControl(int post,vector<int>ir,vector<int> cmn_sat,vector<double>& omcs, VectorXd& v,MatrixXd& R);
+        bool PpkResidualQc(int iter,vector<int>ir,vector<int> cmn_sat,vector<double>& omcs, vector<double>R);
 
         void ReSetAmb(double *bias,double *xa,int nb);
-        int DdMat(double *D,int gps,int glo);
+        int DdMat(double *D,int gps,int bds,int glo,int gal);
         int ResolveAmbLambda(double *xa,int gps, int bds,int glo,int gal, int qzs);
         bool ResolvePpkAmb(vector<int>cmn_sat,int nf,double *xa);
+        void HoldAmb(vector<int>cmn_sat,double *xa);
 
     private:
         cSppSolver *spp_solver_;
@@ -262,8 +261,11 @@ namespace PPPLib{
         vector<double>base_res,rover_res;
         vector<tDdAmb> ddambs_;
         int exc_sat_index=0;
+        int num_continuous_fix_=0;
+        bool amb_hold_flag=false;
         double pre_epoch_ar_ratio1=0.0;
         double pre_epoch_ar_ratio2=0.0;
+        int qc_iter_=0;
     };
 
     class cFusionSolver:public cSolver {

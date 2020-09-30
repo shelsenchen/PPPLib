@@ -502,7 +502,7 @@ namespace PPPLib{
 
             if(g1==0.0||g0==0.0) continue;
 
-            double thres_gf;
+            double thres_gf=0.0;
 
 #if 1
             if(el>15.0) thres_gf=C.gnssC.cs_thres[1];
@@ -510,7 +510,6 @@ namespace PPPLib{
 #else
             if(el<C.gnssC.ele_min) continue;
 
-            double thres_gf=0.0;
             double R_gf=0.05;
             if(0<sample_dt&&sample_dt<=1.0){
                 R_gf=0.05;

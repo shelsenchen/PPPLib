@@ -148,6 +148,7 @@ static void LoadConf()
     gnssC->ar_prod= static_cast<GNSS_AR_PROD>(config->Get<int>("ar_prod"));
     gnssC->glo_ar_mode= static_cast<GLO_AR_MODE>(config->Get<int>("glo_ar_mode"));
     gnssC->bds_ar_mode= config->Get<int>("bds_ar_mode");
+    gnssC->gal_ar_mode= config->Get<int>("gal_ar_mode");
     ratio.clear();
     ratio=config->GetArray<double>("ar_thres");
     for(i=0;i<ratio.size();i++) gnssC->ar_thres[i]=ratio[i];
@@ -155,6 +156,9 @@ static void LoadConf()
     gnssC->min_sat_num2fix=config->Get<int>("min_sat_num2fix");
     gnssC->min_sat_num2drop=config->Get<int>("min_sat_num2drop");
     gnssC->min_lock2fix=config->Get<int>("min_lock2fix");
+    gnssC->min_sat_num2hold=config->Get<int>("min_sat_num2hold");
+    gnssC->min_fix2hold=config->Get<int>("min_fix2hold");
+    gnssC->hold_er_mask=config->Get<double>("hold_el_mask");
     gnssC->ar_filter=config->Get<int>("ar_filter");
     gnssC->res_qc= config->Get<int>("res_qc");
     ratio.clear();
@@ -356,6 +360,7 @@ static int Processer()
     while((file=readdir(dir))!= nullptr){
         if(strncmp(file->d_name,".",1)==0) continue;
         else if(strstr(file->d_name,"base")) continue;
+        else if(strstr(file->d_name,"gsof")) continue;
         else if(!(ext=strrchr(file->d_name,'.'))) continue;
         else if(!strstr(ext+3,"o")) continue;
         else if(kConf.use_custom_dir&&!kConf.site_name.empty()&&!strstr(file->d_name,kConf.site_name.c_str())) continue;
