@@ -96,6 +96,7 @@ static void LoadConf()
     kConf.prc_date.Epoch2Time(ep);
 
     tGnssConf *gnssC=&kConf.gnssC;
+    gnssC->restart_gap=config->Get<int>("restart_gap");
     gnssC->ele_min=config->Get<double>("ele_min");
     gnssC->frq_opt= static_cast<GNSS_FRQ_OPT>(config->Get<int>("frq_opt"));
     vector<int>frqs;

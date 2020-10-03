@@ -143,16 +143,18 @@ namespace PPPLib{
         // precise
         void SatPcoCorr(tSatInfoUnit* sat_info,Vector3d sat_pos,Vector3d& dant);
         bool PreSatClkCorr(tSatInfoUnit* sat_info);
+        bool PreSatPrClkCorr(tSatInfoUnit* sat_info);
         bool PreSatPos(tSatInfoUnit* sat_info);
         bool PreEphModel(tSatInfoUnit* sat_info);
 
     public:
         bool EphCorr(vector<tSatInfoUnit>& epoch_sat_info);
         void InitEphModel(vector<tBrdEphUnit>& brd_eph,vector<tBrdGloEphUnit>& brd_glo_eph,vector<tPreOrbUnit>& pre_orb,
-                vector<tPreClkUnit>& pre_clk,tAntUnit* sat_ant);
+                vector<tPreClkUnit>& pre_clk,vector<tPreClkUnit>& pre_pr_clk,tAntUnit* sat_ant);
 
     private:
         vector<tPreClkUnit> pre_clk_;
+        vector<tPreClkUnit> pre_pr_clk_;
         vector<tPreOrbUnit> pre_orb_;
         vector<tBrdEphUnit> brd_eph_;
         vector<tBrdGloEphUnit> brd_glo_eph_;

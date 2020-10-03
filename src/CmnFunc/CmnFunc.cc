@@ -1090,7 +1090,7 @@ namespace PPPLib{
         int k=NumIon();
         int l=NumAmb();
         return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()
-                       +NumClk()+NumDcb()+NumIfb()+NumGloIfcb()+NumGloIfpb()+
+                       +NumClk()+NumPhaseClk()+NumDcb()+NumIfb()+NumGloIfcb()+NumGloIfpb()+
                        +NumTrp()+NumIon()+NumAmb();
     }
 
@@ -1109,7 +1109,7 @@ namespace PPPLib{
         int k=NumIon();
         int l=NumAmb();
         return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()
-               +NumClk()+NumDcb()+NumIfb()+NumGloIfcb()+NumGloIfpb()+
+               +NumClk()+NumPhaseClk()+NumDcb()+NumIfb()+NumGloIfcb()+NumGloIfpb()+
                +NumTrp()+NumIon();
     }
 
@@ -1146,6 +1146,14 @@ namespace PPPLib{
         if(PPPLibC_.mode==MODE_INS||PPPLibC_.mode==MODE_IGLC||PPPLibC_.mode==MODE_PPK||PPPLibC_.mode_opt==MODE_OPT_PPK) return 0;
         if(PPPLibC_.gnssC.est_bd3_isb) a+=1;
         return a;
+    }
+
+    int cParSetting::NumPhaseClk() {
+        int a=NSYS;
+        if((PPPLibC_.mode==MODE_PPP||PPPLibC_.mode_opt==MODE_OPT_PPP)&&PPPLibC_.gnssC.ar_mode==AR_PPP_AR&&PPPLibC_.gnssC.ar_prod==AR_PROD_IC_CNES){
+            return a;
+        }
+        else return 0;
     }
 
     int cParSetting::NumClkDrift() {
@@ -1237,39 +1245,43 @@ namespace PPPLib{
         else return -1;
     }
 
+    int cParSetting::IndexPhaseClk(int sys_index) {
+        if(NumPhaseClk()>0) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+sys_index;
+    }
+
     int cParSetting::IndexClkDritf(int sys_index) {
-        if(NumClkDrift()) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+sys_index;
+        if(NumClkDrift()) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+sys_index;
     }
 
     int cParSetting::IndexDcb(int sys_index) {
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumClkDrift()+sys_index;
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+sys_index;
     }
 
     int cParSetting::IndexIfb(int sys_index) {
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumClkDrift()+NumDcb()+sys_index;
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+NumDcb()+sys_index;
     }
 
     int cParSetting::IndexGloIfcb(int i) {
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumClkDrift()+NumIfb()+i-1;
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+i-1;
     }
 
     int cParSetting::IndexGloIfpb() {
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumClkDrift()+NumIfb()+NumGloIfcb();
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+NumGloIfcb();
     }
 
     int cParSetting::IndexTrp() {
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumClkDrift()+NumIfb()+NumGloIfcb()+NumGloIfpb();
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+NumGloIfcb()+NumGloIfpb();
     }
 
     int cParSetting::IndexIon(int sat_no) {
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumClkDrift()+NumIfb()+NumGloIfcb()+NumGloIfpb()+NumTrp()+sat_no-1;
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+NumGloIfcb()+NumGloIfpb()+NumTrp()+sat_no-1;
     }
 
     int cParSetting::IndexAmb(int f, int sat_no) {
         int a=NumPos();
         int b=NumClk();
         int c=f*MAX_SAT_NUM+sat_no-1;
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumClkDrift()+NumIfb()+NumGloIfcb()+NumGloIfpb()+NumTrp()+NumIon()
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+NumGloIfcb()+NumGloIfpb()+NumTrp()+NumIon()
                +f*MAX_SAT_NUM+sat_no-1;
     }
 

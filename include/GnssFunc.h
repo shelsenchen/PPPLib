@@ -135,7 +135,7 @@ namespace PPPLib{
         vector<tBrdGloEphUnit> brd_glo_eph;
         vector<tPreOrbUnit> pre_eph;
         vector<tPreClkUnit> pre_clk;
-        vector<tPreClkUnit> pre_irc;
+        vector<tPreClkUnit> pre_pr_clk;
         vector<tErpUnit>erp_paras;
         vector<tTecUnit>tec_paras;
 
@@ -257,6 +257,7 @@ namespace PPPLib{
         Vector3d pre_pos;
         Vector3d pre_vel;
         Vector2d pre_clk;
+        Vector2d pre_pr_clk;
 
         Vector2d trp_dry_delay; // slant_dry,map_dry
         Vector4d trp_wet_delay; // slant_wet,map_wet,grand_e,grand_n

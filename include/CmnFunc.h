@@ -182,6 +182,7 @@ namespace PPPLib{
     Matrix3d CalcCen(Vector3d& coord_blh,COORDINATE_TYPE lf_type);
 
     typedef struct{
+        int restart_gap;
         int nav_sys;
         double sample_rate;
         double ele_min;
@@ -257,6 +258,7 @@ namespace PPPLib{
         string cod_dcb;
         string fcb;
         string clk;
+        string pr_clk;
         string sp3[3];
         string erp;
         string atx;
@@ -351,6 +353,7 @@ namespace PPPLib{
         int NumBg();
         int NumClPar();
         int NumClk();
+        int NumPhaseClk();
         int NumClkDrift();
         int NumDcb();
         int NumIfb();
@@ -366,6 +369,7 @@ namespace PPPLib{
         int IndexBa();
         int IndexBg();
         int IndexClk(int sys_index);
+        int IndexPhaseClk(int sys_index);
         int IndexClkDritf(int sys_index);
         int IndexDcb(int sys_index);
         int IndexIfb(int sys_index);

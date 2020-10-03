@@ -1089,14 +1089,65 @@ namespace PPPLib{
 
         if(t[0]<=0.0){
             if((sat_info->pre_clk[0]=c[0])==0.0) return 0;
+
             std=pre_clk_[idx].std[sat_info->sat.sat_.no-1]*CLIGHT-EXTERR_CLK*t[0];
         }
         else if(t[1]>=0.0){
             if((sat_info->pre_clk[0]=c[1])==0.0) return 0;
+
             std=pre_clk_[idx+1].std[sat_info->sat.sat_.no-1]*CLIGHT+EXTERR_CLK*t[1];
         }
         else if(c[0]!=0.0&&c[1]!=0.0){
             sat_info->pre_clk[0]=(c[1]*t[0]-c[0]*t[1])/(t[0]-t[1]);
+
+            i=t[0]<-t[1]?0:1;
+            std=pre_clk_[idx+i].std[sat_info->sat.sat_.no-1];
+
+            if(std*CLIGHT>0.05) std+=EXTERR_CLK*fabs(t[i]);
+            else                std=std*CLIGHT+EXTERR_CLK*fabs(t[i]);
+        }
+        else{
+            return false;
+        }
+        sat_info->pre_eph_var+=SQR(std);
+
+        return true;
+    }
+
+    bool cEphModel::PreSatPrClkCorr(tSatInfoUnit *sat_info) {
+        int i,j,k,idx;
+        double t[2],c[2],std;
+
+        if(pre_pr_clk_.size()<2||
+           sat_info->t_trans.TimeDiff(pre_pr_clk_[0].t_tag.t_)<-MAXDTE||
+           sat_info->t_trans.TimeDiff(pre_pr_clk_[pre_clk_.size()-1].t_tag.t_)>MAXDTE){
+            return false;
+        }
+        for(i=0,j=pre_pr_clk_.size()-1;i<j;){
+            k=(i+j)/2;
+            if(pre_pr_clk_[k].t_tag.TimeDiff(sat_info->t_trans.t_)<0.0) i=k+1;
+            else j=k;
+        }
+        idx=i<=0?0:i-1;
+
+        t[0]=sat_info->t_trans.TimeDiff(pre_pr_clk_[idx].t_tag.t_);
+        t[1]=sat_info->t_trans.TimeDiff(pre_pr_clk_[idx+1].t_tag.t_);
+        c[0]=pre_pr_clk_[idx].clk[sat_info->sat.sat_.no-1];
+        c[1]=pre_pr_clk_[idx+1].clk[sat_info->sat.sat_.no-1];
+
+        if(t[0]<=0.0){
+            if((sat_info->pre_pr_clk[0]=c[0])==0.0) return 0;
+
+            std=pre_clk_[idx].std[sat_info->sat.sat_.no-1]*CLIGHT-EXTERR_CLK*t[0];
+        }
+        else if(t[1]>=0.0){
+            if((sat_info->pre_pr_clk[0]=c[1])==0.0) return 0;
+
+            std=pre_clk_[idx+1].std[sat_info->sat.sat_.no-1]*CLIGHT+EXTERR_CLK*t[1];
+        }
+        else if(c[0]!=0.0&&c[1]!=0.0){
+            sat_info->pre_pr_clk[0]=(c[1]*t[0]-c[0]*t[1])/(t[0]-t[1]);
+
             i=t[0]<-t[1]?0:1;
             std=pre_clk_[idx+i].std[sat_info->sat.sat_.no-1];
 
@@ -1228,6 +1279,11 @@ namespace PPPLib{
         if(!PreSatPos(sat_info)||!PreSatClkCorr(sat_info)) return false;
         if(!PreSatPos(&d1E_3)||!PreSatClkCorr(&d1E_3)) return false;
 
+        if(PPPLibC_.gnssC.ar_mode==AR_PPP_AR&&PPPLibC_.gnssC.ar_prod==AR_PROD_IC_CNES){
+            if(!PreSatPrClkCorr(sat_info)) return false;
+            if(!PreSatPrClkCorr(&d1E_3)) return false;
+        }
+
         sat_info->pre_vel=(d1E_3.pre_pos-sat_info->pre_pos)/1E-3;
 
         Vector3d dant(0,0,0);
@@ -1240,15 +1296,21 @@ namespace PPPLib{
             sat_info->pre_clk[1]=(d1E_3.pre_clk[0]-sat_info->pre_clk[0])/1E-3;
         }
 
+        if(PPPLibC_.gnssC.ar_mode==AR_PPP_AR&&PPPLibC_.gnssC.ar_prod==AR_PROD_IC_CNES&&sat_info->pre_pr_clk[0]!=0.0){
+            sat_info->pre_pr_clk[0]=sat_info->pre_pr_clk[0]-2.0*sat_info->pre_pos.dot(sat_info->pre_vel)/CLIGHT/CLIGHT;
+            sat_info->pre_pr_clk[1]=(d1E_3.pre_pr_clk[0]-sat_info->pre_pr_clk[0])/1E-3;
+        }
+
         return true;
     }
 
     void cEphModel::InitEphModel(vector<tBrdEphUnit> &brd_eph, vector<tBrdGloEphUnit> &brd_glo_eph,
-                                 vector<tPreOrbUnit> &pre_orb, vector<tPreClkUnit> &pre_clk,tAntUnit* sat_ant) {
+                                 vector<tPreOrbUnit> &pre_orb, vector<tPreClkUnit> &pre_clk,vector<tPreClkUnit>& pre_pr_clk,tAntUnit* sat_ant) {
         if(brd_eph.size()>0) brd_eph_=brd_eph;
         if(brd_glo_eph.size()>0) brd_glo_eph_=brd_glo_eph;
         if(pre_orb.size()>0) pre_orb_=pre_orb;
         if(pre_clk.size()>0) pre_clk_=pre_clk;
+        if(pre_pr_clk.size()) pre_pr_clk_=pre_pr_clk;
         if(sat_ant) sat_ant_=sat_ant;
     }
 
@@ -1544,7 +1606,7 @@ namespace PPPLib{
 
     void cGnssErrCorr::InitGnssErrCorr(tPPPLibConf C, tNav* nav) {
         eph_model_.PPPLibC_=cbia_model_.PPPLibC_=ion_model_.PPPLibC_=trp_model_.PPPLibC_=ant_model_.PPPLibC_=tid_model_.PPPLibC_=C;
-        eph_model_.InitEphModel(nav->brd_eph,nav->brd_glo_eph,nav->pre_eph,nav->pre_clk,nav->sat_ant);
+        eph_model_.InitEphModel(nav->brd_eph,nav->brd_glo_eph,nav->pre_eph,nav->pre_clk,nav->pre_pr_clk,nav->sat_ant);
         cbia_model_.InitCbiasModel(nav->code_bias,nav->brd_eph);
         ion_model_.InitIondelayModel(nav->ion_para);
         ant_model_.InitAntModel(C,nav->sat_ant,nav->rec_ant);

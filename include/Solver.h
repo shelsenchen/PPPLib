@@ -156,6 +156,7 @@ namespace PPPLib{
         void ClockJumpRepair();
         void PosUpdate(tPPPLibConf C);
         void ClkUpdate(tPPPLibConf C,double tt);
+        void PhaseClkUpdate(tPPPLibConf C,double tt);
         void IfbUpdate(tPPPLibConf C,double tt);
         void GloIfcbUpdate(tPPPLibConf C,double tt);
         void TrpUpdate(tPPPLibConf C,double tt);
@@ -200,6 +201,8 @@ namespace PPPLib{
         tPPPLibConf ppp_conf_;
         int max_iter_=8;
         vector<tSdAmb> sdambs_;
+        cTime filter_start_;
+        bool reset_flag_=false;
 
     public:
         cSppSolver *spp_solver_;

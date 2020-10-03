@@ -1082,6 +1082,12 @@ namespace PPPLib{
             cReadGnssPreEph clk_reader(C.fileC.clk,nav_);
             clk_reader.Reading(1);
 
+            if(C.gnssC.ar_mode==AR_PPP_AR&&C.gnssC.ar_prod==AR_PROD_IC_CNES&&!C.fileC.pr_clk.empty()){
+                cReadGnssPreEph code_clk_reader(C.fileC.pr_clk,nav_);
+                code_clk_reader.irc_pr_clk_=true;
+                code_clk_reader.Reading(1);
+            }
+
             cReadGnssPreEph orb_reader(C.fileC.sp3[1], nav_);
             for(int i=0;i<3;i++){
                 if(C.fileC.sp3[i].empty()) continue;
@@ -1153,6 +1159,7 @@ namespace PPPLib{
             LOG(DEBUG)<<"START PPP SOLVING "<<i+1<<"th EPOCH, ROVER SATELLITE NUMBER "<<epoch_sat_obs_.sat_num;
 
             epoch_idx_+=1;
+            if(epoch_idx_==1) filter_start_=epoch_sat_obs_.obs_time;
             UpdateGnssObs(C,epoch_sat_obs_,REC_ROVER);
             ppplib_sol_.observed_sat_num=epoch_sat_obs_.sat_num;
             InitEpochSatInfo(epoch_sat_info_collect_);
@@ -1280,6 +1287,7 @@ namespace PPPLib{
 
         if(ppplib_sol_.stat==SOL_PPP&&C.gnssC.ar_mode>=AR_PPP_AR){
             VectorXd xa=x;
+#if 1
             if(ResolvePppAmb(2,x, Px)){
 
                 if(!GnssObsRes(5,C,x.data(),re)){
@@ -1297,6 +1305,25 @@ namespace PPPLib{
             else{
                 int a=1;
             }
+#else
+            if(ResolverPppAmb1(2,xa.data())){
+
+                if(!GnssObsRes(5,C,xa.data(),re)){
+                    if(tc_mode_){
+                        CloseLoopState(x,&cur_imu_info_);
+                        RemoveLever(cur_imu_info_,C.insC.lever,re,ve);
+
+                    }
+                    else{
+                        re<<full_x_[0],full_x_[1],full_x_[2];
+                    }
+                    ppplib_sol_.stat=SOL_FIX;
+                }
+            }
+            else{
+                int a=1;
+            }
+#endif
         }
 
         int sat_no;
@@ -1495,9 +1522,14 @@ namespace PPPLib{
                     full_Px_(ia,ia)+=C.gnssC.ait_psd[0]*fabs(dt);
                 }
 
-                if(bias[i]==0.0||(full_x_[ia]!=0.0&&!slip[i]&&full_x_[ia]!=DIS_FLAG)) continue;
+                if(reset_flag_){
+                    InitX(bias[i],SQR(60),ia,full_x_.data(),full_Px_.data());
+                }
+                else{
+                    if(bias[i]==0.0||(full_x_[ia]!=0.0&&!slip[i]&&full_x_[ia]!=DIS_FLAG)) continue;
+                    InitX(bias[i],SQR(60),ia,full_x_.data(),full_Px_.data());
+                }
 
-                InitX(bias[i],SQR(60),ia,full_x_.data(),full_Px_.data());
                 string s="UC-L";
                 if(C.gnssC.frq_opt==FRQ_TRIPLE&&C.gnssC.ion_opt==ION_IF){
                     if(sat_info->tf_if_idx[0]==1){
@@ -1549,7 +1581,7 @@ namespace PPPLib{
             sat_info=&epoch_sat_info_collect_.at(i);
             if(sat_info->stat!=SAT_USED) continue;
             ii=para_.IndexIon(sat_info->sat.sat_.no);
-            if(full_x_[ii]==0.0){
+            if(full_x_[ii]==0.0||reset_flag_){
                 ii=para_.IndexIon(sat_info->sat.sat_.no);
                 if(sat_info->cor_P[0]==0.0||sat_info->cor_P[1]==0.0){
                     sat_info->stat=SAT_NO_USE;
@@ -1572,7 +1604,7 @@ namespace PPPLib{
         if(para_.NumTrp()<=0) return;
 
         int it=para_.IndexTrp();
-        if(full_x_[it]==0.0){
+        if(full_x_[it]==0.0||reset_flag_){
             full_x_[it]=0.175;
             full_Px_(it,it)=SQR(0.3);
             if(C.gnssC.trp_opt==TRP_EST_GRAD){
@@ -1596,13 +1628,13 @@ namespace PPPLib{
         int ii,j;
         if(C.gnssC.glo_ifcb_opt==GLO_IFCB_LNF){
             ii=para_.IndexGloIfcb(1);
-            if(full_x_[ii]==0.0) InitX(0.1,SQR(60.0),ii,full_x_.data(),full_Px_.data());
+            if(full_x_[ii]==0.0||reset_flag_) InitX(0.1,SQR(60.0),ii,full_x_.data(),full_Px_.data());
         }
         else if(C.gnssC.glo_ifcb_opt==GLO_IFCB_QUAD){
             ii=para_.IndexGloIfcb(1);
-            if(full_x_[ii]==0.0) InitX(0.1,SQR(60.0),ii,full_x_.data(),full_Px_.data());
+            if(full_x_[ii]==0.0||reset_flag_) InitX(0.1,SQR(60.0),ii,full_x_.data(),full_Px_.data());
             ii=para_.IndexGloIfcb(2);
-            if(full_x_[ii]==0.0) InitX(0.1,SQR(60.0),ii,full_x_.data(),full_Px_.data());
+            if(full_x_[ii]==0.0||reset_flag_) InitX(0.1,SQR(60.0),ii,full_x_.data(),full_Px_.data());
         }
         else if(C.gnssC.glo_ifcb_opt==GLO_IFCB_1SAT){
             double dtr=spp_solver_->ppplib_sol_.clk_error[SYS_INDEX_GLO];
@@ -1611,7 +1643,7 @@ namespace PPPLib{
             for(int i=0;i<epoch_sat_info_collect_.size();i++){
                 if(epoch_sat_info_collect_[i].stat!=SAT_USED) continue;
                 ii=para_.IndexGloIfcb(epoch_sat_info_collect_[i].sat.sat_.prn);
-                if(full_x_[ii]==0.0){
+                if(full_x_[ii]==0.0||reset_flag_){
                     InitX(dtr,SQR(60.0),ii,full_x_.data(),full_Px_.data());
                 }
                 else full_x_(ii,ii)+=SQR(0.001)*tt;
@@ -1624,7 +1656,7 @@ namespace PPPLib{
                     if(GLO_FRQ_NUM[j-1]==nav_.brd_glo_eph[epoch_sat_info_collect_[i].brd_eph_index].frq) break;
                 }
                 ii=para_.IndexGloIfcb(j);
-                if(full_x_[ii]==0.0) InitX(0.1,SQR(60.0),ii,full_x_.data(),full_Px_.data());
+                if(full_x_[ii]==0.0||reset_flag_) InitX(0.1,SQR(60.0),ii,full_x_.data(),full_Px_.data());
             }
         }
     }
@@ -1637,7 +1669,83 @@ namespace PPPLib{
         int num_sys=NSYS;
         if(ppp_conf_.gnssC.est_bd3_isb) num_sys+=1;
 
-        if(SQR(full_x_[ic])+SQR(full_x_[ic+1])+SQR(full_x_[ic+2])+SQR(full_x_[ic+3])+SQR(full_x_[ic+4])<=0.0){
+        if(SQR(full_x_[ic])+SQR(full_x_[ic+1])+SQR(full_x_[ic+2])+SQR(full_x_[ic+3])+SQR(full_x_[ic+4])<=0.0||reset_flag_){
+            init=true;
+        }
+
+        if(init){
+            for(int i=0;i<num_sys;i++){
+                // GPS_clock, GC_ISB, GE_ISB, GR_ISB, GJ_ISB
+                if(spp_solver_->ppplib_sol_.clk_error[i]==0.0) continue;
+                InitX(spp_solver_->ppplib_sol_.clk_error[i],SQR(60.0),ic+i,full_x_.data(),full_Px_.data());
+            }
+        }
+        else{
+            if(spp_solver_->ppplib_sol_.clk_error[SYS_INDEX_GPS]!=0.0){
+                // GPS clock error reinitialize
+                InitX(spp_solver_->ppplib_sol_.clk_error[SYS_INDEX_GPS],SQR(60.0),ic,full_x_.data(),full_Px_.data());
+
+                // BDS,GAL,GLO,QZS ISB modeling
+                for(int i=SYS_INDEX_BDS;i<num_sys;i++){
+                    if(spp_solver_->ppplib_sol_.clk_error[i-SYS_INDEX_GPS]==0.0) continue;
+                    if(full_x_[ic+i]==0.0){
+                        InitX(spp_solver_->ppplib_sol_.clk_error[i-SYS_INDEX_GPS],SQR(60.0),ic+i,full_x_.data(),full_Px_.data());
+                    }
+                    else full_Px_(ic+i-SYS_INDEX_GPS,ic+i-SYS_INDEX_GPS)+=SQR(psd)*tt;
+                }
+                return ;
+            }
+            else if(ppplib_sol_.clk_error[SYS_INDEX_BDS]!=0.0){
+                // BDS clock error reinitialize
+                ic+=SYS_INDEX_BDS;
+                InitX(spp_solver_->ppplib_sol_.clk_error[SYS_INDEX_BDS],SQR(60.0),ic,full_x_.data(),full_Px_.data());
+
+                // GAL,GLO,QZS ISB modeling
+                for(int i=SYS_INDEX_GAL;i<num_sys;i++){
+                    if(spp_solver_->ppplib_sol_.clk_error[i-SYS_INDEX_GPS]==0.0) continue;
+                    if(full_x_[ic+i-SYS_INDEX_BDS]==0.0){
+                        InitX(spp_solver_->ppplib_sol_.clk_error[i-SYS_INDEX_GPS],SQR(60.0),ic+i-SYS_INDEX_BDS,full_x_.data(),full_Px_.data());
+                    }
+                    else full_Px_(ic+i-SYS_INDEX_BDS,ic+i-SYS_INDEX_BDS)+=SQR(psd)*tt;
+                }
+                return ;
+            }
+            else if(ppplib_sol_.clk_error[SYS_INDEX_GAL]!=0.0){
+                // GAL clock error reinitialize
+                ic+=SYS_INDEX_GAL;
+                InitX(spp_solver_->ppplib_sol_.clk_error[SYS_INDEX_GAL],SQR(60.0),ic,full_x_.data(),full_Px_.data());
+
+                // GLO,QZS ISB modeling
+                for(int i=SYS_INDEX_GLO;i<num_sys;i++){
+                    if(spp_solver_->ppplib_sol_.clk_error[i-SYS_INDEX_GPS]==0.0) continue;
+                    full_Px_(ic+i-SYS_INDEX_GAL,ic+i-SYS_INDEX_GAL)+=SQR(psd)*tt;
+                }
+                return ;
+            }
+            else if(ppplib_sol_.clk_error[SYS_INDEX_GLO]!=0.0){
+                // GLO clock error reinitialize
+                ic+=SYS_INDEX_GLO;
+                InitX(spp_solver_->ppplib_sol_.clk_error[SYS_INDEX_GLO],SQR(60.0),ic,full_x_.data(),full_Px_.data());
+
+                // QZS ISB modeling
+                for(int i=SYS_INDEX_QZS;i<num_sys;i++){
+                    if(spp_solver_->ppplib_sol_.clk_error[i-SYS_INDEX_GPS]==0.0) continue;
+                    full_Px_(ic+i-SYS_INDEX_GLO,ic+i-SYS_INDEX_GLO)+=SQR(psd)*tt;
+                }
+                return ;
+            }
+        }
+    }
+
+    void cPppSolver::PhaseClkUpdate(tPPPLibConf C, double tt) {
+        if(para_.NumPhaseClk()<=0) return;
+        int ic=para_.IndexPhaseClk(SYS_INDEX_GPS);
+        bool init=false;
+        double psd=0.0;
+        int num_sys=NSYS;
+        if(ppp_conf_.gnssC.est_bd3_isb) num_sys+=1;
+
+        if(SQR(full_x_[ic])+SQR(full_x_[ic+1])+SQR(full_x_[ic+2])+SQR(full_x_[ic+3])+SQR(full_x_[ic+4])<=0.0||reset_flag_){
             init=true;
         }
 
@@ -1713,7 +1821,7 @@ namespace PPPLib{
         for(i=0;i<NSYS;i++){
             ifcb+=i;
             if(sys_mask_[i]){
-                if(full_x_[ifcb]==0.0){
+                if(full_x_[ifcb]==0.0||reset_flag_){
                     InitX(0.01,SQR(60),ifcb,full_x_.data(),full_Px_.data());
                 }
                 else{
@@ -1730,7 +1838,7 @@ namespace PPPLib{
         int ip=para_.IndexPos();
         Eigen::Vector3d var(SQR(60.0),SQR(60.0),SQR(60.0));
 
-        if((SQR(full_x_[0])+SQR(full_x_[1])+SQR(full_x_[2]))==0.0){
+        if((SQR(full_x_[0])+SQR(full_x_[1])+SQR(full_x_[2]))==0.0||reset_flag_){
             for(int i=0;i<3;i++) full_x_[i]=spp_solver_->ppplib_sol_.pos[i];
             full_Px_.block<3,3>(0,0)=var.asDiagonal();
             return;
@@ -1748,12 +1856,19 @@ namespace PPPLib{
 
     void cPppSolver::StateTimeUpdate(tPPPLibConf C) {
         double tt=spp_solver_->ppplib_sol_.t_tag.TimeDiff(ppplib_sol_.t_tag.t_);
+        if(C.gnssC.restart_gap>0&&epoch_sat_info_collect_[0].t_tag.TimeDiff(filter_start_.t_)>C.gnssC.restart_gap*3600.0){
+            reset_flag_=true;
+            filter_start_=epoch_sat_info_collect_[0].t_tag;
+        }
 
         //position
         PosUpdate(C);
 
         //clock
         ClkUpdate(C,tt);
+
+        //phase clock
+        PhaseClkUpdate(C,tt);
 
         //dcb
 
@@ -1772,6 +1887,7 @@ namespace PPPLib{
         //amb
         AmbUpdate(C,tt);
 
+        if(reset_flag_) reset_flag_=false;
     }
 
     void cPppSolver::InitSppSolver() {
@@ -1889,7 +2005,6 @@ namespace PPPLib{
         Vector3d dr;
         LOG(DEBUG)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<(post==0?" PRIOR(":(" POST("))<<post<<")"<<" RESIDUAL, PRIOR ROVER COORDINATE "<<rover_xyz.transpose();
 
-//        rover_xyz<<-2279829.6238,5004706.8701,3219778.7313;
         if(C.gnssC.tid_opt>TID_OFF){
             gnss_err_corr_.tid_model_.TidCorr(t.Gpst2Utc(),rover_xyz,dr);
             rover_xyz+=dr;
@@ -1903,8 +2018,11 @@ namespace PPPLib{
         if(C.gnssC.frq_opt==FRQ_TRIPLE&&C.gnssC.ion_opt==ION_IF) num_used_frq=1;
 
         double sat_clk,cbias,trp_del,alpha,beta;
-        int m,idx_isb,idx_gps_clk=para_.IndexClk(SYS_INDEX_GPS),idx_ifcb,ii=0,ia;
+        int m,idx_isb,idx_gps_clk,idx_ifcb,ii=0,ia;
         double base_rec_clk=0.0,isb=0.0,rec_clk=0.0,glo_ifcb=0.0;
+
+        bool irc_flag=(C.gnssC.ar_mode==AR_PPP_AR&&C.gnssC.ar_prod==AR_PROD_IC_CNES)?true:false;
+
         for(int i=0;i<epoch_sat_info_collect_.size();i++){
 
             sat_info=&epoch_sat_info_collect_.at(i);
@@ -1934,6 +2052,13 @@ namespace PPPLib{
             for(int f=0;f<num_used_frq*num_used_obs_type;f++){
                 frq=f/num_used_obs_type;
                 obs_type=f%num_used_obs_type;
+
+                if(irc_flag&&obs_type==GNSS_OBS_PHASE){
+                    idx_gps_clk=para_.IndexPhaseClk(SYS_INDEX_GPS);
+                }
+                else{
+                    idx_gps_clk=para_.IndexClk(SYS_INDEX_GPS);
+                }
 
                 //ionosphere-free
                 if(C.gnssC.ion_opt==ION_IF){
@@ -1978,6 +2103,7 @@ namespace PPPLib{
                 else{
                     if(!post) for(int j=0;j<num_full_x_;j++) H.push_back(j<3?-sig_vec[j]:0.0);
                 }
+
                 if(ppp_conf_.gnssC.est_bd3_isb){
                     for(m=0;m<para_.NumClk();m++){
                         if(x[m+idx_gps_clk]!=0.0) break;
@@ -2132,6 +2258,10 @@ namespace PPPLib{
                 }
 
                 sat_clk=sat_info->pre_clk[0]*CLIGHT;
+                if(irc_flag&&obs_type==GNSS_OBS_CODE) {
+                    sat_clk=sat_info->pre_pr_clk[0]*CLIGHT;
+                }
+
                 trp_del=sat_info->trp_dry_delay[0]+sat_info->trp_wet_delay[0];
                 cbias=0.0;
                 alpha=SQR(sat_info->frq[0])/(SQR(sat_info->frq[0])-SQR(sat_info->frq[1]));
@@ -2494,7 +2624,7 @@ namespace PPPLib{
 
         AverageLcAmb();
 
-        for(i=0;i<3;i++) var+=full_Px_(i,i);
+        for(i=0;i<3;i++) var+=SQRT(full_Px_(i,i));
         var=var/3.0;
         if(var>0.15){ //0.25
             LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<"POSITIONING VARIANCE TOO LARGE FOR PPK AR var="<<var;
@@ -2588,12 +2718,13 @@ namespace PPPLib{
         }
         else if(flag[sat1-1]>flag[sat2-1]){
             for(i=0;i<MAX_SAT_NUM;i++) if(flag[i]==flag[sat2-1]) flag[i]=flag[sat1-1];
-
         }
         else if(flag[sat1-1]<flag[sat2-1]){
             for(i=0;i<MAX_SAT_NUM;i++) if(flag[i]==flag[sat1-1]) flag[i]=flag[sat2-1];
         }
-        else return false;
+        else{
+            return false;
+        }
 
         return true;
     }
@@ -2679,14 +2810,14 @@ namespace PPPLib{
         double wl_bias2=nav_.wide_line_bias[sat2-1];
         double wl1=(lc_amb1->lc_amb[0])/lam_wl-wl_bias1;  //cycle
         double wl2=(lc_amb2->lc_amb[0])/lam_wl-wl_bias2;
-        sd_wl_amb=wl1-wl2;
+        sd_wl_amb=wl1-wl2+(wl_bias1-wl_bias2);
 
         *sd_fix_wl=(int)floor(sd_wl_amb+0.5);
         *res_wl=*sd_fix_wl-sd_wl_amb;
         var_wl=(lc_amb1->var_amb[0]/lc_amb1->n[0]+lc_amb2->var_amb[0]/lc_amb2->n[0])/SQR(lam_wl);
 
         bool fix_flag1=fabs(*sd_fix_wl-sd_wl_amb)<=0.25;
-        bool fix_flag2=IntAmbConfFunc(*sd_fix_wl,sd_wl_amb,sqrt(var_wl))>=0.9999;
+        bool fix_flag2=IntAmbConfFunc(*sd_fix_wl,sd_wl_amb,sqrt(var_wl))>=0.99;
         fix_flag=fix_flag1&&fix_flag2;
 
         char buff[1024]={'\0'};
@@ -2704,6 +2835,7 @@ namespace PPPLib{
         vector<double>res_nls;
         int i,j,k,m=0,flag[MAX_SAT_NUM]={0},max_flag=0,info;
         char out_buff[1024]={'\0'};
+        bool fix_flag=false;
 
         VectorXd B11(n),NC(n),s(2);
         MatrixXd N1(n,2),D(num_full_x_,n);
@@ -2723,12 +2855,14 @@ namespace PPPLib{
             B11[m]=(x[j]-x[k]+beta*lam2*fix_wls[i])/lam_nl;
             N1(m,0)=(int)floor(B11[m]+0.5);
             res_nl=N1(m,0)-B11[m];
-            if(fabs(res_nl)>0.15) continue;
 
-            sprintf(out_buff,"%s TO FIX NL AMB sd_nl_amb(%s-%s)=sd_if_amb-sd_wl_amb=%6.3f-%6.3f=%6.3f round(sd_nl_amb)=%5d",
+            fix_flag=fabs(res_nl) <= 0.15;
+            sprintf(out_buff,"%s TO FIX NL AMB sd_nl_amb(%s-%s)=sd_if_amb-sd_wl_amb=%6.3f-%6.3f=%6.3f round(sd_nl_amb)=%5d %s",
                     epoch_sat_info_collect_[0].t_tag.GetTimeStr(1).c_str(),previous_sat_info_[sat1[i]-1].sat.sat_.id.c_str(),previous_sat_info_[sat2[i]-1].sat.sat_.id.c_str(),
-                    (full_x_[j]-full_x_[k])/lam_nl,beta*lam2*fix_wls[i]/lam_nl,B11[m],(int)floor(B11[m]+0.5));
+                    (full_x_[j]-full_x_[k])/lam_nl,beta*lam2*fix_wls[i]/lam_nl,B11[m],(int)floor(B11[m]+0.5),fix_flag?"YES":"NO");
             LOG(DEBUG)<<out_buff;
+
+            if(!fix_flag) continue;
 
             D.data()[j+m*num_full_x_]=1.0/lam_nl;
             D.data()[k+m*num_full_x_]=-1.0/lam_nl;
@@ -2738,7 +2872,7 @@ namespace PPPLib{
             fix_wls[m++]=fix_wls[i];
             res_nls.push_back(res_nl);
         }
-        if(m<4) return false;
+        if(m<3) return false;
 
         MatrixXd E(m,num_full_x_),Q(m,m);
         MatMul("TN",m,num_full_x_,num_full_x_,1.0,D.data(),full_Px_.data(),0.0,E.data());
@@ -2802,8 +2936,8 @@ namespace PPPLib{
         // nl to iono-free ambiguity
         for(i=0;i<m;i++){
             out_buff[0]='\0';
-//            NC[i]=alpha*lam1*N1(i,0)+beta*lam2*(N1(i,0)-fix_wls[i]);
-            NC[i]=lam_nl*(N1(i,0))-lam2*beta*(fix_wls[i]);
+            NC[i]=alpha*lam1*N1(i,0)+beta*lam2*(N1(i,0)-fix_wls[i]);
+//            NC[i]=lam_nl*(N1(i,0))-lam2*beta*(fix_wls[i]);
             j=para_.IndexAmb(0,sat1[i]);
             k=para_.IndexAmb(0,sat2[i]);
             previous_sat_info_[sat2[i]-1].res_wl=res_wls[i];
@@ -2859,7 +2993,7 @@ namespace PPPLib{
                 k=para_.IndexAmb(0,sat2[i]);
                 if(!MatchNlFcb(sat1[i],sat2[i],&nl_fcb1,&nl_fcb2)) continue;
 
-                float_nl =(x[j]-x[k]+beta*lam2*fix_wls[i])/lam_nl-(nl_fcb1-nl_fcb2);
+                float_nl =(x[j]-x[k]+beta*lam2*fix_wls[i])/lam_nl+(nl_fcb1-nl_fcb2);
                 round_nl=(int)floor(float_nl+0.5);
                 res_nl=float_nl-round_nl;
                 fix_flag=fabs(res_nl)<=0.15;
@@ -2943,7 +3077,7 @@ namespace PPPLib{
         for(i=0;i<m;i++){
             buff[0]='\0';
             fix_if_ambs[i]=0.0;
-            fix_if_ambs[i]=lam_nl*(fix_nl_ambs(i,0)+sd_nl_fcbs[i])-lam2*beta*(fix_wls[i]);
+            fix_if_ambs[i]=lam_nl*(fix_nl_ambs(i,0)-sd_nl_fcbs[i])-lam2*beta*(fix_wls[i]);
             j=para_.IndexAmb(0,sat1[i]);
             k=para_.IndexAmb(0,sat2[i]);
             sprintf(buff,"REFACTOR SD_IF_AMB(%s-%s): float_if_amb=%6.3f-%6.3f=%6.3f fixed_if_amb=%6.3f",
@@ -2977,9 +3111,9 @@ namespace PPPLib{
 
         AverageLcAmb();
 #if 1
-        for(i=0;i<3;i++) var+=full_Px_(i,i);
+        for(i=0;i<3;i++) var+=SQRT(full_Px_(i,i));
         var=var/3.0;
-        if(var>0.15){ //0.25
+        if(var>0.05){ //0.25
             LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<"POSITIONING VARIANCE TOO LARGE FOR PPP AR var="<<var;
             ppplib_sol_.num_ar_sat=0;
             return false;
@@ -3000,7 +3134,7 @@ namespace PPPLib{
             }
         }
 
-        if(ppp_conf_.gnssC.ar_mode==AR_PPP_AR&&m>0){
+        if(ppp_conf_.gnssC.ar_mode==AR_PPP_AR&&m>3){
             stat=FixNlAmbILS_FCB(sat_no1.data(),sat_no2.data(),fix_wls.data(),res_wls.data(),m,x,P);
         }
         else return false;
@@ -3349,9 +3483,9 @@ namespace PPPLib{
         }
 
 #if 1
-        for(i=0;i<3;i++) var+=full_Px_(i,i);
+        for(i=0;i<3;i++) var+=SQRT(full_Px_(i,i));
         var=var/3.0;
-        if(var>0.15){ //0.25
+        if(var>0.05){ //0.25
             LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<"POSITIONING VARIANCE TOO LARGE FOR PPP AR var="<<var;
             ppplib_sol_.num_ar_sat=0;
             return false;

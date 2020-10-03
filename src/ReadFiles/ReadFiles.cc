@@ -157,6 +157,16 @@ namespace PPPLib{
             }
             C_->fileC.clk=f;f[0]='\0';
             LOG(DEBUG)<<"PRECISE CLOCK FILE: "<<C_->fileC.clk;
+
+            if(C_->gnssC.ar_prod==AR_PROD_IC_CNES){
+                sprintf(f,"%s%c%s%d%d%s",pres_dir.c_str(),sep_,kGnssAcStr[1].c_str(),week_,wod_,".clk");
+                if((access(f,0))==-1){
+                    LOG(ERROR)<<"PRECISE PSEUDORANGE SATELLITE CLOCK FILE NO FOUND FOR CNES AR: "<<f;
+                    return 0;
+                }
+                C_->fileC.pr_clk=f;f[0]='\0';
+                LOG(DEBUG)<<"PRECISE PSEUDORANGE SATELLITE CLOCK FILE: "<<C_->fileC.pr_clk;
+            }
         }
         if(C_->gnssC.tid_opt>TID_OFF){
             sprintf(f,"%s%c%s%d%d%s",pres_dir.c_str(),sep_,kGnssAcStr[C_->gnssC.ac_opt].c_str(),week_,wod_,".erp");
@@ -165,7 +175,7 @@ namespace PPPLib{
                 LOG(DEBUG)<<"ERP FILE: "<<C_->fileC.erp;
             }
             else{
-                sprintf(f,"%s%cigs%2dP%d.erp",C_->data_dir.c_str(),sep_,yy_,week_);
+                sprintf(f,"%s%c%d%c%d%cigs%2dP%d.erp",C_->data_dir.c_str(),sep_,year_,sep_,week_,sep_,yy_,week_);
                 if((access(f,0))==-1){
                     LOG(WARNING)<<"ERP FILE NO FOUND "<<f;
                 }
@@ -202,6 +212,8 @@ namespace PPPLib{
             }
             C_->fileC.blq=f;
             LOG(DEBUG)<<"BLQ FILE: "<<C_->fileC.blq;
+
+
         }
         return 1;
     }
@@ -264,29 +276,26 @@ namespace PPPLib{
         sprintf(f,"%s%c%s_%s_%s%c",mode_dir.c_str(),sep_,sys_str.c_str(),kGnssFrqStr[C_->gnssC.frq_opt].c_str(),kIonOptStr[C_->gnssC.ion_opt].c_str(),sep_);
         par_dir=f;f[0]='\0';
         CreateDir(par_dir.c_str());
-        sprintf(f,"%s%s.pos",par_dir.c_str(),C_->site_name.c_str());
+        if(C_->gnssC.ar_mode>AR_OFF){
+            sprintf(f,"%s%s_ar.pos",par_dir.c_str(),C_->site_name.c_str());
+        }
+        else{
+            sprintf(f,"%s%s.pos",par_dir.c_str(),C_->site_name.c_str());
+        }
         C_->fileC.sol=f;
         f[0]='\0';
         if(C_->solC.out_stat){
-            sprintf(f,"%s%s.pos.stat",par_dir.c_str(),C_->site_name.c_str());
+            if(C_->gnssC.ar_mode>AR_OFF){
+                sprintf(f,"%s%s_ar.pos.stat",par_dir.c_str(),C_->site_name.c_str());
+            }
+            else{
+                sprintf(f,"%s%s.pos.stat",par_dir.c_str(),C_->site_name.c_str());
+            }
+
+            C_->fileC.sol_stat=f;
+            LOG(DEBUG)<<"SOLUTION FILE: "<<C_->fileC.sol;
         }
-        C_->fileC.sol_stat=f;
-        LOG(DEBUG)<<"SOLUTION FILE: "<<C_->fileC.sol;
         f[0]='\0';
-        if(C_->solC.out_bias){
-            sprintf(f,"%s%s.bias",par_dir.c_str(),C_->site_name.c_str());
-        }
-        C_->fileC.sol_bias=f;
-        f[0]='\0';
-        if(C_->solC.out_trp){
-            sprintf(f,"%s%s.trp",par_dir.c_str(),C_->site_name.c_str());
-        }
-        C_->fileC.sol_trp=f;
-        f[0]='\0';
-        if(C_->solC.out_ion){
-            sprintf(f,"%s%s.ion",par_dir.c_str(),C_->site_name.c_str());
-        }
-        C_->fileC.sol_ion=f;
         return 1;
     }
 
@@ -1485,18 +1494,34 @@ namespace PPPLib{
 
         while(getline(inf_,line_str_)&&!inf_.eof()){
             if(line_str_.substr(0,2).compare("AS")||epoch_t.Str2Time(line_str_.substr(8,26))) continue;
-            if(nav_->pre_clk.empty()||fabs(epoch_t.TimeDiff(nav_->pre_clk.back().t_tag.t_)>1E-9)){
-                nav_->pre_clk.push_back(clk);
+            if(irc_pr_clk_){
+                if(nav_->pre_pr_clk.empty()||fabs(epoch_t.TimeDiff(nav_->pre_pr_clk.back().t_tag.t_)>1E-9)){
+                    nav_->pre_pr_clk.push_back(clk);
+                }
+                nav_->pre_pr_clk.back().t_tag=epoch_t;
             }
-            nav_->pre_clk.back().t_tag=epoch_t;
+            else{
+                if(nav_->pre_clk.empty()||fabs(epoch_t.TimeDiff(nav_->pre_clk.back().t_tag.t_)>1E-9)){
+                    nav_->pre_clk.push_back(clk);
+                }
+                nav_->pre_clk.back().t_tag=epoch_t;
+            }
+
             sat=cSat(line_str_.substr(3,3));
             sat.SatId2No();
             if(!(sat.sat_.sys&sys_mask_)) continue;
             if(!(sat.sat_.no)) continue;
             if(line_str_.length()>60) k=2;
             for(int i=0,j=40;i<k;i++,j+=20) Str2Double(line_str_.substr(j,19),data[i]);
-            nav_->pre_clk.back().clk[sat.sat_.no-1]=data[0];
-            nav_->pre_clk.back().std[sat.sat_.no-1]=(float)data[1];
+
+            if(irc_pr_clk_){
+                nav_->pre_pr_clk.back().clk[sat.sat_.no-1]=data[0];
+                nav_->pre_pr_clk.back().std[sat.sat_.no-1]=(float)data[1];
+            }
+            else{
+                nav_->pre_clk.back().clk[sat.sat_.no-1]=data[0];
+                nav_->pre_clk.back().std[sat.sat_.no-1]=(float)data[1];
+            }
         }
     }
 

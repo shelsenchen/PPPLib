@@ -204,6 +204,9 @@ namespace PPPLib {
         void ReadHead(int type);
         bool Reading(int type);
 
+    public:
+        bool irc_pr_clk_=false;
+
     private:
         cTime pre_eph_time_;
         int num_sat_;
