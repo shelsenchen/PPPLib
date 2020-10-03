@@ -135,13 +135,31 @@ namespace PPPLib{
         }
     }
 
-    void cOutSol::WriteBias(tSolInfoUnit &sol) {
+    void cOutSol::WriteSolStat(tSolInfoUnit *sol, tSatInfoUnit *sat_infos) {
         int week;
         double wos;
-        wos=sol.t_tag.Time2Gpst(&week, nullptr,SYS_GPS);
-        fprintf(fout_bias_,"%4d, %6.1f, %10.3f, %10.3f, %10.3f, %10.3f, %10.3f, %5.2f, %5.2f, %5.2f, %5.2f, %5.3f\n",
-                week,wos,sol.clk_error[0],sol.clk_error[1],sol.clk_error[2],sol.clk_error[3],sol.clk_error[4],
-                sol.rec_ifcb[0],sol.rec_ifcb[1],sol.rec_ifcb[2],sol.rec_ifcb[3],sol.rec_ifcb[4]);
+        wos=sol->t_tag.Time2Gpst(&week,nullptr,SYS_GPS);
+        bool coupled=sol->ins_stat>SOL_INS_NONE? true:false;
+
+        char epoch[1024]={'\0'};
+        /* $EPOCH  epoch_time GPS_week wos epoch_idx sol_stat sol_ins_stat observed_num valid_num*/
+        sprintf(epoch,"$EPOCH  %22s %4d %6.1f %5d %d %d %2d %2d %3.1f\n",sol->t_tag.GetTimeStr(1).c_str(),week,wos,sol->epoch_idx,sol->stat,sol->ins_stat,
+                sol->observed_sat_num,sol->valid_sat_num,sol->dops[0]);
+        f_stat_<<epoch;
+        /* $POS    x y z*/
+        char pos[1024]={'\0'};
+
+        sprintf(pos,"$POS    %12.3f %12.3f %12.3f",sol->pos[0],sol->pos[1],sol->pos[2]);
+        f_stat_<<pos;
+
+        char clk[1024]={'\0'};
+        sprintf(clk,"$CLK    %9.2f %9.2f %9.2f %9.2f %9.2f",sol->clk_error[0],sol->clk_error[1],sol->clk_error[2],
+                sol->clk_error[3],sol->clk_error[4]);
+        f_stat_<<clk;
+
+        char trp[1024]={'\0'};
+        sprintf(trp,"$TRP    %5.2f %5.2f",sol->zenith_trp_delay[0],sol->zenith_trp_delay[1]);
+        f_stat_<<trp;
     }
 
     int cOutSol::OutEcef(unsigned char *buff, const char *s, tSolInfoUnit &sol) {

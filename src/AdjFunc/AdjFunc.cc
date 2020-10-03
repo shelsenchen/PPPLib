@@ -57,7 +57,7 @@ namespace PPPLib {
 
         for(i=0;i<nx;i++){
 //            if(X[i]!=0.0&&Px(i,i)>0.0&&X[i]!=DIS_FLAG&&H.row(i).norm()) zip_idx.push_back(i);
-            if(X[i]!=0.0&&Px(i,i)>0.0&&X[i]!=DIS_FLAG) zip_idx.push_back(i);
+            if(X[i]!=0.0&&fabs(Px(i,i))>0.0&&X[i]!=DIS_FLAG) zip_idx.push_back(i);
 
         }
         MatrixXd H_,Px_;

@@ -591,6 +591,11 @@ namespace PPPLib {
         GYRO_FORMAT_RAD
     };
 
+    enum INS_ALIGN {
+        ALIGN_GNSS_SOL,
+        ALIGN_GNSS_OBS
+    };
+
     enum SOLVE_ESTIMATOR {
         SOLVE_LSQ,
         SOLVE_KF,

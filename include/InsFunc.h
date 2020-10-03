@@ -6,6 +6,7 @@
 #define PPPLIB_INSFUNC_H
 
 #include "CmnFunc.h"
+#include "GnssFunc.h"
 
 namespace PPPLib {
 
@@ -93,6 +94,25 @@ namespace PPPLib {
         Eigen::Vector3d PositionUpdate(const tImuInfoUnit& pre_imu_info,const Vector3d& cur_vel,double dt);
         void TraceInsMechInfo(tImuInfoUnit &imu_info,bool prior,int idx);
 
+    };
+
+    class cInsAlign{
+    public:
+        cInsAlign();
+        cInsAlign(cImuData imu_data,tPPPLibConf C);
+        ~cInsAlign();
+
+    public:
+        bool CoarseAlign(tImuInfoUnit& imu_info);
+        bool GnssSolAlign();
+        bool GnssObsAlign();
+
+    private:
+        cImuData *imu_data_;
+        tPPPLibConf C_;
+
+    public:
+        int imu_idx=0;
     };
 
     void AdjustImuData(tImuDataUnit& imu_data,IMU_COORD_TYPE coord_type,IMU_DATA_FORMAT data_format,GYRO_DATA_FORMAT gyro_val_format,double dt);

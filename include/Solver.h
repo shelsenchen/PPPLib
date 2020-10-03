@@ -31,9 +31,6 @@ namespace PPPLib{
         void CorrGnssObs(tPPPLibConf C,Vector3d& rr);
         virtual int GnssObsRes(int post,tPPPLibConf C,double* x);
 
-        bool DetectCodeOutlier(tPPPLibConf C,int post,vector<double> omcs,vector<double>& R);
-        bool IGG3(tPPPLibConf C,int post,vector<double> omcs,vector<double> R);
-
         virtual void InitSolver(tPPPLibConf C);
         virtual bool InitReader(tPPPLibConf C);
         virtual bool SolverProcess(tPPPLibConf C,int idx);
@@ -41,9 +38,13 @@ namespace PPPLib{
         virtual bool Estimator(tPPPLibConf C);
         virtual bool SolutionUpdate();
 
-        void InitFullPx(tPPPLibConf C);
+        void InitInsPx(tPPPLibConf C,int nx,MatrixXd& Px);
         void InitX(double xi,double var,int idx,double *x,double *xp);
-        Eigen::MatrixXd InitQ(tPPPLibConf,double dt);
+        Eigen::MatrixXd InitQ(tPPPLibConf,double dt,int nx);
+
+        void RemoveLever(const tImuInfoUnit& imu_info,Vector3d& lever,Vector3d& gnss_re,Vector3d& gnss_ve);
+        void CloseLoopState(VectorXd& x,tImuInfoUnit* imu_info_corr);
+
 
     public:
         cGnssObsOperator gnss_obs_operator_;
@@ -89,6 +90,9 @@ namespace PPPLib{
         VectorXd real_x_fix_;
         MatrixXd real_Px_fix_;
         vector<double>code_sigma,phase_sigma;
+
+        bool tc_mode_=false;
+        tImuInfoUnit cur_imu_info_;
     };
 
     class cSppSolver:public cSolver {
@@ -158,14 +162,13 @@ namespace PPPLib{
         void IonUpdate(tPPPLibConf C,double tt);
         void AmbUpdate(tPPPLibConf C,double tt);
         void StateTimeUpdate(tPPPLibConf C);
-        int GnssObsRes(int post,tPPPLibConf C,double *x) override;
+        int GnssObsRes(int post,tPPPLibConf C,double *x,Vector3d re);
+        void ReInitPppSolver(tPPPLibConf C);
 
         void DisableX(int iter,VectorXd& x,vector<int>&par_idx,vector<double>& back_values);
 
         // quality control
         bool PppResidualQc(int iter,vector<double>omcs,vector<double>var);
-        bool PppResidualQcStep(int iter,vector<double>omcs,vector<double>R);
-        bool PppResIGG3Control(int iter,vector<double>omcs,vector<double> R);
 
         // PPP-AR
         bool ResolvePppAmb(int nf,VectorXd& x,MatrixXd& P);
@@ -222,7 +225,7 @@ namespace PPPLib{
     private:
         void InitSppSolver();
         void Spp2Ppk();
-        bool GnssZeroRes(tPPPLibConf C,RECEIVER_INDEX rec,vector<int>sat_idx,double* x);
+        bool GnssZeroRes(tPPPLibConf C,RECEIVER_INDEX rec,vector<int>sat_idx,double* x,Vector3d rr);
         int GnssDdRes(int post,tPPPLibConf C,vector<int>ir,vector<int>ib,vector<int>cmn_sat_no,double* x,int refsat[NSYS][2*MAX_GNSS_USED_FRQ_NUM]);
         bool ValidObs(int i,int nf,int f);
         bool MatchBaseObs(cTime t);
@@ -230,18 +233,19 @@ namespace PPPLib{
         void PpkCycleSlip(tPPPLibConf C,vector<int>& iu,vector<int>& ib,vector<int>& cmn_sat_no);
         void StateTimeUpdate(tPPPLibConf C,vector<int>& iu,vector<int>& ib,vector<int>& cmn_sat_no);
         void PosUpdate(tPPPLibConf C);
+        void GloIfpbUpdate(tPPPLibConf C,double tt);
         void TrpUpdate(tPPPLibConf C,double tt);
         void IonUpdate(tPPPLibConf C,double tt);
         void AmbUpdate(tPPPLibConf C, double tt,vector<int>& ir,vector<int>& ib,vector<int>& cmn_sat_no);
 
         bool CheckDualFrq(tSatInfoUnit& sat_info);
-        void DetectPhaseOutlier(int post,vector<int> cmn_sat,vector<double> omcs,int refsat[NSYS][2*MAX_GNSS_USED_FRQ_NUM],vector<double>& R);
-        bool PpkResStepControl(int post,vector<int>ir,vector<int> cmn_sat,vector<double>& omcs, VectorXd& v,MatrixXd& R);
+        bool PpkResidualQc(int iter,vector<int>ir,vector<int> cmn_sat,vector<double>& omcs, vector<double>R);
 
         void ReSetAmb(double *bias,double *xa,int nb);
-        int DdMat(double *D,int gps,int glo);
-        int ResolveAmbLambda(double *xa,int gps,int glo);
+        int DdMat(double *D,int gps,int bds,int glo,int gal);
+        int ResolveAmbLambda(double *xa,int gps, int bds,int glo,int gal, int qzs);
         bool ResolvePpkAmb(vector<int>cmn_sat,int nf,double *xa);
+        void HoldAmb(vector<int>cmn_sat,double *xa);
 
     private:
         cSppSolver *spp_solver_;
@@ -254,8 +258,11 @@ namespace PPPLib{
         vector<double>base_res,rover_res;
         vector<tDdAmb> ddambs_;
         int exc_sat_index=0;
+        int num_continuous_fix_=0;
+        bool amb_hold_flag=false;
         double pre_epoch_ar_ratio1=0.0;
         double pre_epoch_ar_ratio2=0.0;
+        int qc_iter_=0;
     };
 
     class cFusionSolver:public cSolver {
@@ -273,7 +280,7 @@ namespace PPPLib{
         double Vel2Yaw(Vector3d vn);
         bool GnssSol2Ins(Vector3d re,Vector3d ve);
         Vector3d Pos2Vel(tSolInfoUnit& sol1,tSolInfoUnit& sol2);
-        bool InsAlign(int use_raw_gnss_obs);
+        bool InsAlign();
 
     public:
         void InitSolver(tPPPLibConf C) override;
@@ -282,14 +289,13 @@ namespace PPPLib{
         bool SolutionUpdate() override;
 
     private:
-        void CloseLoopState(VectorXd& x,tImuInfoUnit* imu_info_corr);
         void DisableX(VectorXd& x,int idx);
         void StateTimeUpdate();
-        void PropVariance(MatrixXd& F,MatrixXd& Q,int nx);
-        void RemoveLever(const tImuInfoUnit& imu_info,Vector3d& lever,Vector3d& gnss_re,Vector3d& gnss_ve);
+        void PropVariance(MatrixXd& F,MatrixXd& Q,int nx,MatrixXd& Px);
         int BuildLcHVR(int post,tPPPLibConf C,tImuInfoUnit& imu_info,double *meas_pos,double *meas_vel,Vector3d& q_pos,Vector3d& q_vel);
         bool LcFilter(tPPPLibConf C);
         bool ValidSol(VectorXd& x, double thres);
+        void ControlPx(int nx,MatrixXd& Px);
 
     public:
         bool LooseCouple(tPPPLibConf C);
@@ -297,6 +303,7 @@ namespace PPPLib{
 
     private:
         cInsMech ins_mech_;
+        cSolver *gnss_alignor_;
         cSolver *gnss_solver_;
         tPPPLibConf fs_conf_;
         tPPPLibConf gnss_conf_;

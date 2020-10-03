@@ -89,6 +89,11 @@ static void LoadConf()
     kConf.data_dir=config->Get<string>("data_dir");
     kConf.use_custom_dir=config->Get<int>("use_custom_dir");
     kConf.site_name=config->Get<string>("site_name");
+    vector<int> epoch;
+    epoch=config->GetArray<int>("prc_date");
+    double ep[6]={0};
+    for(int i=0;i<3;i++) ep[i]=epoch[i];
+    kConf.prc_date.Epoch2Time(ep);
 
     tGnssConf *gnssC=&kConf.gnssC;
     gnssC->ele_min=config->Get<double>("ele_min");
@@ -143,6 +148,7 @@ static void LoadConf()
     gnssC->ar_prod= static_cast<GNSS_AR_PROD>(config->Get<int>("ar_prod"));
     gnssC->glo_ar_mode= static_cast<GLO_AR_MODE>(config->Get<int>("glo_ar_mode"));
     gnssC->bds_ar_mode= config->Get<int>("bds_ar_mode");
+    gnssC->gal_ar_mode= config->Get<int>("gal_ar_mode");
     ratio.clear();
     ratio=config->GetArray<double>("ar_thres");
     for(i=0;i<ratio.size();i++) gnssC->ar_thres[i]=ratio[i];
@@ -150,7 +156,10 @@ static void LoadConf()
     gnssC->min_sat_num2fix=config->Get<int>("min_sat_num2fix");
     gnssC->min_sat_num2drop=config->Get<int>("min_sat_num2drop");
     gnssC->min_lock2fix=config->Get<int>("min_lock2fix");
-    gnssC->partial_ar=config->Get<int>("partial_ar");
+    gnssC->min_sat_num2hold=config->Get<int>("min_sat_num2hold");
+    gnssC->min_fix2hold=config->Get<int>("min_fix2hold");
+    gnssC->hold_er_mask=config->Get<double>("hold_el_mask");
+    gnssC->ar_filter=config->Get<int>("ar_filter");
     gnssC->res_qc= config->Get<int>("res_qc");
     ratio.clear();
     ratio=config->GetArray<double>("base_coord");
@@ -173,6 +182,7 @@ static void LoadConf()
     insC->data_format= static_cast<IMU_DATA_FORMAT>(config->Get<int>("data_format"));
     insC->gyro_val_format= static_cast<GYRO_DATA_FORMAT>(config->Get<int>("gyro_val_format"));
     insC->sample_rate=config->Get<double>("sample_hz");
+    insC->ins_align=static_cast<INS_ALIGN>(config->Get<int>("ins_align"));
     ratio.clear();
     ratio=config->GetArray<double>("lever");
     for(i=0;i<ratio.size();i++) insC->lever[i]=ratio[i];
@@ -185,8 +195,8 @@ static void LoadConf()
     insC->init_bg_unc=config->Get<double>("init_bg_unc");
     insC->psd_acce=config->Get<double>("psd_acce");
     insC->psd_gyro=config->Get<double>("psd_gyro");
-    insC->psd_ba=config->Get<double>("ba");
-    insC->psd_bg=config->Get<double>("bg");
+    insC->psd_ba=config->Get<double>("psd_ba");
+    insC->psd_bg=config->Get<double>("psd_bg");
 
     tSolConf *solC=&kConf.solC;
     solC->out_sol=config->Get<int>("out_sol");
@@ -221,12 +231,12 @@ static int ParsePara(int arc,char *arv[], string& conf_file)
         else if(!strcmp(arv[i],"-M")&&i+1<arc){
             mode=arv[++i];
         }
-        else if(!strcmp(arv[i],"-T")&&i+1<arc){
-            if(sscanf(arv[++i],"%lf/%lf/%lf",ep,ep+1,ep+2)<3){
-                fprintf(stderr, "PROCESS DATE FORMAT ERROR: yyyy/mm/dd\n");
-                return 0;
-            }
-        }
+//        else if(!strcmp(arv[i],"-T")&&i+1<arc){
+//            if(sscanf(arv[++i],"%lf/%lf/%lf",ep,ep+1,ep+2)<3){
+//                fprintf(stderr, "PROCESS DATE FORMAT ERROR: yyyy/mm/dd\n");
+//                return 0;
+//            }
+//        }
         else if(!strcmp(arv[i],"-S")&&i+1<arc){
             p=arv[++i];
             for(;*p&&*p!=' ';p++){
@@ -270,7 +280,7 @@ static int ParsePara(int arc,char *arv[], string& conf_file)
     string logini_path = SetLogConfPath("");
     InitLog(arc,arv,logini_path,level);
 
-    kConf.prc_date.Epoch2Time(ep);
+//    kConf.prc_date.Epoch2Time(ep);
 
     Config::Ptr_ config=Config::GetInstance();
     if(!config->Open(conf_file)){
@@ -318,7 +328,9 @@ static int Processer()
         case MODE_SPP:  solver=new cSppSolver(kConf);break;
         case MODE_PPP:  solver=new cPppSolver(kConf);break;
         case MODE_PPK:  solver=new cPpkSolver(kConf);break;
-        case MODE_IGLC: solver=new cFusionSolver(kConf);break;
+        case MODE_IGLC:
+        case MODE_IGTC:
+                        solver=new cFusionSolver(kConf);break;
     }
 
     if(kConf.mode==MODE_IGLC&&kConf.mode_opt==MODE_OPT_GSOF){
@@ -338,16 +350,20 @@ static int Processer()
         kConf.fileC.sol=config->Get<string>("sol");
 
         solver->SolverProcess(kConf,0);
+        return true;
     }
 
     struct dirent *file;
     char *ext;
+    kConf.site_idx=0;
+    bool single_flag=kConf.site_name.empty()?false:true;
     while((file=readdir(dir))!= nullptr){
         if(strncmp(file->d_name,".",1)==0) continue;
         else if(strstr(file->d_name,"base")) continue;
+        else if(strstr(file->d_name,"gsof")) continue;
         else if(!(ext=strrchr(file->d_name,'.'))) continue;
         else if(!strstr(ext+3,"o")) continue;
-        else if(!kConf.site_name.empty()&&!strstr(file->d_name,kConf.site_name.c_str())) continue;
+        else if(kConf.use_custom_dir&&!kConf.site_name.empty()&&!strstr(file->d_name,kConf.site_name.c_str())) continue;
 
         f[0]='\0';
         sprintf(f,"%s%c%s",data_dir.c_str(),FILEPATHSEP,file->d_name);
@@ -358,21 +374,34 @@ static int Processer()
             string name=file->d_name;
             kConf.site_name=name.substr(0,4);
         }
+        kConf.site_idx++;
 
         LOG(INFO)<<"==== START PROCESS: "<<kConf.site_name;
-        if(!AutoMatchFile(kConf.fileC.rover)){
-            kConf.site_name.clear();
-            LOG(INFO)<<"==== PROCESS FAIL: "<<kConf.site_name;
-            continue;
+
+        if(kConf.site_idx==1){
+            if(!AutoMatchFile(kConf.fileC.rover)){
+                kConf.site_name.clear();
+                LOG(INFO)<<"==== PROCESS FAIL, MISSING FILE: "<<kConf.site_name;
+                continue;
+            }
+        }
+        else{
+            cMatchFile match_file;
+            match_file.InitMatchFile(kConf,FILEPATHSEP);
+            match_file.MatchOut();
         }
 
         long t1=clock();
+
         solver->InitReader(kConf);
         kConf.gnssC.sample_rate=solver->rover_obs_.GetGnssObs()[1].obs_time.TimeDiff(solver->rover_obs_.GetGnssObs()[0].obs_time.t_);
         solver->SolverProcess(kConf,-1);
+        if(single_flag) break;
+
+        kConf.site_name.clear();
         long t2=clock();
         double t=(double)(t2-t1)/CLOCKS_PER_SEC;
-        cout<<"total(s): "<<t;
+        cout<<"total(s): "<<t<<endl;
     }
 
     return 1;

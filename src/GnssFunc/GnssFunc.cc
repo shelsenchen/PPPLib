@@ -158,6 +158,11 @@ namespace PPPLib{
         }
     }
 
+    void cGnssObs::ResetGnssObs() {
+        epoch_num=0;
+        obs_.clear();
+    }
+
     cGnssObsOperator::cGnssObsOperator() {}
 
     cGnssObsOperator::~cGnssObsOperator() {}
@@ -497,7 +502,7 @@ namespace PPPLib{
 
             if(g1==0.0||g0==0.0) continue;
 
-            double thres_gf;
+            double thres_gf=0.0;
 
 #if 1
             if(el>15.0) thres_gf=C.gnssC.cs_thres[1];
@@ -505,7 +510,6 @@ namespace PPPLib{
 #else
             if(el<C.gnssC.ele_min) continue;
 
-            double thres_gf=0.0;
             double R_gf=0.05;
             if(0<sample_dt&&sample_dt<=1.0){
                 R_gf=0.05;
@@ -990,6 +994,8 @@ namespace PPPLib{
         /* sun position in eci */
         Ms=357.5277233+35999.05034*t;
         ls=280.460+36000.770*t+1.914666471*sin(Ms*D2R)+0.019994643*sin(2.0*Ms*D2R);
+        double a=0.016708617*cos(Ms*D2R);
+        double b=0.000139589*cos(2.0*Ms*D2R);
         rs=AU*(1.000140612-0.016708617*cos(Ms*D2R)-0.000139589*cos(2.0*Ms*D2R));
         sinl=sin(ls*D2R); cosl=cos(ls*D2R);
         rsun[0]=rs*cosl;
@@ -1013,10 +1019,12 @@ namespace PPPLib{
         Vector3d rs,rm;
         double gmst0;
         Matrix3d U;
+        cTime ttt=ut1t;
         cTime t=ut1t+erp_val[2];
 
+
         SunMoonPosEci(t,rs,rm);
-        Eci2Ecef(t,erp_val,U,&gmst0);
+        Eci2Ecef(ttt,erp_val,U,&gmst0);
 
         sun_pos=U*rs; moon_pos=U*rm;
         return gmst0;

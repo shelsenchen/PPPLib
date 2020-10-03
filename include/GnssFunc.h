@@ -195,7 +195,7 @@ namespace PPPLib{
         void SetRcvIdx(RECEIVER_INDEX rcv);
         vector<tEpochSatUnit>& GetGnssObs();
         tStaInfoUnit* GetStation();
-
+        void ResetGnssObs();
         void CarrierSmoothCode(int smooth_length);
 
     public:
@@ -286,6 +286,8 @@ namespace PPPLib{
         int mw_idx[2];
         Vector2d gf;          //L1_L2, L1_L5
         Vector2d multipath_comb;
+        double glo_bias[MAX_GNSS_USED_FRQ_NUM];
+
         double tdcp;
         double cmc_P;             // code minus carrier
         double cor_if_P[2];     // SF-IF or DF-IF or TF-IF1/TF-IF2

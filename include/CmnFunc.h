@@ -213,12 +213,16 @@ namespace PPPLib{
         GNSS_AR_PROD ar_prod;
         GLO_AR_MODE glo_ar_mode;
         bool bds_ar_mode;
+        bool gal_ar_mode;
         double ar_thres[8];
         double ar_el_mask;
         int min_sat_num2fix;
         int min_sat_num2drop;
         int min_lock2fix;
-        bool partial_ar;
+        double hold_er_mask;
+        int min_sat_num2hold;
+        int min_fix2hold;
+        bool ar_filter;
         bool res_qc;
         Vector3d rb;
     }tGnssConf;
@@ -228,6 +232,7 @@ namespace PPPLib{
         IMU_COORD_TYPE coord_type;
         IMU_DATA_FORMAT data_format;
         GYRO_DATA_FORMAT gyro_val_format;
+        INS_ALIGN ins_align;
         double sample_rate;
         Vector3d lever;
         double correction_time_ba;
@@ -287,6 +292,7 @@ namespace PPPLib{
         cTime prc_date;
         string data_dir;
         string site_name;
+        int site_idx;
         bool use_custom_dir;
         PPPLIB_MODE mode;
         PPPLIB_MODE_OPT mode_opt;
@@ -300,8 +306,10 @@ namespace PPPLib{
 
     typedef struct {
         cTime t_tag;
+        int epoch_idx;
         SOL_STAT stat;
         SOL_INS_STAT ins_stat;
+        int observed_sat_num;
         int valid_sat_num;
         Vector3d pos;
         Vector3d vel;
@@ -347,6 +355,7 @@ namespace PPPLib{
         int NumDcb();
         int NumIfb();
         int NumGloIfcb();
+        int NumGloIfpb();
         int NumTrp();
         int NumIon();
         int NumAmb();
@@ -361,6 +370,7 @@ namespace PPPLib{
         int IndexDcb(int sys_index);
         int IndexIfb(int sys_index);
         int IndexGloIfcb(int i);
+        int IndexGloIfpb();
         int IndexTrp();
         int IndexIon(int sat_no);
         int IndexAmb(int f,int sat_no);

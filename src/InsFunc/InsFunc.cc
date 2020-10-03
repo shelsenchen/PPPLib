@@ -285,9 +285,11 @@ namespace PPPLib {
         F.block<3,3>(ia,ibg)=Cbe;
 
         //ba-ba
-        F.block<3,3>(iba,iba)=Matrix3d::Identity()*(-1.0/C.insC.correction_time_ba);
+//        F.block<3,3>(iba,iba)=Matrix3d::Identity()*(-1.0/C.insC.correction_time_ba);
+        F.block<3,3>(iba,iba)=Matrix3d::Zero();
         //bg-bg
-        F.block<3,3>(ibg,ibg)=Matrix3d::Identity()*(-1.0/C.insC.correction_time_bg);
+//        F.block<3,3>(ibg,ibg)=Matrix3d::Identity()*(-1.0/C.insC.correction_time_bg);
+        F.block<3,3>(ibg,ibg)=Matrix3d::Zero();
 
         return MatrixXd::Identity(nx,nx)+F*dt;
     }
@@ -342,6 +344,19 @@ namespace PPPLib {
         LOG(DEBUG)<<"   "<<"POSITION:(e)"<<setw(13)<<std::fixed<<setprecision(4)<<imu_info.re.transpose()<<" m";
         LOG(DEBUG)<<"   "<<"GYRO BIAS:  "<<setw(13)<<std::fixed<<setprecision(6)<<imu_info.bg.transpose()<<" ";
         LOG(DEBUG)<<"   "<<"ACCE BIAS:  "<<setw(13)<<std::fixed<<setprecision(6)<<imu_info.ba.transpose()<<" ";
+    }
+
+    cInsAlign::cInsAlign() {}
+
+    cInsAlign::cInsAlign(cImuData imu_data,tPPPLibConf C) {
+        imu_data_=&imu_data;
+        C_=C;
+    }
+
+    cInsAlign::~cInsAlign() {}
+
+    bool cInsAlign::CoarseAlign(tImuInfoUnit &imu_info) {
+
     }
 
     void AdjustImuData(tImuDataUnit& imu_data,IMU_COORD_TYPE coord_type,IMU_DATA_FORMAT data_format,GYRO_DATA_FORMAT gyro_val_format,double dt) {
