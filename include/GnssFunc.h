@@ -135,6 +135,7 @@ namespace PPPLib{
         vector<tBrdGloEphUnit> brd_glo_eph;
         vector<tPreOrbUnit> pre_eph;
         vector<tPreClkUnit> pre_clk;
+        vector<tPreClkUnit> pre_irc;
         vector<tErpUnit>erp_paras;
         vector<tTecUnit>tec_paras;
 

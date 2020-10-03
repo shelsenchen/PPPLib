@@ -13,8 +13,6 @@ namespace PPPLib{
 
     cSolver::~cSolver() {}
 
-
-
     int cSolver::GnssObsRes(int post, tPPPLibConf C, double *x) {
 
     }

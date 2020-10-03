@@ -231,12 +231,6 @@ static int ParsePara(int arc,char *arv[], string& conf_file)
         else if(!strcmp(arv[i],"-M")&&i+1<arc){
             mode=arv[++i];
         }
-//        else if(!strcmp(arv[i],"-T")&&i+1<arc){
-//            if(sscanf(arv[++i],"%lf/%lf/%lf",ep,ep+1,ep+2)<3){
-//                fprintf(stderr, "PROCESS DATE FORMAT ERROR: yyyy/mm/dd\n");
-//                return 0;
-//            }
-//        }
         else if(!strcmp(arv[i],"-S")&&i+1<arc){
             p=arv[++i];
             for(;*p&&*p!=' ';p++){
@@ -279,8 +273,6 @@ static int ParsePara(int arc,char *arv[], string& conf_file)
 
     string logini_path = SetLogConfPath("");
     InitLog(arc,arv,logini_path,level);
-
-//    kConf.prc_date.Epoch2Time(ep);
 
     Config::Ptr_ config=Config::GetInstance();
     if(!config->Open(conf_file)){

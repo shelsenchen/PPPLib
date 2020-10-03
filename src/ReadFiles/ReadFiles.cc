@@ -1459,7 +1459,6 @@ namespace PPPLib{
                         sat=cSat(line_str_.substr(3,3));
                         sat.SatId2No();
                         if(sat.sat_.no>0&&sscanf(line_str_.c_str()+40,"%lf",&bias)==1){
-//                            Str2Double(line_str_.substr( 40,15),bias);
                             nav_->wide_line_bias[sat.sat_.no-1]=bias;
                         }
                     }
