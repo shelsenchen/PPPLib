@@ -46,9 +46,6 @@ namespace PPPLib {
         FILE *fout_;
         string buff_;
         FILE *fout_stat_;
-        FILE *fout_bias_;
-        FILE *fout_trp_;
-        FILE *fout_ion_;
         ofstream  f_stat_;
 
     public:
