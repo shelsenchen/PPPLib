@@ -127,7 +127,7 @@ namespace PPPLib {
         tGnssSignal* GetGnssSignal();
         unsigned char Signal2Code(string signal,int* frq,int sat_sys);
         string Code2Signal(unsigned char code,int* frq,int sat_sys);
-        int GetCodePri(int sat_sys, unsigned char code);
+        int GetCodePri(int sat_sys, unsigned char code,int type);
         void GnssSignalIndex(int sat_sys,string obs_code_type[MAX_GNSS_CODE_TYPE]);
 
     private:
@@ -364,6 +364,8 @@ namespace PPPLib {
         int cols_;
         char sep_;
     };
+
+    extern bool GetRefPosFrmSnx(tPPPLibConf& C,string path,Vector3d& ref_pos);
 }
 
 #endif //PPPLIB_READFILES_H

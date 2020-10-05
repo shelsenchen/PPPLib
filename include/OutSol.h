@@ -24,21 +24,24 @@ namespace PPPLib {
         tSolInfoUnit CompareSol(tSolInfoUnit& sol,tSolInfoUnit& ref_sol);
 
         int OutEcef(unsigned char* buff,const char *s,tSolInfoUnit& sol);
+        int OutEnu(unsigned char* buff,const char *s,tSolInfoUnit& sol);
+        int OutBlh(unsigned char* buff,const char *s,tSolInfoUnit& sol);
         int OutSolStat(tSolInfoUnit *sol,tSatInfoUnit *sat_infos,char *buff);
-        int OutSolStat1(tSolInfoUnit *sol, tSatInfoUnit *sat_infos, char *buff);
+        int PPPLibOut(tSolInfoUnit *sol,vector<tSatInfoUnit>& epoch_sat_info);
+        void PPPLibOutSat(vector<tSatInfoUnit>& epoch_sat_info);
 
     public:
         bool InitOutSol(tPPPLibConf C,string file);
         void WriteHead();
 
-        void WriteSol(tSolInfoUnit sol,int epoch);
-
+        void WriteSol(tSolInfoUnit sol,vector<tSatInfoUnit>&epoch_sat_info);
         void WriteSatStat(tSolInfoUnit *sol,tSatInfoUnit *sat_infos);
-
-        void WriteSolStat(tSolInfoUnit *sol,tSatInfoUnit *sat_infos);
 
         void WriteImuHead();
         void WriteImuObs();
+
+    public:
+        tSolInfoUnit ref_sol_;
 
     private:
         int ref_index_=0;
@@ -47,6 +50,7 @@ namespace PPPLib {
         string buff_;
         FILE *fout_stat_;
         ofstream  f_stat_;
+        ofstream  ppplib_out_;
 
     public:
         vector<tSolInfoUnit> ref_sols_;

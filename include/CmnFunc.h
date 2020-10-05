@@ -266,25 +266,22 @@ namespace PPPLib{
         string blq;
         string imu;
         string gsof;
-        string ref;
+        string kine_ref;
+        string snx;
         string sol;
         string sol_stat;
-        string sol_bias;
-        string sol_trp;
-        string sol_ion;
     }tFileConf;
 
     typedef struct{
+        int sol_fmt;     //0: ppplib fmt  1: rtklib fmt
         bool out_sol;
         bool out_head;
         bool out_vel;
-        bool out_bias; //clock, isb and ifcb
         bool out_trp;
-        bool out_ion;
         bool out_att;
         bool out_ba;
         bool out_bg;
-        bool out_err;
+        bool out_err_fmt;
         bool out_stat;
         int out_ins_mech_frq;
         COORDINATE_TYPE sol_coord;

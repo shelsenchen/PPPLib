@@ -125,8 +125,10 @@ namespace PPPLib{
             //first frequency
             f1=frqs[0];f2=frqs[1];f3=frqs[2];
             if(C.gnssC.adj_obs) AdjustObsInd(epoch_sat_obs.epoch_data.at(i),&f1,&f2,&f3);
+
             if(sat_info.sat.sat_.sys==SYS_GLO) gnss_obs_operator_.ReAlignObs(C,sat_info,epoch_sat_obs.epoch_data.at(i),0,frqs[0],f1,nav_.glo_frq_num);
             else gnss_obs_operator_.ReAlignObs(C,sat_info,epoch_sat_obs.epoch_data.at(i),0,frqs[0],f1,nullptr);
+
             sat_info.c_var_factor[0]=1.0;
             sat_info.p_var_factor[0]=1.0;
 
@@ -967,7 +969,7 @@ namespace PPPLib{
                         ppplib_sol_.dops[1],epoch_sat_obs_.sat_num,num_valid_sat_);
                 LOG(DEBUG)<<buff;
 
-                out_->WriteSol(ppplib_sol_,epoch_idx_);
+                out_->WriteSol(ppplib_sol_,epoch_sat_info_collect_);
                 epoch_sat_info_collect_.clear();
             }
             else{
@@ -1120,6 +1122,11 @@ namespace PPPLib{
         out_->InitOutSol(ppp_conf_,ppp_conf_.fileC.sol);
         out_->WriteHead();
         out_->ref_sols_=ref_sols_;
+        if(ppp_conf_.solC.out_err_fmt&&!ppp_conf_.fileC.snx.empty()){
+            if(!GetRefPosFrmSnx(ppp_conf_,ppp_conf_.fileC.snx,out_->ref_sol_.pos)){
+                ppp_conf_.solC.out_err_fmt=false;
+            }
+        }
 
         tPPPLibConf spp_conf=C;
         spp_conf.mode=MODE_SPP;
@@ -1287,7 +1294,7 @@ namespace PPPLib{
 
         if(ppplib_sol_.stat==SOL_PPP&&C.gnssC.ar_mode>=AR_PPP_AR){
             VectorXd xa=x;
-#if 1
+#if 0
             if(ResolvePppAmb(2,x, Px)){
 
                 if(!GnssObsRes(5,C,x.data(),re)){
@@ -1305,24 +1312,48 @@ namespace PPPLib{
             else{
                 int a=1;
             }
+
 #else
-            if(ResolverPppAmb1(2,xa.data())){
+            if(C.gnssC.ar_prod==AR_PROD_IC_CNES){
+                if(ResolvePppAmb(2,x, Px)){
 
-                if(!GnssObsRes(5,C,xa.data(),re)){
-                    if(tc_mode_){
-                        CloseLoopState(x,&cur_imu_info_);
-                        RemoveLever(cur_imu_info_,C.insC.lever,re,ve);
+                    if(!GnssObsRes(5,C,x.data(),re)){
+                        if(tc_mode_){
+                            CloseLoopState(x,&cur_imu_info_);
+                            RemoveLever(cur_imu_info_,C.insC.lever,re,ve);
 
+                        }
+                        else{
+                            re<<full_x_[0],full_x_[1],full_x_[2];
+                        }
+                        ppplib_sol_.stat=SOL_FIX;
                     }
-                    else{
-                        re<<full_x_[0],full_x_[1],full_x_[2];
-                    }
-                    ppplib_sol_.stat=SOL_FIX;
+                }
+                else{
+                    int a=1;
                 }
             }
-            else{
-                int a=1;
+            else if(C.gnssC.ar_prod==AR_PROD_FCB){
+                if(ResolvePppAmb_FCB_EL(2,x, Px)){
+
+                    if(!GnssObsRes(5,C,x.data(),re)){
+                        if(tc_mode_){
+                            CloseLoopState(x,&cur_imu_info_);
+                            RemoveLever(cur_imu_info_,C.insC.lever,re,ve);
+
+                        }
+                        else{
+                            re<<full_x_[0],full_x_[1],full_x_[2];
+                        }
+                        ppplib_sol_.stat=SOL_FIX;
+                    }
+                }
+                else{
+                    int a=1;
+                }
             }
+
+
 #endif
         }
 
@@ -1377,7 +1408,7 @@ namespace PPPLib{
             for(int i=0;i<3;i++) ppplib_sol_.q_pos[ip+i]=real_Px_fix_(ip+i,ip+i);
         }
 
-        if(ppp_conf_.solC.out_sol) out_->WriteSol(ppplib_sol_,epoch_idx_);
+        if(ppp_conf_.solC.out_sol) out_->WriteSol(ppplib_sol_,epoch_sat_info_collect_);
         if(ppp_conf_.solC.out_stat) out_->WriteSatStat(&ppplib_sol_,previous_sat_info_);
     }
 
@@ -2762,6 +2793,7 @@ namespace PPPLib{
 
             if(sat_info->el_az[0]*R2D<ppp_conf_.gnssC.ele_min) continue;
 
+            double bias=sat_info->cp_bias[0];
             double P1=sat_info->raw_P[0],P2=sat_info->raw_P[1];
             double L1=sat_info->raw_L[0],L2=sat_info->raw_L[1];
             double lam1=sat_info->lam[0],lam2=sat_info->lam[1];
@@ -2810,7 +2842,7 @@ namespace PPPLib{
         double wl_bias2=nav_.wide_line_bias[sat2-1];
         double wl1=(lc_amb1->lc_amb[0])/lam_wl-wl_bias1;  //cycle
         double wl2=(lc_amb2->lc_amb[0])/lam_wl-wl_bias2;
-        sd_wl_amb=wl1-wl2+(wl_bias1-wl_bias2);
+        sd_wl_amb=wl1-wl2;
 
         *sd_fix_wl=(int)floor(sd_wl_amb+0.5);
         *res_wl=*sd_fix_wl-sd_wl_amb;
@@ -2899,8 +2931,6 @@ namespace PPPLib{
         buff.clear();
         ss[0]='\0';
 
-        cout<<Q<<endl;
-        cout<<B1<<endl;
         N1=MatrixXd::Zero(n,2);
         if((info=lambda_.IntegerAmb(B1,Q,N1,m,2,s))){
             LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" PPP LAMBDA ERROR";
@@ -2993,7 +3023,7 @@ namespace PPPLib{
                 k=para_.IndexAmb(0,sat2[i]);
                 if(!MatchNlFcb(sat1[i],sat2[i],&nl_fcb1,&nl_fcb2)) continue;
 
-                float_nl =(x[j]-x[k]+beta*lam2*fix_wls[i])/lam_nl+(nl_fcb1-nl_fcb2);
+                float_nl =(x[j]-x[k]+beta*lam2*fix_wls[i])/lam_nl-(nl_fcb1-nl_fcb2);
                 round_nl=(int)floor(float_nl+0.5);
                 res_nl=float_nl-round_nl;
                 fix_flag=fabs(res_nl)<=0.15;
@@ -3077,7 +3107,7 @@ namespace PPPLib{
         for(i=0;i<m;i++){
             buff[0]='\0';
             fix_if_ambs[i]=0.0;
-            fix_if_ambs[i]=lam_nl*(fix_nl_ambs(i,0)-sd_nl_fcbs[i])-lam2*beta*(fix_wls[i]);
+            fix_if_ambs[i]=lam_nl*(fix_nl_ambs(i,0)+sd_nl_fcbs[i])-lam2*beta*(fix_wls[i]);
             j=para_.IndexAmb(0,sat1[i]);
             k=para_.IndexAmb(0,sat2[i]);
             sprintf(buff,"REFACTOR SD_IF_AMB(%s-%s): float_if_amb=%6.3f-%6.3f=%6.3f fixed_if_amb=%6.3f",
@@ -3096,6 +3126,8 @@ namespace PPPLib{
         vector<int>sat_no1,sat_no2,fix_wls;
         vector<double>res_wls;
 
+        AverageLcAmb();
+
         ppplib_sol_.ratio=0.0;
         if(ppp_conf_.gnssC.ar_mode==AR_OFF||ppp_conf_.gnssC.ar_thres[0]<1.0){
             ppplib_sol_.num_ar_sat=0;
@@ -3109,7 +3141,6 @@ namespace PPPLib{
 
         ppplib_sol_.num_ar_sat=nb;
 
-        AverageLcAmb();
 #if 1
         for(i=0;i<3;i++) var+=SQRT(full_Px_(i,i));
         var=var/3.0;
@@ -3881,7 +3912,7 @@ namespace PPPLib{
         for(int i=0;i<3;i++) spp_solver_->full_x_[i]=full_x_[i];
         ppplib_sol_.valid_sat_num=num_valid_sat_;
 
-        if(ppk_conf_.solC.out_sol) out_->WriteSol(ppplib_sol_,epoch_idx_);
+        if(ppk_conf_.solC.out_sol) out_->WriteSol(ppplib_sol_,epoch_sat_info_collect_);
         if(ppk_conf_.solC.out_stat) out_->WriteSatStat(&ppplib_sol_,previous_sat_info_);
     }
 
@@ -5449,9 +5480,9 @@ namespace PPPLib{
             pre_imu_info_=cur_imu_info_;
             if(C.solC.out_ins_mech_frq!=0&&ins_mech_idx%C.solC.out_ins_mech_frq==0&&ppplib_sol_.ins_stat==SOL_INS_MECH){
                 ppplib_sol_.valid_sat_num=0;
-                out_->WriteSol(ppplib_sol_,epoch_idx_);
+                out_->WriteSol(ppplib_sol_,epoch_sat_info_collect_);
             }
-            else if(ppplib_sol_.ins_stat!=SOL_INS_MECH) out_->WriteSol(ppplib_sol_,epoch_idx_);
+            else if(ppplib_sol_.ins_stat!=SOL_INS_MECH) out_->WriteSol(ppplib_sol_,epoch_sat_info_collect_);
         }
     }
 
@@ -5459,7 +5490,7 @@ namespace PPPLib{
         gnss_solver_->epoch_idx_=epoch_idx_;
         gnss_solver_->epoch_sat_obs_=epoch_sat_obs_;
         if(gnss_solver_->SolverEpoch()){
-            gnss_solver_->out_->WriteSol(gnss_solver_->ppplib_sol_,epoch_idx_);
+            gnss_solver_->out_->WriteSol(gnss_solver_->ppplib_sol_,epoch_sat_info_collect_);
         }
     }
 

@@ -397,8 +397,8 @@ namespace PPPLib {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     };
 
-    const string kGnssSignalPriors[NSYS][MAX_GNSS_FRQ_NUM]{
-            {"CWPYMNSL", "CWPYMNDSLX",      "IQX",         "",        "",    ""},
+    const string kGnssSignalCodePriors[NSYS][MAX_GNSS_FRQ_NUM]{
+            {"WCPYMNSL", "WCPYMNDSLX",      "IQX",         "",        "",    ""},
             {     "IQX",      "IQXA",      "IQX",     "DPXA",     "DPX", "DPZ"},
             {   "CABXZ",       "IQX",      "IQX",      "IQX",   "CABXZ",    ""},
             {      "CP",        "CP",      "IQX",      "ABX",    "ABXP",    ""},

@@ -371,11 +371,17 @@ namespace PPPLib{
                 }
                 if(i==0){
                     cbias_[SYS_INDEX_GPS][0]=beta*DCB_p1p2;     // L1
-                    if(sat_info_->P_code[i]==GNSS_CODE_L1C) cbias_[SYS_INDEX_GPS][i]+=code_bias_[sat_no-1][GPS_C1CC1W];
+                    if(sat_info_->P_code[i]==GNSS_CODE_L1C){
+                        cbias_[SYS_INDEX_GPS][i]+=code_bias_[sat_no-1][GPS_C1CC1W];
+                        sat_info_->cp_bias[0]=code_bias_[sat_no-1][GPS_C1CC1W];
+                    }
                 }
                 else if(i==1){
                     cbias_[SYS_INDEX_GPS][1]=-alpha*DCB_p1p2;   // L2
-                    if(sat_info_->P_code[i]==GNSS_CODE_L2C) cbias_[SYS_INDEX_GPS][i]+=code_bias_[sat_no-1][GPS_C2CC2W];
+                    if(sat_info_->P_code[i]==GNSS_CODE_L2C){
+                        cbias_[SYS_INDEX_GPS][i]+=code_bias_[sat_no-1][GPS_C2CC2W];
+                        sat_info_->cp_bias[0]=code_bias_[sat_no-1][GPS_C2CC2W];
+                    }
                     else if(sat_info_->P_code[i]==GNSS_CODE_L2S) cbias_[SYS_INDEX_GPS][i]-=code_bias_[sat_no-1][GPS_C2WC2S];
                     else if(sat_info_->P_code[i]==GNSS_CODE_L2L) cbias_[SYS_INDEX_GPS][i]-=code_bias_[sat_no-1][GPS_C2WC2L];
                     else if(sat_info_->P_code[i]==GNSS_CODE_L2X) cbias_[SYS_INDEX_GPS][i]-=code_bias_[sat_no-1][GPS_C2WC2X];

@@ -201,15 +201,16 @@ static void LoadConf()
 
     tSolConf *solC=&kConf.solC;
     solC->out_sol=config->Get<int>("out_sol");
+    solC->sol_coord= static_cast<COORDINATE_TYPE>(config->Get<int>("sol_coord"));
+    solC->sol_fmt=config->Get<int>("sol_fmt");
     solC->out_head=config->Get<int>("out_head");
     solC->out_vel=config->Get<int>("out_vel");
-    solC->out_bias=config->Get<int>("out_bias");
     solC->out_trp=config->Get<int>("out_trp");
-    solC->out_ion=config->Get<int>("out_ion");
     solC->out_att=config->Get<int>("out_att");
     solC->out_ba=config->Get<int>("out_ba");
     solC->out_bg=config->Get<int>("out_bg");
     solC->out_stat=config->Get<int>("out_stat");
+    solC->out_err_fmt=config->Get<int>("out_err_fmt");
     solC->out_ins_mech_frq=config->Get<int>("out_ins_mech_frq");
 }
 
@@ -356,7 +357,7 @@ static int Processer()
         else if(strstr(file->d_name,"gsof")) continue;
         else if(!(ext=strrchr(file->d_name,'.'))) continue;
         else if(!strstr(ext+3,"o")) continue;
-        else if(kConf.use_custom_dir&&!kConf.site_name.empty()&&!strstr(file->d_name,kConf.site_name.c_str())) continue;
+        else if(!kConf.site_name.empty()&&!strstr(file->d_name,kConf.site_name.c_str())) continue;
 
         f[0]='\0';
         sprintf(f,"%s%c%s",data_dir.c_str(),FILEPATHSEP,file->d_name);

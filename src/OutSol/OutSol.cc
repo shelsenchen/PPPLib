@@ -86,12 +86,6 @@ namespace PPPLib{
         return (int)(p-buff);
     }
 
-    int cOutSol::OutSolStat1(tSolInfoUnit *sol, tSatInfoUnit *sat_infos, char *buff) {
-        if(sol->stat<=SOL_NONE) return 0;
-
-        char *p=buff;
-    }
-
     void cOutSol::WriteSatStat(tSolInfoUnit *sol,tSatInfoUnit *sat_infos) {
         char buff[8191+1];
 
@@ -135,33 +129,6 @@ namespace PPPLib{
         }
     }
 
-    void cOutSol::WriteSolStat(tSolInfoUnit *sol, tSatInfoUnit *sat_infos) {
-        int week;
-        double wos;
-        wos=sol->t_tag.Time2Gpst(&week,nullptr,SYS_GPS);
-        bool coupled=sol->ins_stat>SOL_INS_NONE? true:false;
-
-        char epoch[1024]={'\0'};
-        /* $EPOCH  epoch_time GPS_week wos epoch_idx sol_stat sol_ins_stat observed_num valid_num*/
-        sprintf(epoch,"$EPOCH  %22s %4d %6.1f %5d %d %d %2d %2d %3.1f\n",sol->t_tag.GetTimeStr(1).c_str(),week,wos,sol->epoch_idx,sol->stat,sol->ins_stat,
-                sol->observed_sat_num,sol->valid_sat_num,sol->dops[0]);
-        f_stat_<<epoch;
-        /* $POS    x y z*/
-        char pos[1024]={'\0'};
-
-        sprintf(pos,"$POS    %12.3f %12.3f %12.3f",sol->pos[0],sol->pos[1],sol->pos[2]);
-        f_stat_<<pos;
-
-        char clk[1024]={'\0'};
-        sprintf(clk,"$CLK    %9.2f %9.2f %9.2f %9.2f %9.2f",sol->clk_error[0],sol->clk_error[1],sol->clk_error[2],
-                sol->clk_error[3],sol->clk_error[4]);
-        f_stat_<<clk;
-
-        char trp[1024]={'\0'};
-        sprintf(trp,"$TRP    %5.2f %5.2f",sol->zenith_trp_delay[0],sol->zenith_trp_delay[1]);
-        f_stat_<<trp;
-    }
-
     int cOutSol::OutEcef(unsigned char *buff, const char *s, tSolInfoUnit &sol) {
         const char *sep=" ";
         char *p=(char *)buff;
@@ -200,61 +167,187 @@ namespace PPPLib{
         return p-(char*)buff;
     }
 
+    int cOutSol::PPPLibOut(tSolInfoUnit *sol, vector<tSatInfoUnit>& epoch_sat_info) {
+        Vector3d pre_pos(0,0,0),out_pos(0,0,0),dr(0,0,0);
+        bool dgnss=C_.mode==MODE_PPK||C_.mode_opt==MODE_OPT_PPK;
+
+        // 首先坐标都表示在ｅ系下
+
+
+        if(C_.solC.sol_coord==COORD_ENU){
+            Vector3d blh(0,0,0);
+            if(dgnss){
+                blh=Xyz2Blh(C_.gnssC.rb);
+                dr=sol->pos-C_.gnssC.rb;
+                out_pos=Xyz2Enu(blh,dr);
+                if(C_.solC.out_err_fmt){
+                    Vector3d ref_dr=ref_sol_.pos-C_.gnssC.rb;
+                    Vector3d ref_pos_enu=Xyz2Enu(blh,ref_dr);
+                    out_pos-=ref_pos_enu;
+                }
+            }
+            else{
+                blh=Xyz2Blh(ref_sol_.pos);
+                dr=sol->pos-ref_sol_.pos;
+                out_pos=Xyz2Enu(blh,dr);  //PPP enu模式即为err_fmt
+            }
+        }
+        else if(C_.solC.sol_coord==COORD_BLH){
+
+
+        }
+        else if(C_.solC.sol_coord==COORD_XYZ){
+            out_pos=sol->pos;
+            if(C_.solC.out_err_fmt){
+                out_pos-=ref_sol_.pos;
+            }
+        }
+
+        double wos=0;
+        int week=0;
+
+        wos=sol->t_tag.Time2Gpst(&week,nullptr,SYS_GPS);
+        char epoch[1024]={'\0'};
+        sprintf(epoch,"$EPOCH    %12s %4d %10.2f %5d %d %3d %3d %5.1f",
+                sol->t_tag.GetTimeStr(1).c_str(),week,wos,sol->epoch_idx,sol->stat,sol->observed_sat_num,sol->valid_sat_num,sol->dops[1]);
+        ppplib_out_<<epoch<<endl;
+
+        if(sol->stat>SOL_NONE){
+            char pos[1024]={'\0'};
+            int d=12;
+            if(C_.solC.out_err_fmt) d=5;
+            sprintf(pos,"$POS   %12.3f %12.3f %12.3f\n",out_pos[0],out_pos[1],out_pos[2]);
+            char clk[1024]={'\0'};
+            sprintf(clk,"$CLK   %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f\n",sol->clk_error[0],sol->clk_error[1],sol->clk_error[2],sol->clk_error[3],sol->clk_error[4],sol->clk_error[5]);
+            char trp[1024]={'\0'};
+            sprintf(trp,"$TRP   %12.3f %12.3f\n",sol->zenith_trp_delay[0],sol->zenith_trp_delay[1]);
+            ppplib_out_<<pos;
+            ppplib_out_<<clk;
+            ppplib_out_<<trp;
+            if(C_.solC.out_stat){
+             PPPLibOutSat(epoch_sat_info);
+            }
+            ppplib_out_<<endl;
+        }
+        else{
+            if(C_.solC.out_stat){
+                PPPLibOutSat(epoch_sat_info);
+            }
+            ppplib_out_<<endl;
+        }
+    }
+
+    void cOutSol::PPPLibOutSat(vector<tSatInfoUnit>& epoch_sat_info) {
+        int i,sat_no=0;
+        tSatInfoUnit sat_info;
+
+        for(i=0;i<epoch_sat_info.size();i++){
+            sat_info=epoch_sat_info[i];
+            if(sat_info.stat==SAT_NO_USE||sat_info.stat>SAT_USED){
+                for(int j=0;j<MAX_GNSS_USED_FRQ_NUM;j++){
+                    sat_info.post_res_L[j]=sat_info.post_res_P[j]=0.0;
+                }
+            }
+
+            char info[1024]={'\0'};
+            char res[1024]={'\0'};
+            char amb[1024]={'\0'};
+            char trp[1024]={'\0'};
+            char ion[1024]={'\0'};
+            char loc[1024]={'\0'};
+            // info: id, stat, az, el;
+            sprintf(info,"$SAT     %4s %d %6.1f %6.1f",sat_info.sat.sat_.id.c_str(),sat_info.stat,sat_info.el_az[1]*R2D,sat_info.el_az[0]*R2D);
+
+            // res: P1(IF_P),P2,P3(m), L1(IF_L),L2,L3(mm)
+            sprintf(res,"%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f",sat_info.post_res_P[0],sat_info.post_res_P[1],
+                    sat_info.post_res_P[2],sat_info.post_res_L[0],sat_info.post_res_L[1],sat_info.post_res_L[2]);
+
+            // amb: L1(IF_L), L2, L3, MW, SMW
+            sprintf(amb,"%8.3f %8.3f %8.3f %8.3f %8.3f",sat_info.float_amb[0],sat_info.float_amb[1],sat_info.float_amb[2],sat_info.raw_mw[0],sat_info.sm_mw[0]);
+
+            // trp: strp_h,strp_w,map_h,map_w
+            sprintf(trp,"%6.3f %6.3f %6.3f %6.3f",sat_info.trp_dry_delay[0],sat_info.trp_wet_delay[0],sat_info.trp_dry_delay[1],sat_info.trp_wet_delay[1]);
+
+            // ion: sion
+            sprintf(ion,"%6.3f",sat_info.ion_delay[0]);
+
+            // lock and outc
+            sprintf(loc,"%5d %5d",sat_info.lock[0],sat_info.outc[0]);
+
+            ppplib_out_<<info<<" "<<res<<" "<<amb<<" "<<trp<<" "<<ion<<" "<<loc<<endl;
+        }
+    }
+
     bool cOutSol::InitOutSol(tPPPLibConf C, string file) {
         C_=C;
-        fout_=fopen(file.c_str(),"w");
-        if(C_.solC.out_stat&&!C_.fileC.sol_stat.empty()){
-            fout_stat_=fopen(C_.fileC.sol_stat.c_str(),"w");
+        if(!C_.solC.sol_fmt){
+            ppplib_out_.open(C_.fileC.sol,ios::out);
         }
-
-        if(C_.solC.out_bias&&!C_.fileC.sol_bias.empty()){
-            fout_bias_=fopen(C_.fileC.sol_bias.c_str(),"w");
-        }
-
-        if(C_.solC.out_trp&&!C_.fileC.sol_trp.empty()){
-            fout_trp_=fopen(C_.fileC.sol_trp.c_str(),"w");
+        else{
+            fout_=fopen(file.c_str(),"w");
+            if(C_.solC.out_stat&&!C_.fileC.sol_stat.empty()){
+                fout_stat_=fopen(C_.fileC.sol_stat.c_str(),"w");
+            }
         }
 
     }
 
     void cOutSol::WriteHead() {
         if(!C_.solC.out_head) return;
-        const char *sep=" ";
-        fprintf(fout_,"%s  %-*s%s%14s%s%14s%s%14s%s%3s%s%3s%s%8s%s%8s%s%8s%s%8s%s%8s%s%8s%s%6s%s%6s%s%6s",
-                   COMMENTH,20,"GPST",sep,"x-ecef(m)",sep,"y-ecef(m)",sep,"z-ecef(m)",sep,"Q",sep,"ns",sep,
-                   "sdx(m)",sep,"sdy(m)",sep,"sdz(m)",sep,"sdxy(m)",sep,
-                   "sdyz(m)",sep,"sdzx(m)",sep,"age(s)",sep,"ratio",sep,"sigma");
-        if(C_.mode>=MODE_INS){
-            fprintf(fout_,"%s%4s",sep,"QINS");
+
+        if(C_.solC.sol_fmt){
+            const char *sep=" ";
+            fprintf(fout_,"%s  %-*s%s%14s%s%14s%s%14s%s%3s%s%3s%s%8s%s%8s%s%8s%s%8s%s%8s%s%8s%s%6s%s%6s%s%6s",
+                    COMMENTH,20,"GPST",sep,"x-ecef(m)",sep,"y-ecef(m)",sep,"z-ecef(m)",sep,"Q",sep,"ns",sep,
+                    "sdx(m)",sep,"sdy(m)",sep,"sdz(m)",sep,"sdxy(m)",sep,
+                    "sdyz(m)",sep,"sdzx(m)",sep,"age(s)",sep,"ratio",sep,"sigma");
+
+            if(C_.mode>=MODE_INS){
+                fprintf(fout_,"%s%4s",sep,"QINS");
+            }
+            if(C_.solC.out_vel){
+                fprintf(fout_,"%s%10s%s%10s%s%10s%s%9s%s%8s%s%8s%s%8s%s%8s%s%8s",
+                        sep,"vn(m/s)",sep,"ve(m/s)",sep,"vu(m/s)",sep,"sdvn",sep,
+                        "sdve",sep,"sdvu",sep,"sdvne",sep,"sdveu",sep,"sdvun");
+            }
+            if(C_.solC.out_att&&C_.mode>=MODE_INS){
+                fprintf(fout_,"%s%10s%s%10s%s%10s%s%10s%s%10s%s%10s",
+                        sep,"roll(deg)",sep,"pitch(deg)",sep,"yaw(deg)",
+                        sep,"sdroll",sep,"sdpitch",sep,"sdyaw");
+            }
+            if(C_.solC.out_ba&&C_.mode>=MODE_IGLC){
+                fprintf(fout_,"%s%10s%s%10s%s%10s",sep,"bax(m/s^2)",sep,"bay(m/s^2)",sep,"baz(m/s^2)");
+            }
+            if(C_.solC.out_bg&&C_.mode>=MODE_IGLC){
+                fprintf(fout_,"%s%10s%s%10s%s%10s",sep,"bgx(rad/s)",sep,"bgy(rad/s)",sep,"bgz(rad/s)");
+            }
+            fprintf(fout_,"\n");
         }
-        if(C_.solC.out_vel){
-            fprintf(fout_,"%s%10s%s%10s%s%10s%s%9s%s%8s%s%8s%s%8s%s%8s%s%8s",
-                       sep,"vn(m/s)",sep,"ve(m/s)",sep,"vu(m/s)",sep,"sdvn",sep,
-                       "sdve",sep,"sdvu",sep,"sdvne",sep,"sdveu",sep,"sdvun");
+        else{
+
         }
-        if(C_.solC.out_att&&C_.mode>=MODE_INS){
-            fprintf(fout_,"%s%10s%s%10s%s%10s%s%10s%s%10s%s%10s",
-                       sep,"roll(deg)",sep,"pitch(deg)",sep,"yaw(deg)",
-                       sep,"sdroll",sep,"sdpitch",sep,"sdyaw");
-        }
-        if(C_.solC.out_ba&&C_.mode>=MODE_IGLC){
-            fprintf(fout_,"%s%10s%s%10s%s%10s",sep,"bax(m/s^2)",sep,"bay(m/s^2)",sep,"baz(m/s^2)");
-        }
-        if(C_.solC.out_bg&&C_.mode>=MODE_IGLC){
-            fprintf(fout_,"%s%10s%s%10s%s%10s",sep,"bgx(rad/s)",sep,"bgy(rad/s)",sep,"bgz(rad/s)");
-        }
-        fprintf(fout_,"\n");
     }
 
-    void cOutSol::WriteSol(tSolInfoUnit sol,int epoch) {
+    void cOutSol::WriteSol(tSolInfoUnit sol,vector<tSatInfoUnit>& epoch_sat_info) {
         tSolInfoUnit dsol;
         dsol=sol;
 
         unsigned char p[8191+1];
         char s[256];
+        int n=0;
 
-        int n=OutEcef(p, sol.t_tag.GetTimeStr(3).c_str(),dsol);
-        fwrite(p,n,1,fout_);
+        if(C_.solC.sol_fmt){ // rtklib format
+            switch(C_.solC.sol_coord){
+                case COORD_BLH:
+                case COORD_XYZ:
+                case COORD_ENU:
+                    n=OutEcef(p, sol.t_tag.GetTimeStr(3).c_str(),dsol);
+            }
+            fwrite(p,n,1,fout_);
+        }
+        else{  // ppplib format
+            PPPLibOut(&sol,epoch_sat_info);
+        }
     }
 
     void cOutSol::WriteImuHead() {
@@ -263,7 +356,6 @@ namespace PPPLib{
         fprintf(fout_,"%s %4s%s%14s%s%14s%s%14s%s%14s%s%14s%s%14s%s%14s",
                 COMMENTH,"GPSW",sep,"SOW",sep,"x-acce(m/s^2)",sep,"y-acce(m/s^2)",sep,"z-acce(m/s^2)",sep,"x-gyro(rad/s)",sep,"y-gyro(rad/s)",sep,"z-gyro(rad/s)");
         fprintf(fout_,"\n");
-
     }
 
     void cOutSol::WriteImuObs() {
@@ -282,5 +374,4 @@ namespace PPPLib{
         }
         fclose(fout_);
     }
-
 }

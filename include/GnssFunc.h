@@ -267,6 +267,7 @@ namespace PPPLib{
         double shapiro;
 
         double code_bias[MAX_GNSS_USED_FRQ_NUM];
+        double cp_bias[MAX_GNSS_USED_FRQ_NUM];
         double bd2_mp[3];
         double phase_wp;
         double float_amb[MAX_GNSS_USED_FRQ_NUM]; //L1,L2,L5

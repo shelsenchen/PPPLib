@@ -40,6 +40,23 @@ namespace PPPLib{
             return 0;
         }
 
+        if(C_->solC.out_err_fmt){
+            char f[1024]={'\0'};
+            if(C_->use_custom_dir){
+                sprintf(f,"%s%cigs%2dP%d.snx",C_->data_dir.c_str(),sep_,yy_,week_);
+            }
+            else{
+                sprintf(f,"%s%c%d%c%d%cigs%2dP%d.snx",C_->data_dir.c_str(),sep_,year_,sep_,week_,sep_,yy_,week_);
+            }
+            if((access(f,0))!=-1){
+                C_->fileC.snx=f;f[0]='\0';
+                LOG(DEBUG)<<"ERP FILE: "<<C_->fileC.snx;
+            }
+            else{
+                C_->solC.out_err_fmt=false;
+            }
+        }
+
         return 1;
     }
 
@@ -616,7 +633,7 @@ namespace PPPLib{
         return kGnssSignalCodes[code];
     }
 
-    int cGnssSignal::GetCodePri(int sat_sys, unsigned char code) {
+    int cGnssSignal::GetCodePri(int sat_sys, unsigned char code,int type) {
         if(code==GNSS_CODE_NONE) return 0;
         size_t str_pos;
         string signal;
@@ -633,7 +650,7 @@ namespace PPPLib{
             default:
                 i=0;break;
         }
-        return ((str_pos=kGnssSignalPriors[i][f-1].find(signal[1]))!=string::npos)?14-(int)str_pos:0;
+        return (((str_pos=kGnssSignalCodePriors[i][f-1].find(signal[1]))!=string::npos)?14-(int)str_pos:0);
     }
 
     void cGnssSignal::GnssSignalIndex(int sat_sys, string *obs_code_type) {
@@ -641,11 +658,13 @@ namespace PPPLib{
         string s;
         int i,j,num_signal;
         int k_code=-1,k_phase=-1,k_doppler=-1,k_snr=-1;
+        int type=0;
 
         for(i=num_signal=0;obs_code_type[i][0];i++,num_signal++){
             signal_.code[i]=Signal2Code(obs_code_type[i].substr(1),signal_.frq+i,sat_sys);
             signal_.type[i]=((p=kGnssObsCode.find(obs_code_type[i][0]))!=string::npos)?(int)p:0;
-            signal_.pri[i]=GetCodePri(sat_sys,signal_.code[i]);
+
+            signal_.pri[i]=GetCodePri(sat_sys,signal_.code[i],signal_.type[i]);
             signal_.pos[i]=-1;
         }
 
@@ -2410,6 +2429,47 @@ namespace PPPLib{
         return true;
     }
 
+    bool GetRefPosFrmSnx(tPPPLibConf& C,string path,Vector3d& ref_pos) {
+        ifstream inf;
+        int flag=0;
+        ref_pos<<0,0,0;
+        double *pos=ref_pos.data();
+        string buff,site;
+
+        inf.open(path);
+        if(inf.is_open()){
+            while(getline(inf,buff)&&!inf.eof()){
+                if(buff.find("+SOLUTION/ESTIMATE")!=string::npos) flag=1;
+                if(buff.find("-SOLUTION/ESTIMATE")!=string::npos) {flag=0;break;}
+                if(flag){
+                    site=buff.substr(14,4);
+                    int a=buff.find("STAX");
+                    if((strcasecmp(site.c_str(),C.site_name.c_str())==0)&&(buff.find("STAX")!=-1)){
+                        Str2Double(buff.substr(47,21),pos[0]);
+                        continue;
+                    }
+                    if((strcasecmp(site.c_str(),C.site_name.c_str())==0)&&(buff.find("STAY")!=-1)){
+                        Str2Double(buff.substr(47,21),pos[1]);
+                        continue;
+                    }
+                    if((strcasecmp(site.c_str(),C.site_name.c_str())==0)&&(buff.find("STAZ")!=-1)){
+                        Str2Double(buff.substr(47,21),pos[2]);
+                        break;
+                    }
+                }
+            }
+        }
+        inf.close();
+        if(pos[0]!=0.0){
+            char ref_coor[1024]={'\0'};
+            sprintf(ref_coor,"%s %12.3f %12.3f %12.3f",C.site_name.c_str(),pos[0],pos[1],pos[2]);
+            LOG(INFO)<<ref_coor;
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
 }
 
 
