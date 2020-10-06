@@ -3,7 +3,15 @@ NOTE: The program is still under development, and some bugs still exist in PPPLi
 
 UPDATE LOG
 
-2020/09/24 fixed bugs in LC mode, added PPP qc function, support estimating BD2/BD3 ISB
+2020/09/24 
+    fixed bugs in LC mode 
+    added PPP qc function 
+    support estimating BD2/BD3 ISB
+
+2020/10/06
+    support PPP-AR with IRC or FCB(just supported and should to be optimized)
+    support INS/GNSS tightly coupled(just supported and should to be optimized)
+
 
 **INTRODUCTION**
 
@@ -29,15 +37,15 @@ mode and INS/GNSS loosely coupled mode for real kinematic scene. Detailed inform
 * Multi-GNSS post-kinematic processing
 * Support BDS-3 new satellites and signals
 * Support estimating BD2/BD3 ISB
-* Support INS/GNSS loosely coupled
+* Support INS/GNSS loosely coupled(under testing)
+* Supported INS/GNSS tightly coupled(under testing)
 * Convenient visualization
 
 **WILL BE**　
 
-1. GNSS/INS tightly coupled
-2. PPP ambiguity resolution
-3. Robust processing strategy for real-kinematic scene
-4. Enhance algorithms for GNSS/INS integration
+1. Robust processing strategy for real-kinematic scene
+2. Enhance algorithms for GNSS/INS integration
+3. Visual
 
 **HOW TO USE**
   
@@ -65,7 +73,7 @@ mode and INS/GNSS loosely coupled mode for real kinematic scene. Detailed inform
   PPPLib in Terminal like:
   
   1. cd ../bin
-  2. ./PPPLibMain -C ../conf/PPPLib.ini -M PPP-KINE -S G -L 128 -T 2019/12/01
+  2. ./PPPLibMain -C ../conf/PPP/PPPLib_MGEX.ini -M PPP-KINE -S G -L 128
   
   Note that the path in configuration file should set to your local dir.  
 
@@ -73,7 +81,7 @@ mode and INS/GNSS loosely coupled mode for real kinematic scene. Detailed inform
 
   You should install the MinGW on your Windows computer for gcc compiler. It is recommended to
   use CLion IDE for run and debug. Load the PPPLib project, after cmake completed, you can add program arguments “-C ../conf/PPPLib.ini
-  -M PPP-KINE -S G -L 128 -T 2019/12/01” in Run/Debug Configurations and then the project is ready for running.
+  -M PPP-KINE -S G -L 128” in Run/Debug Configurations and then the project is ready for running.
   
 **DATASET**
   
