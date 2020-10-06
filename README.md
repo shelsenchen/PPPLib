@@ -8,7 +8,7 @@ NOTE: The program is still under development, and some bugs still exist in PPPLi
     added PPP qc function \
     support estimating BD2/BD3 ISB 
 
-2020/10/06
+2020/10/06 \
     support PPP-AR with IRC or FCB(just supported and should to be optimized) \
     support INS/GNSS tightly coupled(just supported and should to be optimized) \
     add python script to plot solution
