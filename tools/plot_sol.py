@@ -14,8 +14,8 @@ START_POS = -1
 ID = START_POS+1
 STAT = START_POS+2
 OBS = START_POS+3
-EL = START_POS+4
-AZ = START_POS+5
+AZ = START_POS+4
+EL = START_POS+5
 RES_P1 = START_POS+6
 RES_P2 = START_POS+7
 RES_P3 = START_POS+8
@@ -351,19 +351,20 @@ def walk_files(dir):
 if __name__ == '__main__':
     BATCH_PLOT = 1
     # 指定路径,若路径后４位为'.pos',则处理单文件，否则处理该路径下的所有.pos文件
-    sol_dir = '/home/cc/dataset/data_batch/2020/2092/041/result_wum/PPP_KINE'
+    # sol_dir = '/home/cc/dataset/data_batch/2020/2092/041/result_wum/PPP_KINE'
+    sol_dir = '/home/cc/dataset/data_batch/2020/2092/041/result_wum/PPP_KINE/G_DF_IF/abmf.pos'
     if sol_dir[-4:] == '.pos':
         BATCH_PLOT = 0
     else:
         BATCH_PLOT = 1
 
     # 指定绘制类型
-    DOP_PLOT = 1  # 绘制卫星数量和pdop
-    ENU_PLOT = 1  # 绘制ENU位置误差
-    TRP_PLOT = 1  # 绘制对流层延迟
+    DOP_PLOT = 0  # 绘制卫星数量和pdop
+    ENU_PLOT = 0  # 绘制ENU位置误差
+    TRP_PLOT = 0  # 绘制对流层延迟
     # 绘制卫星有关，指定卫星id后绘制单颗卫星，不指定则不绘制 　
     SAT_PLOT = AMB1
-    SAT_ID = 'C10'
+    SAT_ID = 'G16'
 
     if BATCH_PLOT:
         walk_files(sol_dir)

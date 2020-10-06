@@ -269,7 +269,8 @@ namespace PPPLib{
             sprintf(trp,"%6.3f %6.3f %6.3f %6.3f",sat_info.trp_dry_delay[0],sat_info.trp_wet_delay[0],sat_info.trp_dry_delay[1],sat_info.trp_wet_delay[1]);
 
             // ion: sion
-            sprintf(ion,"%6.3f",sat_info.ion_delay[0]);
+            double fact=40.30E16/SQR(sat_info.frq[0]);
+            sprintf(ion,"%6.3f",sat_info.ion_delay[0]*fact);
 
             // lock and outc
             sprintf(loc,"%5d %5d",sat_info.lock[0],sat_info.outc[0]);
