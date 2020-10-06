@@ -1,16 +1,17 @@
 NOTE: The program is still under development, and some bugs still exist in PPPLib. Comments and suggestions from users 
       are welcome, please send them to the author.
 
-UPDATE LOG
+**UPDATE LOG**
 
-2020/09/24 
-    fixed bugs in LC mode 
-    added PPP qc function 
-    support estimating BD2/BD3 ISB
+2020/09/24 \
+    fixed bugs in LC mode \
+    added PPP qc function \
+    support estimating BD2/BD3 ISB 
 
 2020/10/06
-    support PPP-AR with IRC or FCB(just supported and should to be optimized)
-    support INS/GNSS tightly coupled(just supported and should to be optimized)
+    support PPP-AR with IRC or FCB(just supported and should to be optimized) \
+    support INS/GNSS tightly coupled(just supported and should to be optimized) \
+    add python script to plot solution
 
 
 **INTRODUCTION**
