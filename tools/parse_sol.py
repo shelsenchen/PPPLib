@@ -175,7 +175,7 @@ def parse_sol(dir, site_name):
                 tmp = data[t-1]
 
                 line = [i.strip() for i in line.split(' ') if i.strip()]
-                if len(line) != 11:
+                if len(line) != 10:
                     raise ValueError
                 time = ' '.join(line[1:3])
                 time = datetime.strptime(time, '%Y/%m/%d %H:%M:%S.0')
@@ -185,7 +185,7 @@ def parse_sol(dir, site_name):
                 line[7] = int(line[7])  # ObsNum
                 line[8] = int(line[8])  # ValidSat
                 line[9] = float(line[9])  # PDOP
-                line[10] = float(line[10])  # SIGMA0
+                # line[10] = float(line[10])  # SIGMA0
 
                 tmp['epoch'] = [time] + line[3:]
             elif line.startswith('$POS'):

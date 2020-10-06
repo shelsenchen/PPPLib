@@ -168,6 +168,8 @@ namespace PPPLib{
     cGnssObsOperator::~cGnssObsOperator() {}
 
     void cGnssObsOperator::ReAlignObs(tPPPLibConf C, tSatInfoUnit &sat_info, tSatObsUnit sat_obs, int f, int raw_idx,int frq_idx,int *glo_frq) {
+
+#if 0
         if(sat_obs.code[raw_idx]==GNSS_CODE_L1W&&sat_obs.P[raw_idx]!=0.0){
             sat_info.P_code[f]=sat_obs.code[raw_idx];
             sat_info.raw_P[f]=sat_obs.P[raw_idx];
@@ -176,7 +178,10 @@ namespace PPPLib{
             sat_info.P_code[f]=sat_obs.code[frq_idx];
             sat_info.raw_P[f]=C.gnssC.csc?sat_obs.CSC_P[frq_idx]:sat_obs.P[frq_idx];
         }
-
+#else
+        sat_info.P_code[f]=sat_obs.code[frq_idx];
+        sat_info.raw_P[f]=C.gnssC.csc?sat_obs.CSC_P[frq_idx]:sat_obs.P[frq_idx];
+#endif
 
         sat_info.raw_L[f]=sat_obs.L[frq_idx];
         sat_info.raw_D[f]=sat_obs.D[frq_idx];
@@ -339,8 +344,8 @@ namespace PPPLib{
         double obs1,obs2,obs3;
         double f1,f2,f3;
         if(type==GNSS_OBS_CODE){
-            obs1=sat_info.raw_P[0]+sat_info.cp_bias[0];
-            obs2=sat_info.raw_P[1]+sat_info.cp_bias[1];
+            obs1=sat_info.raw_P[0]-sat_info.cp_bias[0];
+            obs2=sat_info.raw_P[1]-sat_info.cp_bias[1];
             obs3=sat_info.raw_P[2];
         }
         else if(type==GNSS_OBS_PHASE){

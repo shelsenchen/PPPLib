@@ -1084,7 +1084,7 @@ namespace PPPLib{
             cReadGnssPreEph clk_reader(C.fileC.clk,nav_);
             clk_reader.Reading(1);
 
-            if(C.gnssC.ar_mode==AR_PPP_AR&&C.gnssC.ar_prod==AR_PROD_IC_CNES&&!C.fileC.pr_clk.empty()){
+            if(C.gnssC.ar_mode==AR_PPP_AR&&C.gnssC.ar_prod==AR_PROD_IRC_CNES&&!C.fileC.pr_clk.empty()){
                 cReadGnssPreEph code_clk_reader(C.fileC.pr_clk,nav_);
                 code_clk_reader.irc_pr_clk_=true;
                 code_clk_reader.Reading(1);
@@ -1105,7 +1105,7 @@ namespace PPPLib{
                 blq_reader.Reading();
             }
 
-            if((C.mode==MODE_PPP||C.mode_opt==MODE_OPT_PPP)&&C.gnssC.ar_mode==AR_PPP_AR&&C.gnssC.ar_prod==AR_PROD_FCB){
+            if((C.mode==MODE_PPP||C.mode_opt==MODE_OPT_PPP)&&C.gnssC.ar_mode==AR_PPP_AR&&C.gnssC.ar_prod==AR_PROD_FCB_SGG){
                 cReadFcb fcb_reader(C.fileC.fcb,nav_);
                 fcb_reader.Reading();
             }
@@ -1295,8 +1295,8 @@ namespace PPPLib{
         if(ppplib_sol_.stat==SOL_PPP&&C.gnssC.ar_mode>=AR_PPP_AR){
             VectorXd xa=x;
 #if 0
-            if(ResolvePppAmb(2,x, Px)){
-
+            // 轮换参考星策略,某些历元存在lamada搜索失败
+            if(ResolvePppAmbRotRef(2,x, Px)){
                 if(!GnssObsRes(5,C,x.data(),re)){
                     if(tc_mode_){
                         CloseLoopState(x,&cur_imu_info_);
@@ -1314,45 +1314,23 @@ namespace PPPLib{
             }
 
 #else
-            if(C.gnssC.ar_prod==AR_PROD_IC_CNES){
-                if(ResolvePppAmb(2,x, Px)){
+            // 固定参考星策略
+            if(ResolvePppAmbFixRef(2,x, Px)){
+                if(!GnssObsRes(5,C,x.data(),re)){
+                    if(tc_mode_){
+                        CloseLoopState(x,&cur_imu_info_);
+                        RemoveLever(cur_imu_info_,C.insC.lever,re,ve);
 
-                    if(!GnssObsRes(5,C,x.data(),re)){
-                        if(tc_mode_){
-                            CloseLoopState(x,&cur_imu_info_);
-                            RemoveLever(cur_imu_info_,C.insC.lever,re,ve);
-
-                        }
-                        else{
-                            re<<full_x_[0],full_x_[1],full_x_[2];
-                        }
-                        ppplib_sol_.stat=SOL_FIX;
                     }
-                }
-                else{
-                    int a=1;
+                    else{
+                        re<<full_x_[0],full_x_[1],full_x_[2];
+                    }
+                    ppplib_sol_.stat=SOL_FIX;
                 }
             }
-            else if(C.gnssC.ar_prod==AR_PROD_FCB){
-                if(ResolvePppAmb_FCB_EL(2,x, Px)){
-
-                    if(!GnssObsRes(5,C,x.data(),re)){
-                        if(tc_mode_){
-                            CloseLoopState(x,&cur_imu_info_);
-                            RemoveLever(cur_imu_info_,C.insC.lever,re,ve);
-
-                        }
-                        else{
-                            re<<full_x_[0],full_x_[1],full_x_[2];
-                        }
-                        ppplib_sol_.stat=SOL_FIX;
-                    }
-                }
-                else{
-                    int a=1;
-                }
+            else{
+                int a=1;
             }
-
 
 #endif
         }
@@ -1409,7 +1387,7 @@ namespace PPPLib{
         }
 
         if(ppp_conf_.solC.out_sol) out_->WriteSol(ppplib_sol_,epoch_sat_info_collect_);
-        if(ppp_conf_.solC.out_stat) out_->WriteSatStat(&ppplib_sol_,previous_sat_info_);
+        if(ppp_conf_.solC.out_stat&&ppp_conf_.solC.sol_fmt) out_->WriteSatStat(&ppplib_sol_,previous_sat_info_);
     }
 
     void cPppSolver::AmbUpdate(tPPPLibConf C,double tt) {
@@ -2052,7 +2030,7 @@ namespace PPPLib{
         int m,idx_isb,idx_gps_clk,idx_ifcb,ii=0,ia;
         double base_rec_clk=0.0,isb=0.0,rec_clk=0.0,glo_ifcb=0.0;
 
-        bool irc_flag=(C.gnssC.ar_mode==AR_PPP_AR&&C.gnssC.ar_prod==AR_PROD_IC_CNES)?true:false;
+        bool irc_flag=(C.gnssC.ar_mode==AR_PPP_AR&&C.gnssC.ar_prod==AR_PROD_IRC_CNES)?true:false;
 
         for(int i=0;i<epoch_sat_info_collect_.size();i++){
 
@@ -2644,7 +2622,7 @@ namespace PPPLib{
         return reduce_weight;
     }
 
-    bool cPppSolver::ResolvePppAmb(int nf, VectorXd& x,MatrixXd& P) {
+    bool cPppSolver::ResolvePppAmbRotRef(int nf, VectorXd& x,MatrixXd& P) {
         double elmask,var=0.0;
         int i,j,m=0,stat;
         if(num_valid_sat_<=0||ppp_conf_.gnssC.ion_opt!=ION_IF||nf<2) return false;
@@ -2686,10 +2664,10 @@ namespace PPPLib{
         }
 
         if(ppp_conf_.gnssC.ar_mode==AR_PPP_AR&&m>4){
-            if(ppp_conf_.gnssC.ar_prod==AR_PROD_FCB){
+            if(ppp_conf_.gnssC.ar_prod==AR_PROD_FCB_SGG){
                 stat=FixNlAmbILS_FCB(sat_no1.data(),sat_no2.data(),fix_wls.data(),res_wls.data(),m,x,P);
             }
-            else if(ppp_conf_.gnssC.ar_prod==AR_PROD_IC_CNES){
+            else if(ppp_conf_.gnssC.ar_prod==AR_PROD_IRC_CNES){
                 stat=FixNlAmbILS_IRC(sat_no1.data(),sat_no2.data(),fix_wls.data(),res_wls.data(),m,x,P);
             }
             else
@@ -2838,10 +2816,15 @@ namespace PPPLib{
 
         if(!lc_amb1->n[0]||!lc_amb2->n[0]) return false;
 
+        double C=1.0;
+        if(ppp_conf_.gnssC.ar_prod==AR_PROD_IRC_CNES){
+            C=-1.0;
+        }
+
         double wl_bias1=nav_.wide_line_bias[sat1-1];
         double wl_bias2=nav_.wide_line_bias[sat2-1];
-        double wl1=(lc_amb1->lc_amb[0])/lam_wl-wl_bias1;  //cycle
-        double wl2=(lc_amb2->lc_amb[0])/lam_wl-wl_bias2;
+        double wl1=(lc_amb1->lc_amb[0])/lam_wl-wl_bias1*C;  //cycle
+        double wl2=(lc_amb2->lc_amb[0])/lam_wl-wl_bias2*C;
         sd_wl_amb=wl1-wl2;
 
         *sd_fix_wl=(int)floor(sd_wl_amb+0.5);
@@ -2849,7 +2832,7 @@ namespace PPPLib{
         var_wl=(lc_amb1->var_amb[0]/lc_amb1->n[0]+lc_amb2->var_amb[0]/lc_amb2->n[0])/SQR(lam_wl);
 
         bool fix_flag1=fabs(*sd_fix_wl-sd_wl_amb)<=0.25;
-        bool fix_flag2=IntAmbConfFunc(*sd_fix_wl,sd_wl_amb,sqrt(var_wl))>=0.99;
+        bool fix_flag2=IntAmbConfFunc(*sd_fix_wl,sd_wl_amb,sqrt(var_wl))>=0.9999;
         fix_flag=fix_flag1&&fix_flag2;
 
         char buff[1024]={'\0'};
@@ -2888,7 +2871,7 @@ namespace PPPLib{
             N1(m,0)=(int)floor(B11[m]+0.5);
             res_nl=N1(m,0)-B11[m];
 
-            fix_flag=fabs(res_nl) <= 0.15;
+            fix_flag=fabs(res_nl) <= 0.10;
             sprintf(out_buff,"%s TO FIX NL AMB sd_nl_amb(%s-%s)=sd_if_amb-sd_wl_amb=%6.3f-%6.3f=%6.3f round(sd_nl_amb)=%5d %s",
                     epoch_sat_info_collect_[0].t_tag.GetTimeStr(1).c_str(),previous_sat_info_[sat1[i]-1].sat.sat_.id.c_str(),previous_sat_info_[sat2[i]-1].sat.sat_.id.c_str(),
                     (full_x_[j]-full_x_[k])/lam_nl,beta*lam2*fix_wls[i]/lam_nl,B11[m],(int)floor(B11[m]+0.5),fix_flag?"YES":"NO");
@@ -2904,7 +2887,7 @@ namespace PPPLib{
             fix_wls[m++]=fix_wls[i];
             res_nls.push_back(res_nl);
         }
-        if(m<3) return false;
+        if(m<2) return false;
 
         MatrixXd E(m,num_full_x_),Q(m,m);
         MatMul("TN",m,num_full_x_,num_full_x_,1.0,D.data(),full_Px_.data(),0.0,E.data());
@@ -3046,7 +3029,7 @@ namespace PPPLib{
                 sd_nl_fcbs.push_back((nl_fcb1-nl_fcb2));
             }
         }
-        if(m<3) return false;
+        if(m<2) return false;
 
         MatrixXd E(m,num_full_x_),Qnl(m,m);
         MatMul("TN",m,num_full_x_,num_full_x_,1.0,D.data(),P.data(),0.0,E.data());
@@ -3118,7 +3101,7 @@ namespace PPPLib{
         return FixPppSol(sat1,sat2,fix_if_ambs.data(),m,x,P);
     }
 
-    bool cPppSolver::ResolvePppAmb_FCB_EL(int nf,VectorXd& x,MatrixXd& P){
+    bool cPppSolver::ResolvePppAmbFixRef(int nf,VectorXd& x,MatrixXd& P){
         double elmask,var=0.0,res_wl;
         int i,j,m=0,stat,nb=0;
         if(num_valid_sat_<=0||ppp_conf_.gnssC.ion_opt!=ION_IF) return false;
@@ -3166,7 +3149,14 @@ namespace PPPLib{
         }
 
         if(ppp_conf_.gnssC.ar_mode==AR_PPP_AR&&m>3){
-            stat=FixNlAmbILS_FCB(sat_no1.data(),sat_no2.data(),fix_wls.data(),res_wls.data(),m,x,P);
+            if(ppp_conf_.gnssC.ar_prod==AR_PROD_FCB_SGG){
+                stat=FixNlAmbILS_FCB(sat_no1.data(),sat_no2.data(),fix_wls.data(),res_wls.data(),m,x,P);
+            }
+            else if(ppp_conf_.gnssC.ar_prod==AR_PROD_IRC_CNES){
+                stat=FixNlAmbILS_IRC(sat_no1.data(),sat_no2.data(),fix_wls.data(),res_wls.data(),m,x,P);
+            }
+            else
+                return false;
         }
         else return false;
 

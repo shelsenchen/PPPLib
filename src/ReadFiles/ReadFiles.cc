@@ -100,7 +100,7 @@ namespace PPPLib{
         LOG(DEBUG)<<"CAS DCB FILE: "<<C_->fileC.cbias;
 
         if((C_->mode==MODE_PPP||C_->mode_opt==MODE_OPT_PPP)&&C_->gnssC.ar_mode==AR_PPP_AR){
-            if(C_->gnssC.ar_prod==AR_PROD_FCB){
+            if(C_->gnssC.ar_prod==AR_PROD_FCB_SGG){
                 sprintf(f,"%s%csgg%04d%d_%s.fcb",prods_dir.c_str(),sep_,week_,wod_,kGnssAcStr[C_->gnssC.ac_opt].c_str());
                 if(access(f,0)==-1){
                     LOG(ERROR)<<"FCB NO FOUND: "<<f;
@@ -175,7 +175,7 @@ namespace PPPLib{
             C_->fileC.clk=f;f[0]='\0';
             LOG(DEBUG)<<"PRECISE CLOCK FILE: "<<C_->fileC.clk;
 
-            if(C_->gnssC.ar_prod==AR_PROD_IC_CNES){
+            if(C_->gnssC.ar_prod==AR_PROD_IRC_CNES){
                 sprintf(f,"%s%c%s%d%d%s",pres_dir.c_str(),sep_,kGnssAcStr[1].c_str(),week_,wod_,".clk");
                 if((access(f,0))==-1){
                     LOG(ERROR)<<"PRECISE PSEUDORANGE SATELLITE CLOCK FILE NO FOUND FOR CNES AR: "<<f;

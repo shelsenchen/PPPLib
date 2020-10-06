@@ -216,11 +216,11 @@ namespace PPPLib{
             char pos[1024]={'\0'};
             int d=12;
             if(C_.solC.out_err_fmt) d=5;
-            sprintf(pos,"$POS   %12.3f %12.3f %12.3f\n",out_pos[0],out_pos[1],out_pos[2]);
+            sprintf(pos,"$POS   %15.3f %15.3f %15.3f\n",out_pos[0],out_pos[1],out_pos[2]);
             char clk[1024]={'\0'};
-            sprintf(clk,"$CLK   %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f\n",sol->clk_error[0],sol->clk_error[1],sol->clk_error[2],sol->clk_error[3],sol->clk_error[4],sol->clk_error[5]);
+            sprintf(clk,"$CLK   %15.3f %15.3f %15.3f %15.3f %15.3f %15.3f\n",sol->clk_error[0],sol->clk_error[1],sol->clk_error[2],sol->clk_error[3],sol->clk_error[4],sol->clk_error[5]);
             char trp[1024]={'\0'};
-            sprintf(trp,"$TRP   %12.3f %12.3f\n",sol->zenith_trp_delay[0],sol->zenith_trp_delay[1]);
+            sprintf(trp,"$TRP   %15.3f %15.3f\n",sol->zenith_trp_delay[0],sol->zenith_trp_delay[1]);
             ppplib_out_<<pos;
             ppplib_out_<<clk;
             ppplib_out_<<trp;
@@ -324,7 +324,50 @@ namespace PPPLib{
             fprintf(fout_,"\n");
         }
         else{
+            string comm="%";
+            string use_sys,clk;
 
+            if(C_.gnssC.nav_sys&SYS_GPS){
+                use_sys+="GPS ";
+            }
+            if(C_.gnssC.nav_sys&SYS_BDS){
+                if(C_.gnssC.est_bd3_isb){
+                    use_sys+="BD2 BD3 ";
+                }
+                else{
+                    use_sys+="BDS ";
+                }
+            }
+            if(C_.gnssC.nav_sys&SYS_GAL){
+                use_sys+="GAL ";
+            }
+            if(C_.gnssC.nav_sys&SYS_GLO){
+                use_sys+="GLO ";
+            }
+            if(C_.gnssC.nav_sys&SYS_QZS){
+                use_sys+="QZS ";
+            }
+
+            ppplib_out_<<"+ PPPLib HEADER"<<endl;
+            ppplib_out_<<"  Station : "<<endl;
+            ppplib_out_<<"  Rec Type: "<<endl;
+            ppplib_out_<<"  Ant Type: "<<endl;
+            if(C_.mode!=MODE_PPK){
+                ppplib_out_<<"  Sta  Pos: "<<endl;
+            }
+            ppplib_out_<<"  Nav  Sys: "<<use_sys<<endl;
+            ppplib_out_<<"  Trp Mode: "<<endl;
+            ppplib_out_<<"  Ion Mode: "<<endl;
+            ppplib_out_<<"  Sat  Eph: "<<endl;
+            ppplib_out_<<"  $EPOCH  : "<<"Y/M/D H:M:S | WEEK | WOS | Epoch | SolStat | ObsNum | ValidSat | PDOP | SIGMA0 "<<endl;
+            ppplib_out_<<"  $POS    : "<<endl;
+            ppplib_out_<<"  $CLK    : "<<"Clock | ISB"<<endl;
+            ppplib_out_<<"  $TRP    : "<<"Hydrostatic | Wet "<<endl;
+            ppplib_out_<<"  $SAT    : "<<"ID | Stat | Obs | Az | El | Res_P1 | Res_P2 | Res_P3 | Res_L1 | Res_L2 | Res_L3 | Amb1 | Amb2 | Amb3 | MwAmb | sMwAmb | sTrp_h | sTrp_w | map_h | map_w | sIon | Lock | Outc"<<endl;
+//            if(C_.gnssC.ion_opt!=ION_IF) ppplib_out_<<"| Ion "<<endl;
+//            else ppplib_out_<<endl;
+            ppplib_out_<<"- PPPLib HEADER"<<endl;
+            ppplib_out_<<endl;
         }
     }
 

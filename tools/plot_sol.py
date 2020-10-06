@@ -185,7 +185,7 @@ def enu_plot(dir, site, data):
         ax.axhline(y=0.3, color='y', linestyle='-', linewidth=0.4)
         ax.axhline(y=-0.3, color='y', linestyle='-', linewidth=0.4)
     else:
-        plt.ylim([-0.5, 0.5])
+        plt.ylim([-0.2, 0.2])
         ax.axhline(y=0.1, color='y', linestyle='-', linewidth=0.4)
         ax.axhline(y=-0.1, color='y', linestyle='-', linewidth=0.4)
     legend_font = {'size': 7}
@@ -348,14 +348,38 @@ def walk_files(dir):
 
 
 if __name__ == '__main__':
-    sol_dir = '../../example/result_brd/SPP_STATIC'
+    BATCH_PLOT = 1
+    # 指定路径,若路径后４位为'.pos',则处理单文件，否则处理该路径下的所有.pos文件
+    sol_dir = '/home/cc/dataset/data_batch/2020/2091/038/result_wum/PPP_STATIC'
+    if sol_dir[-4:] == '.pos':
+        BATCH_PLOT = 0
+    else:
+        BATCH_PLOT = 1
+
+    # 指定绘制类型
     DOP_PLOT = 1
     ENU_PLOT = 1
     TRP_PLOT = 1
     SAT_PLOT = AMB1
     SAT_ID = 'C10'
-    walk_files(sol_dir)
 
+    if BATCH_PLOT:
+        walk_files(sol_dir)
+    else:
+        if sol_dir[-4:] == '.pos':
+            site = sol_dir[-8:-4]
+            data = parse_sol(sol_dir, site)
+    if ENU_PLOT:
+        enu_plot(sol_dir, site, data)
+    if DOP_PLOT:
+        dop_plot(sol_dir, site, data)
+    if TRP_PLOT:
+        trp_plot(sol_dir, site, data)
+    if SAT_PLOT:
+        sat_plot(sol_dir, site, data, RES_P1, SAT_ID)
+        sat_plot(sol_dir, site, data, RES_L1, SAT_ID)
+        sat_plot(sol_dir, site, data, AMB1, SAT_ID)
+        sat_plot(sol_dir, site, data, MW_AMB, SAT_ID)
 
 
 

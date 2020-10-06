@@ -398,7 +398,7 @@ namespace PPPLib {
     };
 
     const string kGnssSignalCodePriors[NSYS][MAX_GNSS_FRQ_NUM]{
-            {"WCPYMNSL", "WCPYMNDSLX",      "IQX",         "",        "",    ""},
+            {"CWPYMNSL", "CWPYMNDSLX",      "IQX",         "",        "",    ""},
             {     "IQX",      "IQXA",      "IQX",     "DPXA",     "DPX", "DPZ"},
             {   "CABXZ",       "IQX",      "IQX",      "IQX",   "CABXZ",    ""},
             {      "CP",        "CP",      "IQX",      "ABX",    "ABXP",    ""},
@@ -548,10 +548,10 @@ namespace PPPLib {
     };
 
     enum GNSS_AR_PROD {
-        AR_PROD_FCB,
+        AR_PROD_FCB_SGG,
         AR_PROD_OSB_CODE,
         AR_PROD_OSB_WUH,
-        AR_PROD_IC_CNES,
+        AR_PROD_IRC_CNES,
     };
 
     enum GLO_AR_MODE {

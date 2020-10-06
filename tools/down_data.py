@@ -9,7 +9,7 @@ import subprocess
 import cmn_func as common
 
 
-LOCAL_DIR = 'E:\\Codings\\data_tmp\\'
+LOCAL_DIR = '/home/cc/dataset/data_batch/'
 
 
 class FtpDown:
@@ -218,7 +218,7 @@ def down_pre(ftp, ac_list, time):
     if ac_list[0] is 'GBM':
         remote_dir = 'GNSS/products/mgex/' + str(gps_week)
     if not ac_list:
-        ac_list = ['COD', 'GFZ', 'WUM']
+        ac_list = ['COM', 'WUM', 'GRM']
 
     for i in range(0, len(ac_list)):
         local_dir = LOCAL_DIR + str(time_idx.year) + '/' + '{:d}/'.format(gps_week) \
@@ -339,18 +339,19 @@ def down_gbm_pre(ftp, time):
 DOWN_OBS_NAV_PRE = 1
 DOWN_ION_DCB = 0
 DOWN_CAS_DCB = 1
-DOWN_GBM_PRE = 0
-DOWN_COD_OSB = 0
+DOWN_GBM_PRE = 1
+DOWN_COD_OSB = 1
 sta_list = ['ABMF', 'DJIG', 'FAA1', 'HARB', 'JFNG', 'KARR', 'KIRU',
             'MAS1', 'MAYG', 'NIUM', 'NNOR', 'NYA2', 'PADO', 'SGOC',
-            'SGPO', 'TOW2', 'URUM']
+            'SGPO', 'TOW2', 'URUM', 'CEDU', 'CUSV', 'IISC', 'PTGG',
+            'SEYG', 'TLSE', 'ULAB']
 
-ac_list = ['COD', 'WUM', 'GRG']
+ac_list = ['WUM']
 
 if __name__ == "__main__":
 
-    time_start = datetime.datetime(2020, 3, 15, 0, 0, 0)
-    time_end = datetime.datetime(2020, 3, 15, 0, 0, 0)
+    time_start = datetime.datetime(2020, 2, 10, 0, 0, 0)
+    time_end = datetime.datetime(2020, 2, 16, 0, 0, 0)
     time_idx = time_start
 
     if DOWN_OBS_NAV_PRE:

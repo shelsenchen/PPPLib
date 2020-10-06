@@ -1285,7 +1285,7 @@ namespace PPPLib{
         if(!PreSatPos(sat_info)||!PreSatClkCorr(sat_info)) return false;
         if(!PreSatPos(&d1E_3)||!PreSatClkCorr(&d1E_3)) return false;
 
-        if(PPPLibC_.gnssC.ar_mode==AR_PPP_AR&&PPPLibC_.gnssC.ar_prod==AR_PROD_IC_CNES){
+        if(PPPLibC_.gnssC.ar_mode==AR_PPP_AR&&PPPLibC_.gnssC.ar_prod==AR_PROD_IRC_CNES){
             if(!PreSatPrClkCorr(sat_info)) return false;
             if(!PreSatPrClkCorr(&d1E_3)) return false;
         }
@@ -1302,7 +1302,7 @@ namespace PPPLib{
             sat_info->pre_clk[1]=(d1E_3.pre_clk[0]-sat_info->pre_clk[0])/1E-3;
         }
 
-        if(PPPLibC_.gnssC.ar_mode==AR_PPP_AR&&PPPLibC_.gnssC.ar_prod==AR_PROD_IC_CNES&&sat_info->pre_pr_clk[0]!=0.0){
+        if(PPPLibC_.gnssC.ar_mode==AR_PPP_AR&&PPPLibC_.gnssC.ar_prod==AR_PROD_IRC_CNES&&sat_info->pre_pr_clk[0]!=0.0){
             sat_info->pre_pr_clk[0]=sat_info->pre_pr_clk[0]-2.0*sat_info->pre_pos.dot(sat_info->pre_vel)/CLIGHT/CLIGHT;
             sat_info->pre_pr_clk[1]=(d1E_3.pre_pr_clk[0]-sat_info->pre_pr_clk[0])/1E-3;
         }

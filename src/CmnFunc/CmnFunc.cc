@@ -1150,7 +1150,7 @@ namespace PPPLib{
 
     int cParSetting::NumPhaseClk() {
         int a=NSYS;
-        if((PPPLibC_.mode==MODE_PPP||PPPLibC_.mode_opt==MODE_OPT_PPP)&&PPPLibC_.gnssC.ar_mode==AR_PPP_AR&&PPPLibC_.gnssC.ar_prod==AR_PROD_IC_CNES){
+        if((PPPLibC_.mode==MODE_PPP||PPPLibC_.mode_opt==MODE_OPT_PPP)&&PPPLibC_.gnssC.ar_mode==AR_PPP_AR&&PPPLibC_.gnssC.ar_prod==AR_PROD_IRC_CNES){
             return a;
         }
         else return 0;

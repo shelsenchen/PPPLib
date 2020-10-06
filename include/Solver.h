@@ -172,7 +172,10 @@ namespace PPPLib{
         bool PppResidualQc(int iter,vector<double>omcs,vector<double>var);
 
         // PPP-AR
-        bool ResolvePppAmb(int nf,VectorXd& x,MatrixXd& P);
+        bool ResolvePppAmbRotRef(int nf,VectorXd& x,MatrixXd& P);
+        // PPP-AR select high-ele satellite
+        bool ResolvePppAmbFixRef(int nf,VectorXd& x,MatrixXd& P);
+
         bool FixPppSol(int *sat1,int *sat2,double *NC,int n,VectorXd& x,MatrixXd& P);
         bool AmbLinearDependCheck(int sat1,int sat2,int *flag,int *max_flg);
         int SelectAmb(int *sat1,int *sat2,double *N,double *var,int n);
@@ -188,8 +191,7 @@ namespace PPPLib{
         bool MatchNlFcb(int sat1,int sat2,double *nl_fcb1,double *nl_fcb2);
         bool FixNlAmbILS_FCB(int *sat1,int *sat2,int *fix_wls,double *res_wls,int n,VectorXd& x,MatrixXd& P);
 
-        // ppp-ar with fcb correction and select high-ele satellite
-        bool ResolvePppAmb_FCB_EL(int nf,VectorXd& x,MatrixXd& P);
+
 
         // ppp-ar use ppk-ar function
         void ResetAmb(double *bias,double *xa,int nb);
