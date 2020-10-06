@@ -131,6 +131,7 @@ def enu_plot(dir, site, data):
     dir_site = os.path.join(dir, site)
     if not os.path.exists(dir_site):
         os.makedirs(dir_site)
+
     t = []
     e = []
     n = []
@@ -162,9 +163,9 @@ def enu_plot(dir, site, data):
     if e.__len__() <= 0 or n.__len__() <= 0 or u.__len__() <= 0 or t.__len__() <= 0:
         return
 
-    [time_e, rms_e, std_e] = cmn.seri_cover(e, t, 0.15)
-    [time_n, rms_n, std_n] = cmn.seri_cover(n, t, 0.15)
-    [time_u, rms_u, std_u] = cmn.seri_cover(u, t, 0.15)
+    [time_e, rms_e, std_e] = cmn.seri_cover(e, t, 0.1)
+    [time_n, rms_n, std_n] = cmn.seri_cover(n, t, 0.1)
+    [time_u, rms_u, std_u] = cmn.seri_cover(u, t, 0.1)
     label_x = 'E(cm): RMS={:.2f} STD={:.2f}, COV_T(min): {:.1f}'.format(rms_e*100, std_e*100, time_e)
     label_y = 'N(cm): RMS={:.2f} STD={:.2f}, COV_T(min): {:.1f}'.format(rms_n*100, std_n*100, time_n)
     label_z = 'U(cm): RMS={:.2f} STD={:.2f}, COV_T(min): {:.1f}'.format(rms_u*100, std_u*100, time_u)
@@ -350,36 +351,40 @@ def walk_files(dir):
 if __name__ == '__main__':
     BATCH_PLOT = 1
     # 指定路径,若路径后４位为'.pos',则处理单文件，否则处理该路径下的所有.pos文件
-    sol_dir = '/home/cc/dataset/data_batch/2020/2091/038/result_wum/PPP_STATIC'
+    sol_dir = '/home/cc/dataset/data_batch/2020/2092/041/result_wum/PPP_KINE'
     if sol_dir[-4:] == '.pos':
         BATCH_PLOT = 0
     else:
         BATCH_PLOT = 1
 
     # 指定绘制类型
-    DOP_PLOT = 1
-    ENU_PLOT = 1
-    TRP_PLOT = 1
+    DOP_PLOT = 1  # 绘制卫星数量和pdop
+    ENU_PLOT = 1  # 绘制ENU位置误差
+    TRP_PLOT = 1  # 绘制对流层延迟
+    # 绘制卫星有关，指定卫星id后绘制单颗卫星，不指定则不绘制 　
     SAT_PLOT = AMB1
     SAT_ID = 'C10'
 
     if BATCH_PLOT:
         walk_files(sol_dir)
     else:
+        pos_dir = ''
+        site = ''
         if sol_dir[-4:] == '.pos':
+            pos_dir = sol_dir[:-8]
             site = sol_dir[-8:-4]
-            data = parse_sol(sol_dir, site)
-    if ENU_PLOT:
-        enu_plot(sol_dir, site, data)
-    if DOP_PLOT:
-        dop_plot(sol_dir, site, data)
-    if TRP_PLOT:
-        trp_plot(sol_dir, site, data)
-    if SAT_PLOT:
-        sat_plot(sol_dir, site, data, RES_P1, SAT_ID)
-        sat_plot(sol_dir, site, data, RES_L1, SAT_ID)
-        sat_plot(sol_dir, site, data, AMB1, SAT_ID)
-        sat_plot(sol_dir, site, data, MW_AMB, SAT_ID)
+            data = parse_sol(pos_dir, site)
+        if ENU_PLOT:
+            enu_plot(pos_dir, site, data)
+        if DOP_PLOT:
+            dop_plot(pos_dir, site, data)
+        if TRP_PLOT:
+            trp_plot(pos_dir, site, data)
+        if SAT_PLOT:
+            sat_plot(pos_dir, site, data, RES_P1, SAT_ID)
+            sat_plot(pos_dir, site, data, RES_L1, SAT_ID)
+            sat_plot(pos_dir, site, data, AMB1,   SAT_ID)
+            sat_plot(pos_dir, site, data, MW_AMB, SAT_ID)
 
 
 

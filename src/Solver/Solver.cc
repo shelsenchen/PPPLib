@@ -816,9 +816,9 @@ namespace PPPLib{
                 double cod_bia=sat_info->code_bias[f];
 
                 omc=cor_P-(r+sag_err+(rec_clk-CLIGHT*sat_info->brd_clk[0])+sat_info->trp_dry_delay[0]+sat_info->trp_wet_delay[0]+sat_info->ion_delay[0]);
-                if(epoch_idx_>20&&fabs(omc)>500&&sat_info->sat.sat_.sys==SYS_BDS){ //500
-//                    sat_info->stat=SAT_NO_USE;
-//                    continue;
+                if(epoch_idx_>20&&fabs(omc)>5000){ //500
+                    sat_info->stat=SAT_NO_USE;
+                    continue;
                 }
                 meas_var=GnssMeasVar(C,GNSS_OBS_CODE,*sat_info)+sat_info->brd_eph_var+sat_info->trp_var+sat_info->ion_var;
                 meas_var*=sat_info->c_var_factor[f];
@@ -2299,12 +2299,12 @@ namespace PPPLib{
 
                 LOG(DEBUG)<<sat_info->sat.sat_.id<<" "<<(C.gnssC.ion_opt==ION_IF?((obs_type==GNSS_OBS_CODE?"IF_P":"IF_L")):((obs_type==GNSS_OBS_CODE?"P":"L")))<<frq+1<<" "<<buff;
 
-                if(!post&&fabs(omc)>((sat_info->sat.sat_.sys==SYS_GAL||sat_info->sat.sat_.sys==SYS_BDS)?100.0:C.gnssC.max_prior)){
-                    if(obs_type==GNSS_OBS_CODE) sat_info->stat=SAT_PRI_RES_C;
-                    else sat_info->stat=SAT_PRI_RES_P;
-                    LOG(WARNING)<<sat_info->t_tag.GetTimeStr(1)<<" "<<sat_info->sat.sat_.id<<" DETECTING OUTLIER IN PRIOR RESIDUALS "<<(obs_type==GNSS_OBS_CODE?"P":"L")<<frq+1<<"= "<<omc;
-                    return 0;
-                }
+//                if(!post&&fabs(omc)>((sat_info->sat.sat_.sys==SYS_GAL||sat_info->sat.sat_.sys==SYS_BDS)?100.0:C.gnssC.max_prior)){
+//                    if(obs_type==GNSS_OBS_CODE) sat_info->stat=SAT_PRI_RES_C;
+//                    else sat_info->stat=SAT_PRI_RES_P;
+//                    LOG(WARNING)<<sat_info->t_tag.GetTimeStr(1)<<" "<<sat_info->sat.sat_.id<<" DETECTING OUTLIER IN PRIOR RESIDUALS "<<(obs_type==GNSS_OBS_CODE?"P":"L")<<frq+1<<"= "<<omc;
+//                    return 0;
+//                }
 
                 omcs.push_back(omc);
                 meas_var_vec.push_back(meas_var);

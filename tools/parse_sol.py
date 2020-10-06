@@ -25,6 +25,7 @@ def parse_sol(dir, site_name):
     site = Site()
     data = []
     path = os.path.join(dir, site_name+'.pos')
+
     with open(path, 'r', encoding='utf-8') as f:
         n = 0
         t = 0

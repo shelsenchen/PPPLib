@@ -172,10 +172,8 @@ namespace PPPLib{
         bool dgnss=C_.mode==MODE_PPK||C_.mode_opt==MODE_OPT_PPK;
 
         // 首先坐标都表示在ｅ系下
-
-
+        Vector3d blh(0,0,0);
         if(C_.solC.sol_coord==COORD_ENU){
-            Vector3d blh(0,0,0);
             if(dgnss){
                 blh=Xyz2Blh(C_.gnssC.rb);
                 dr=sol->pos-C_.gnssC.rb;
@@ -197,9 +195,11 @@ namespace PPPLib{
 
         }
         else if(C_.solC.sol_coord==COORD_XYZ){
+            blh=Xyz2Blh(ref_sol_.pos);
             out_pos=sol->pos;
             if(C_.solC.out_err_fmt){
-                out_pos-=ref_sol_.pos;
+                dr=out_pos-ref_sol_.pos;
+                out_pos=Xyz2Enu(blh,dr);
             }
         }
 
