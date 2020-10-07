@@ -12,6 +12,9 @@ NOTE: The program is still under development, and some bugs still exist in PPPLi
     support PPP-AR with IRC or FCB(just supported and should to be optimized) \
     support INS/GNSS tightly coupled(just supported and should to be optimized) \
     add python script to plot solution
+    
+2020/10/07 \
+    update dataset to Baidu Cloud
 
 
 **INTRODUCTION**
