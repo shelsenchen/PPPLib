@@ -192,8 +192,6 @@ namespace PPPLib{
         bool MatchNlFcb(int sat1,int sat2,double *nl_fcb1,double *nl_fcb2);
         bool FixNlAmbILS_FCB(int *sat1,int *sat2,int *fix_wls,double *res_wls,int n,VectorXd& x,MatrixXd& P);
 
-
-
         // ppp-ar use ppk-ar function
         void ResetAmb(double *bias,double *xa,int nb);
         bool FixNlAmbILS1(int *sat1,int *sat2,int *fix_wls,int n,double *xa);

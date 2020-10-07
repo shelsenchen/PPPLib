@@ -4589,10 +4589,10 @@ namespace PPPLib{
         int sat_no;
         double fact=k0/(*max_norm_v_code)*SQR((k1-*max_norm_v_code)/(k1-k0));
         if(k0<=*max_norm_v_code&&*max_norm_v_code<=k1){
-//            sat_no=epoch_sat_info_collect_[ir[j2]].sat.sat_.no;
-//            f=(vflag_[code_idx[idx_max_norm_v_code]])&0xF;
-//            previous_sat_info_[sat_no].c_var_factor[f]*=1.0/fact;
-//            reduce_weight=true;
+            sat_no=epoch_sat_info_collect_[ir[j2]].sat.sat_.no;
+            f=(vflag_[code_idx[idx_max_norm_v_code]])&0xF;
+            previous_sat_info_[sat_no].c_var_factor[f]*=1.0/fact;
+            reduce_weight=true;
         }
 
         if(v_phase.size()){
