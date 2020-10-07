@@ -456,7 +456,7 @@ namespace PPPLib {
     };
 
     const string kGnssAcStr[]={
-            "brd","wum","gbm","com","grm"
+            "brd","wum","gbm","cod","grg"
     };
 
     enum GNSS_ION_OPT {
