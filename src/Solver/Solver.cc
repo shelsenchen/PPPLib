@@ -236,7 +236,12 @@ namespace PPPLib{
 
             cReadGnssCodeBias dcb_reader(C.fileC.cod_dcb, nav_,0);
             for(i=0;i<n;i++){
-#if 1
+#if WIN32
+                vector<string> splits=MultiSplitStr(ex_files[i],sep);
+                string a=((splits[0]).substr(splits[0].length()-2,2));
+                m=atoi(a.c_str());
+                if(mon!=m) continue;
+#else
                 vector<string> splits=MultiSplitStr(ex_files[i],sep);
                 m=atoi(((splits.end()-2)->substr(6,2)).c_str());
                 if(mon!=m) continue;
@@ -824,8 +829,8 @@ namespace PPPLib{
 
                 omc=cor_P-(r+sag_err+(rec_clk-CLIGHT*sat_info->brd_clk[0])+sat_info->trp_dry_delay[0]+sat_info->trp_wet_delay[0]+sat_info->ion_delay[0]);
                 if(epoch_idx_>20&&fabs(omc)>5000){ //500
-                    sat_info->stat=SAT_NO_USE;
-                    continue;
+//                    sat_info->stat=SAT_NO_USE;
+//                    continue;
                 }
                 meas_var=GnssMeasVar(C,GNSS_OBS_CODE,*sat_info)+sat_info->brd_eph_var+sat_info->trp_var+sat_info->ion_var;
                 meas_var*=sat_info->c_var_factor[f];
