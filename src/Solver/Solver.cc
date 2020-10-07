@@ -3836,7 +3836,6 @@ namespace PPPLib{
             if(GnssZeroRes(C,REC_ROVER,ir,x.data(),rover_xyz)){
                 if(GnssDdRes(1,C,ir,ib,cmn_sat_no,x.data(),ref_sat)){
 
-
                     if(tc_mode_){
                         ppplib_sol_.stat=SOL_FLOAT;
                         ppplib_sol_.ins_stat=SOL_IG_TC;
@@ -5826,8 +5825,8 @@ namespace PPPLib{
         ppplib_sol_.ins_stat=SOL_INS_MECH;
         ppplib_sol_.valid_sat_num=0;
 
-        cout<<gnss_solver_->full_Px_.block<15,15>(0,0)<<endl<<endl;
-        cout<<gnss_solver_->full_x_.transpose()<<endl<<endl;
+//        cout<<gnss_solver_->full_Px_.block<15,15>(0,0)<<endl<<endl;
+//        cout<<gnss_solver_->full_x_.transpose()<<endl<<endl;
 
         epoch_idx_++;
         gnss_solver_->cur_imu_info_=cur_imu_info_;
