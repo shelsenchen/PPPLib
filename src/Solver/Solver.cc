@@ -5796,7 +5796,7 @@ namespace PPPLib{
         epoch_idx_++;
 
         if(fs_conf_.mode_opt>MODE_OPT_GSOF){
-            cout<<gnss_solver_->full_x_.transpose()<<endl;
+//            cout<<gnss_solver_->full_x_.transpose()<<endl;
             if(gnss_solver_->SolverProcess(gnss_conf_,rover_idx_)){
                 ppplib_sol_=gnss_solver_->ppplib_sol_;
                 if(LcFilter(C)){
