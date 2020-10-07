@@ -107,6 +107,7 @@ namespace PPPLib{
             sat_info.sat=epoch_sat_obs.epoch_data.at(i).sat;
             if(sat_info.sat.sat_.no==4) continue;
             if(sat_info.sat.sat_.no==50) continue;
+//            if(sat_info.sat.sat_.no==69) continue;
             if(!C.gnssC.use_bd3&&sat_info.sat.sat_.sys==SYS_BDS&&sat_info.sat.sat_.prn>18) continue;
             sat_info.stat=SAT_USED;
             switch(sys){
