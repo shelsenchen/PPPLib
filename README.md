@@ -15,6 +15,9 @@ NOTE: The program is still under development, and some bugs still exist in PPPLi
     
 2020/10/07 \
     update dataset to Baidu Cloud
+    
+2020/10/08 \
+    fix bug in BDS-only PPP
 
 
 **INTRODUCTION**
