@@ -46,10 +46,10 @@ namespace PPPLib {
     private:
         int ref_index_=0;
         tPPPLibConf C_;
-        FILE *fout_;
+    public:
         string buff_;
+        FILE *fout_;
         FILE *fout_stat_;
-        ofstream  f_stat_;
         ofstream  ppplib_out_;
 
     public:

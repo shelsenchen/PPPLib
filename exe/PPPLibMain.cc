@@ -390,7 +390,9 @@ static int Processer()
         solver->InitReader(kConf);
         kConf.gnssC.sample_rate=solver->rover_obs_.GetGnssObs()[1].obs_time.TimeDiff(solver->rover_obs_.GetGnssObs()[0].obs_time.t_);
         solver->SolverProcess(kConf,-1);
+//        solver->CloseSolver();
         if(single_flag) break;
+
 
         kConf.site_name.clear();
         long t2=clock();

@@ -236,7 +236,7 @@ namespace PPPLib{
 
             cReadGnssCodeBias dcb_reader(C.fileC.cod_dcb, nav_,0);
             for(i=0;i<n;i++){
-#if 0
+#if 1
                 vector<string> splits=MultiSplitStr(ex_files[i],sep);
                 m=atoi(((splits.end()-2)->substr(6,2)).c_str());
                 if(mon!=m) continue;
@@ -268,6 +268,13 @@ namespace PPPLib{
     bool cSolver::Estimator(tPPPLibConf C) {}
 
     bool cSolver::SolutionUpdate() {}
+
+    void cSolver::CloseSolver() {
+        out_->buff_.clear();
+        if(out_->ppplib_out_) out_->ppplib_out_.close();
+        if(out_->fout_) fclose(out_->fout_);
+        if(out_->fout_stat_) fclose(out_->fout_stat_);
+    }
 
     static void InitP(double unc,double unc0,int row_s,int col_s,MatrixXd& P){
         double q=unc==0.0?SQR(unc0):SQR(unc);
@@ -1118,6 +1125,7 @@ namespace PPPLib{
         atx_reader.Reading();
         atx_reader.AlignAntPar2Sat(C,*rover_obs_.GetStartTime(),nav_.sta_paras,nav_.sat_ant,nav_.rec_ant);
 
+        if(out_) delete out_;
         out_=new cOutSol(ppp_conf_);
         out_->InitOutSol(ppp_conf_,ppp_conf_.fileC.sol);
         out_->WriteHead();
@@ -1135,6 +1143,7 @@ namespace PPPLib{
         spp_conf.gnssC.trp_opt=TRP_SAAS;
         spp_conf.gnssC.frq_opt=FRQ_SINGLE;
         spp_conf.gnssC.eph_opt=EPH_BRD;
+        if(spp_solver_) delete spp_solver_;
         spp_solver_=new cSppSolver(spp_conf);
         spp_solver_->spp_conf_=spp_conf;
         spp_solver_->nav_=nav_;

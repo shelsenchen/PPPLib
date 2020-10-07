@@ -38,6 +38,8 @@ namespace PPPLib{
         virtual bool Estimator(tPPPLibConf C);
         virtual bool SolutionUpdate();
 
+        void CloseSolver();
+
         void InitInsPx(tPPPLibConf C,int nx,MatrixXd& Px);
         void InitX(double xi,double var,int idx,double *x,double *xp);
         Eigen::MatrixXd InitQ(tPPPLibConf,double dt,int nx);
@@ -71,7 +73,6 @@ namespace PPPLib{
 
         vector<int>vflag_;
         tSolInfoUnit ppplib_sol_;
-        vector<tSolInfoUnit> sol_collect_;
         tSatInfoUnit previous_sat_info_[MAX_SAT_NUM];
         cLambda lambda_;
 

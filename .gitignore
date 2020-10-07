@@ -3,8 +3,7 @@ cmake-build-debug/
 cmake-build-release/
 bin/
 log/
-data/
-data/
+conf_win/
 example/
 venv/
 include/3rdparty
