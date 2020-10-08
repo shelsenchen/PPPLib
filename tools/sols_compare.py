@@ -49,6 +49,7 @@ def compare_pos(site, data, n, save_path, sub1, sub2):
 
     fig = plt.figure(figsize=(4, 3))
     ax1 = fig.add_subplot(311)
+    plt.title(site)
     ax1.xaxis.set_major_formatter(mdate.DateFormatter('%H'))
     plt.ylim([-0.2, 0.2])
     plt.ylabel('North [m]')
@@ -80,10 +81,11 @@ def compare_pos(site, data, n, save_path, sub1, sub2):
 
 
 if __name__ == '__main__':
-    main_dir = '/home/cc/dataset/data_batch/2020/2092/041/result_wum/PPP_KINE'
-    sub_dir1 = 'G_DF_IF'
-    sub_dir2 = 'G_DF_UC'
-    site = 'tlse'
+    # main_dir = '/home/cc/dataset/data_batch/2020/2092/041/result_wum/PPP_KINE'
+    main_dir = '/home/cc/dataset/data_mgex/result_wum/PPP_KINE'
+    sub_dir1 = 'GR_DF_IF'
+    sub_dir2 = 'GR_DF_UC'
+    site = 'wuh2'
     data = []
     n_data = 0
 

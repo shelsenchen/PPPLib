@@ -127,7 +127,7 @@ def dop_plot(dir, site, data):
     plt.clf()
 
 
-def enu_plot(dir, site, data):
+def enu_plot(dir, site, data, pre):
     dir_site = os.path.join(dir, site)
     if not os.path.exists(dir_site):
         os.makedirs(dir_site)
@@ -166,11 +166,14 @@ def enu_plot(dir, site, data):
     [time_e, rms_e, std_e] = cmn.seri_cover(e, t, 0.1)
     [time_n, rms_n, std_n] = cmn.seri_cover(n, t, 0.1)
     [time_u, rms_u, std_u] = cmn.seri_cover(u, t, 0.1)
-    label_x = 'E(cm): RMS={:.2f} STD={:.2f}, COV_T(min): {:.1f}'.format(rms_e*100, std_e*100, time_e)
-    label_y = 'N(cm): RMS={:.2f} STD={:.2f}, COV_T(min): {:.1f}'.format(rms_n*100, std_n*100, time_n)
-    label_z = 'U(cm): RMS={:.2f} STD={:.2f}, COV_T(min): {:.1f}'.format(rms_u*100, std_u*100, time_u)
+    # label_x = 'E(cm): RMS={:.2f} STD={:.2f}, COV_T(min): {:.1f}'.format(rms_e*100, std_e*100, time_e)
+    # label_y = 'N(cm): RMS={:.2f} STD={:.2f}, COV_T(min): {:.1f}'.format(rms_n*100, std_n*100, time_n)
+    # label_z = 'U(cm): RMS={:.2f} STD={:.2f}, COV_T(min): {:.1f}'.format(rms_u*100, std_u*100, time_u)
+    label_x = 'E(cm): RMS={:.2f}, COV_T(min): {:.1f}'.format(rms_e*100, time_e)
+    label_y = 'N(cm): RMS={:.2f}, COV_T(min): {:.1f}'.format(rms_n*100, time_n)
+    label_z = 'U(cm): RMS={:.2f}, COV_T(min): {:.1f}'.format(rms_u*100, time_u)
 
-    fig = plt.figure(figsize=(4, 3))
+    fig = plt.figure(figsize=(2.6, 2.4))
     ax = fig.add_subplot(111)
     ax.grid(axis='x', linestyle='-.', linewidth=0.2)
     ax.grid(axis='y', linestyle='-.', linewidth=0.2)
@@ -189,13 +192,20 @@ def enu_plot(dir, site, data):
         plt.ylim([-0.2, 0.2])
         ax.axhline(y=0.1, color='y', linestyle='-', linewidth=0.4)
         ax.axhline(y=-0.1, color='y', linestyle='-', linewidth=0.4)
-    legend_font = {'size': 7}
+    legend_font = {'size': 6}
     plt.legend(prop=legend_font)
     plt.xlabel('Time [h]')
     plt.ylabel('Position Error [m]')
+    if pre is '':
+        tlt = site
+        save_name = 'pos.png'
+    else:
+        tlt = site + ' ' + pre
+        save_name = pre + '_pos.png'
+    plt.title(tlt)
     # plt.show()
 
-    save_path = os.path.join(dir_site, 'pos.png')
+    save_path = os.path.join(dir_site, save_name)
     fig.savefig(save_path, bbox_inches='tight', dpi=300)
     plt.close(fig)
     plt.clf()
@@ -334,7 +344,7 @@ def walk_files(dir):
                         site = pos_path[-8:-4]
                         data = parse_sol(pos_dir, site)
                         if ENU_PLOT:
-                            enu_plot(pos_dir, site, data)
+                            enu_plot(pos_dir, site, data, d)
                         if DOP_PLOT:
                             dop_plot(pos_dir, site, data)
                         if TRP_PLOT:
@@ -351,9 +361,11 @@ def walk_files(dir):
 if __name__ == '__main__':
     BATCH_PLOT = 1
     # 指定路径,若路径后４位为'.pos',则处理单文件，否则处理该路径下的所有.pos文件
+    sol_dir = '/home/cc/dataset/data_mgex/result_wum/PPP_KINE'
     # sol_dir = '/home/cc/dataset/data_batch/2020/2092/041/result_wum/PPP_KINE'
     # sol_dir = '/home/cc/dataset/data_batch/2020/2092/041/result_wum/PPP_KINE/G_DF_IF/abmf.pos'
-    sol_dir = 'E:\\PhdWorks\\DataProcess\\PPPLib-Dataset\\data_batch\\2020\\2091\\038\\result_wum\\PPP_STATIC'
+
+    # sol_dir = 'E:\\PhdWorks\\DataProcess\\PPPLib-Dataset\\data_batch\\2020\\2091\\038\\result_wum\\PPP_STATIC'
     if sol_dir[-4:] == '.pos':
         BATCH_PLOT = 0
     else:
@@ -377,7 +389,7 @@ if __name__ == '__main__':
             site = sol_dir[-8:-4]
             data = parse_sol(pos_dir, site)
         if ENU_PLOT:
-            enu_plot(pos_dir, site, data)
+            enu_plot(pos_dir, site, data, '')
         if DOP_PLOT:
             dop_plot(pos_dir, site, data)
         if TRP_PLOT:
