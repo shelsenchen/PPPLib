@@ -55,13 +55,14 @@ namespace PPPLib {
     class cReadImu:public cReadFile {
     public:
         cReadImu();
-        cReadImu(string file_path);
+        cReadImu(string file_path, int g_week);
         ~cReadImu();
 
     private:
         bool DecodeImu();
         bool DecodeNovatel(double a_scale, double g_scale);
         bool DecodeCsv(TIME_FORMAT time_f);
+        bool DecodePos();
 
     public:
         cImuData* GetImus();
@@ -82,6 +83,7 @@ namespace PPPLib {
         int idx_gz_;
         char sep_;
         int cols_;
+        int gnss_week_;
     };
 
     class cReadPos:public cReadFile {

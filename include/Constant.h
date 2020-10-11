@@ -573,7 +573,8 @@ namespace PPPLib {
         IMU_NOVTEL_CPT,
         IMU_NOVTEL_A1,
         IMU_M39,
-        IMU_MTI_CSV
+        IMU_MTI_CSV,
+        IMU_POS
     };
 
     enum IMU_COORD_TYPE {

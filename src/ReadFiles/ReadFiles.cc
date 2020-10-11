@@ -343,7 +343,7 @@ namespace PPPLib{
 
     cReadImu::cReadImu() {}
 
-    cReadImu::cReadImu(string file_path){file_=file_path;}
+    cReadImu::cReadImu(string file_path,int gweek){file_=file_path;gnss_week_=gweek;}
 
     cReadImu::~cReadImu() {}
 
@@ -359,6 +359,9 @@ namespace PPPLib{
         }
         else if(imu_data_.imu_type_==IMU_MTI_CSV){
             DecodeCsv(TIME_FMT_WS);
+        }
+        else if(imu_data_.imu_type_==IMU_POS){
+            DecodePos();
         }
         else{
             LOG(ERROR)<<"Unsupport imu type";
@@ -465,6 +468,32 @@ namespace PPPLib{
             imu_data.gyro[2]=data[idx_gz_];
             imu_data_.data_.push_back(imu_data);
         }
+    }
+
+    bool cReadImu::DecodePos() {
+        ifstream in_file(file_,ios::in | ios::binary);
+        if(!in_file){
+            LOG(ERROR)<<"OPEN IMU FILE ERROR: "<<file_;
+            return false;
+        }
+        double data[7]={0};
+        int n=0;
+        tImuDataUnit imu_data;
+
+        while(in_file.read((char *)&data[0],7* sizeof(double))){
+            imu_data.t_tag.t_.long_time=(int)data[0];
+            imu_data.t_tag.t_.sec=data[0]=(int(data[0]));
+            imu_data.t_tag+=gnss_week_*604800.0;
+            imu_data.gyro[0]=data[1];
+            imu_data.gyro[1]=data[2];
+            imu_data.gyro[2]=data[3];
+            imu_data.acce[0]=data[4];
+            imu_data.acce[1]=data[5];
+            imu_data.acce[2]=data[6];
+            imu_data_.data_.push_back(imu_data);
+            n++;
+        }
+        in_file.close();
     }
 
     cImuData* cReadImu::GetImus() {return &imu_data_;}

@@ -3858,11 +3858,10 @@ namespace PPPLib{
             }
         }
 
-
         //PPK-AR
 #if 1
         VectorXd xa=x;
-        if(ppplib_sol_.stat==SOL_FLOAT&&ppplib_sol_.ins_stat!=SOL_IG_TC){
+        if(ppplib_sol_.stat==SOL_FLOAT){
             if(ResolvePpkAmb(cmn_sat_no,para_.GetGnssUsedFrqs(),xa.data())){
 
                 if(GnssZeroRes(C,REC_ROVER,ir,xa.data(),rover_xyz)){
@@ -5200,9 +5199,9 @@ namespace PPPLib{
         int iv=para_.IndexVel();
         int ia=para_.IndexAtt();
         Matrix3d Pp,Pv,Pa;
-        Pp=full_Px_.block<3,3>(ip,ip);
-        Pv=full_Px_.block<3,3>(iv,iv);
-        Pa=full_Px_.block<3,3>(ia,ia);
+        Pp=gnss_solver_->full_Px_.block<3,3>(ip,ip);
+        Pv=gnss_solver_->full_Px_.block<3,3>(iv,iv);
+        Pa=gnss_solver_->full_Px_.block<3,3>(ia,ia);
 
         for(int i=0;i<3;i++) ppplib_sol.q_pos[i]=Pp(i,i);
         ppplib_sol.q_pos[3]=Pp(0,1);
@@ -5408,8 +5407,10 @@ namespace PPPLib{
             cDecodeImuM39 m39_decoder;
             m39_decoder.DecodeM39(C.fileC.imu,C.insC,imu_data_.data_);
         }
-        else if(C.insC.imu_type==IMU_NOVTEL_A1||C.insC.imu_type==IMU_NOVTEL_CPT){
-            cReadImu imu_reader(C.fileC.imu);
+        else if(C.insC.imu_type==IMU_NOVTEL_A1||C.insC.imu_type==IMU_NOVTEL_CPT||C.insC.imu_type==IMU_POS){
+            int week=0;
+            if(C.insC.imu_type==IMU_POS) rover_obs_.GetGnssObs()[0].obs_time.Time2Gpst(&week, nullptr,SYS_GPS);
+            cReadImu imu_reader(C.fileC.imu,week);
             imu_reader.SetImu(C);
             imu_reader.Reading();
             imu_data_=*imu_reader.GetImus();
@@ -5837,5 +5838,7 @@ namespace PPPLib{
         }
         cur_imu_info_=gnss_solver_->cur_imu_info_;
         InsSol2PpplibSol(cur_imu_info_,ppplib_sol_);
+        ppplib_sol_.stat=gnss_solver_->ppplib_sol_.stat;
+        ppplib_sol_.ins_stat=SOL_IG_TC;
     }
 }
