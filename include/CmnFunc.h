@@ -224,6 +224,7 @@ namespace PPPLib{
         int min_sat_num2hold;
         int min_fix2hold;
         bool ar_filter;
+        bool par_ar;
         bool res_qc;
         Vector3d rb;
     }tGnssConf;

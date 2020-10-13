@@ -622,13 +622,14 @@ namespace PPPLib {
         MODE_OPT_KINE_SIM,
         MODE_OPT_KINEMATIC,
         MODE_OPT_GSOF,
+        MODE_OPT_SOL,
         MODE_OPT_SPP,
         MODE_OPT_PPP,
         MODE_OPT_PPK,
     };
 
     const string kPpplibModeOptStr[]={
-            "STATIC","KINE_SIM","KINE","GSOF","SPP","PPP","PPK"
+            "STATIC","KINE_SIM","KINE","GSOF","SOL","SPP","PPP","PPK"
     };
 
     enum SOL_STAT {

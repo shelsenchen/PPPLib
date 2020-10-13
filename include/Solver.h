@@ -246,8 +246,8 @@ namespace PPPLib{
         bool PpkResidualQc(int iter,vector<int>ir,vector<int> cmn_sat,vector<double>& omcs, vector<double>R);
 
         void ReSetAmb(double *bias,double *xa,int nb);
-        int DdMat(double *D,int gps,int bds,int glo,int gal);
-        int ResolveAmbLambda(double *xa,int gps, int bds,int glo,int gal, int qzs);
+        int DdMat(double *D,int gps,int bds,int glo,int gal,double el_mask);
+        int ResolveAmbLambda(double *xa,int gps, int bds,int glo,int gal, int qzs,double el_mask);
         bool ResolvePpkAmb(vector<int>cmn_sat,int nf,double *xa);
         void HoldAmb(vector<int>cmn_sat,double *xa);
 

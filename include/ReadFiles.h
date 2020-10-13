@@ -228,6 +228,9 @@ namespace PPPLib {
     public:
         bool Reading() override;
 
+    public:
+        bool no_code_dcb_=true;
+
     private:
         tNav* nav_;
         int type_=0;    //type==0: code_dcb type==1 cas_dcb
@@ -368,6 +371,7 @@ namespace PPPLib {
     };
 
     extern bool GetRefPosFrmSnx(tPPPLibConf& C,string path,Vector3d& ref_pos);
+    extern bool ReadSol(tPPPLibConf& C, string path, vector<tSolInfoUnit>& gnss_sols);
 }
 
 #endif //PPPLIB_READFILES_H

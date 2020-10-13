@@ -16,12 +16,14 @@ namespace PPPLib{
 
     public:
         virtual int Adjustment(VectorXd L,const MatrixXd H,const MatrixXd R,VectorXd& X, MatrixXd& Px,int nl,int nx);
+        void RemoveEmptyColumns(MatrixXd& H);
 
     public:
         VectorXd dx_;
         VectorXd v_;
         MatrixXd Qvv_;
         double unit_weight_STD_=0.0;
+        bool qc_flag=false;
     };
 
     class cLsqAdjuster:public cAdjuster{
@@ -42,14 +44,6 @@ namespace PPPLib{
         int Adjustment(VectorXd L,const MatrixXd H,const MatrixXd R,VectorXd& X, MatrixXd& Px,int nl,int nx) override;
     };
 
-    class cRobustKfAdjuster:public cAdjuster{
-    public:
-        cRobustKfAdjuster();
-        ~cRobustKfAdjuster();
-
-    public:
-        int Adjustment(VectorXd L,const MatrixXd H,const MatrixXd R,VectorXd& X, MatrixXd& Px,int nl,int nx) override;
-    };
 }
 
 

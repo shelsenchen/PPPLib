@@ -4,6 +4,8 @@
 
 #include "AdjFunc.h"
 
+#define QC
+
 namespace PPPLib {
 
     cAdjuster::cAdjuster() {}
@@ -11,6 +13,29 @@ namespace PPPLib {
     cAdjuster::~cAdjuster() {}
 
     int cAdjuster::Adjustment(VectorXd L, const MatrixXd H, const MatrixXd R, VectorXd &X, MatrixXd &Px, int nl, int nx) {}
+
+    void cAdjuster::RemoveEmptyColumns(MatrixXd &H) {
+        MatrixXd H_=H;
+        vector<int>zip_idx;
+        int i,j;
+        for(i=0;i<H_.rows();i++){
+            if(H_.row(i).sum()==0.0) continue;
+            zip_idx.push_back(i);
+        }
+
+        MatrixXd HH;
+        HH=MatrixXd::Zero(zip_idx.size(),H_.cols());
+
+        for(i=0;i<zip_idx.size();i++){
+            for(j=0;j<H_.cols();j++) HH(i,j)=H(zip_idx[i],j);
+        }
+        H=HH;
+#if 0
+        cout<<H.transpose()<<endl<<endl;
+        cout<<HH.transpose()<<endl<<endl;
+#endif
+        zip_idx.clear();
+    }
 
     cLsqAdjuster::cLsqAdjuster() {}
 
@@ -50,6 +75,7 @@ namespace PPPLib {
 
         vector<int>zip_idx;
         int i,j;
+        qc_flag=false;
 
         if(Qvv_.data()) Qvv_.resize(0,0);
         if(v_.data()) v_.resize(0);
@@ -96,17 +122,25 @@ namespace PPPLib {
             X[zip_idx[i]]=X_[i];
             for(int j=0;j<zip_idx.size();j++) Px(zip_idx[i],zip_idx[j])=Px_(i,j);
         }
+
+#ifdef QC
+        MatrixXd R_inv=R.inverse();
+        RemoveEmptyColumns(H_);
+//        cout<<"P:---------------"<<endl;
+//        cout<<R_inv<<endl;
+//        cout<<"(BtPB)^-1-------------"<<endl;
+        MatrixXd M=H_*R_inv*H_.transpose();
+        if(MatInv(M.data(),M.cols())!=-1){
+            qc_flag= true;
+            MatrixXd N=H_.transpose()*M*H_;
+            Qvv_=(R-N);
+//            cout<<"Qvv"<<endl;
+//            cout<<Qvv_<<endl<<endl;
+        }
+#endif
+
         zip_idx.clear();
 
         return true;
-    }
-
-    cRobustKfAdjuster::cRobustKfAdjuster() {}
-
-    cRobustKfAdjuster::~cRobustKfAdjuster() {}
-
-    //refer to Robust Kalman filtering based on Mahalanobis distance Guobin Chang J Geod (2014)
-    int cRobustKfAdjuster::Adjustment(VectorXd L, const MatrixXd H, const MatrixXd R, VectorXd &X, MatrixXd &Px, int nl, int nx) {
-
     }
 }

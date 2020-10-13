@@ -1615,7 +1615,7 @@ namespace PPPLib{
                 code_pair=line_str_.substr(25,3)+"-"+line_str_.substr(30,3);
                 Str2Double(line_str_.substr(80,10),cbias);
                 if(sat.sat_.sys==SYS_GPS){
-                    continue;
+                    if(!no_code_dcb_) continue;
                     for(i=0;i<MAX_GNSS_CODE_BIAS_PAIRS;i++){
                         if(code_pair==kGnssCodeBiasPairs[SYS_INDEX_GPS][i]) break;
                     }
@@ -1640,7 +1640,7 @@ namespace PPPLib{
                     nav_->code_bias[sat.sat_.no-1][i]=cbias*1E-9*CLIGHT;
                 }
                 else if(sat.sat_.sys==SYS_GLO){
-                    continue;
+                    if(!no_code_dcb_) continue;
                     for(i=0;i<MAX_GNSS_CODE_BIAS_PAIRS;i++){
                         if(code_pair==kGnssCodeBiasPairs[SYS_INDEX_GLO][i]) break;
                     }
@@ -2498,6 +2498,41 @@ namespace PPPLib{
         else{
             return false;
         }
+    }
+
+    bool ReadSol(tPPPLibConf& C,string path, vector<tSolInfoUnit>& gnss_sol) {
+        ifstream inf;
+        string buff;
+        tSolInfoUnit sol_info={0};
+        double v[7]={0};
+
+        inf.open(path);
+        if(inf.is_open()){
+            while(getline(inf,buff)&&!inf.eof()){
+                for(int i=0;i<3;i++) sol_info.pos[i]=0;
+                for(int i=0;i<6;i++) sol_info.q_pos[i]=0;
+                sol_info.stat=SOL_NONE;
+                if(buff[0]=='%') continue;
+//                if(sol_info.t_tag.Str2Time(buff.substr(1,24))!=0) continue;
+                if(sscanf(buff.c_str(),"%lf/%lf/%lf %lf:%lf:%lf",v,v+1,v+2,v+3,v+4,v+5)>=6){
+                    sol_info.t_tag.Epoch2Time(v);
+                }
+                else continue;
+                Str2Double(buff.substr(25,14),sol_info.pos[0]);
+                Str2Double(buff.substr(40,14),sol_info.pos[1]);
+                Str2Double(buff.substr(55,14),sol_info.pos[2]);
+                Str2Int(buff.substr(71,1), reinterpret_cast<int &>(sol_info.stat));
+                Str2Double(buff.substr(79,7),sol_info.q_pos[0]);
+                Str2Double(buff.substr(87,7),sol_info.q_pos[1]);
+                Str2Double(buff.substr(96,7),sol_info.q_pos[2]);
+                Str2Double(buff.substr(105,7),sol_info.q_pos[3]);
+                Str2Double(buff.substr(114,7),sol_info.q_pos[4]);
+                Str2Double(buff.substr(123,7),sol_info.q_pos[5]);
+                gnss_sol.push_back(sol_info);
+            }
+            return true;
+        }
+        else return false;
     }
 }
 

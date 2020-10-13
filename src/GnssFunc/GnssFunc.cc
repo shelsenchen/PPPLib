@@ -517,7 +517,7 @@ namespace PPPLib{
 
             double thres_gf=0.0;
 
-#if 1
+#if 0
             if(el>15.0) thres_gf=C.gnssC.cs_thres[1];
             else thres_gf=-C.gnssC.cs_thres[1]/15.0*el+2.0*C.gnssC.cs_thres[1];
 #else
@@ -710,7 +710,7 @@ namespace PPPLib{
         double a=C.gnssC.meas_err_factor[1],b=C.gnssC.meas_err_factor[2];
 
         if(sys==SYS_BDS){
-            if(sat_info.sat.sat_.prn<19) a=b=0.006;
+//            if(sat_info.sat.sat_.prn<19) a=b=0.006;
             if(std::binary_search(kBD2_GEO,kBD2_GEO+NUM_BD2_GEO,prn)){
                 fact*=4.0;
             }

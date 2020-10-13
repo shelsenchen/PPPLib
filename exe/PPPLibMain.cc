@@ -161,6 +161,7 @@ static void LoadConf()
     gnssC->min_fix2hold=config->Get<int>("min_fix2hold");
     gnssC->hold_er_mask=config->Get<double>("hold_el_mask");
     gnssC->ar_filter=config->Get<int>("ar_filter");
+    gnssC->par_ar=config->Get<int>("par_ar");
     gnssC->res_qc= config->Get<int>("res_qc");
     ratio.clear();
     ratio=config->GetArray<double>("base_coord");
@@ -327,7 +328,7 @@ static int Processer()
                         solver=new cFusionSolver(kConf);break;
     }
 
-    if(kConf.mode==MODE_IGLC&&kConf.mode_opt==MODE_OPT_GSOF){
+    if(kConf.mode==MODE_IGLC&&(kConf.mode_opt==MODE_OPT_GSOF||kConf.mode_opt==MODE_OPT_SOL)){
         Config::Ptr_ config=Config::GetInstance();
         string file=config->Get<string>("imu");
         if((access(file.c_str(),0))==-1){
@@ -335,13 +336,18 @@ static int Processer()
             return 0;
         }
         kConf.fileC.imu=file;
-        file=config->Get<string>("gsof");
+        if(kConf.mode_opt==MODE_OPT_GSOF){
+            file=config->Get<string>("gsof");
+        }
+        else if(kConf.mode_opt==MODE_OPT_SOL){
+            file=config->Get<string>("gnss_sol");
+        }
         if((access(file.c_str(),0))==-1){
-            LOG(ERROR)<<"GNSS GSOF FILE NO EXIST path="<<f;
+            LOG(ERROR)<<"GNSS SOLUTION FILE NO EXIST path="<<f;
             return 0;
         }
         kConf.fileC.gsof=file;
-        kConf.fileC.sol=config->Get<string>("sol");
+        kConf.fileC.sol=config->Get<string>("rslt");
 
         solver->SolverProcess(kConf,0);
         return true;

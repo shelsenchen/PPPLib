@@ -107,7 +107,7 @@ namespace PPPLib{
             sat_info.sat=epoch_sat_obs.epoch_data.at(i).sat;
             if(sat_info.sat.sat_.no==4) continue;
             if(sat_info.sat.sat_.no==50) continue;
-//            if(sat_info.sat.sat_.no==69) continue;
+            if(sat_info.sat.sat_.no>=33&&sat_info.sat.sat_.no<=37) continue;
             if(!C.gnssC.use_bd3&&sat_info.sat.sat_.sys==SYS_BDS&&sat_info.sat.sat_.prn>18) continue;
             sat_info.stat=SAT_USED;
             switch(sys){
@@ -218,6 +218,7 @@ namespace PPPLib{
         }
 
         // code dcb
+        bool no_code_dcb_flag=true;
         if(!C.fileC.cod_dcb.empty()&&C.site_idx==1){
             int i,j,n,mon=C.prc_date.GetEpoch()[1],m;
             char *ex_files[36]={nullptr};
@@ -235,28 +236,32 @@ namespace PPPLib{
             }
             n=ExPath((char *)C.fileC.cod_dcb.c_str(),ex_files,36);
 
-            cReadGnssCodeBias dcb_reader(C.fileC.cod_dcb, nav_,0);
-            for(i=0;i<n;i++){
+            if(n>0){
+                cReadGnssCodeBias dcb_reader(C.fileC.cod_dcb, nav_,0);
+                for(i=0;i<n;i++){
 #if WIN32
-                vector<string> splits=MultiSplitStr(ex_files[i],sep);
+                    vector<string> splits=MultiSplitStr(ex_files[i],sep);
                 string a=((splits[0]).substr(splits[0].length()-2,2));
                 m=atoi(a.c_str());
                 if(mon!=m) continue;
 #else
-                vector<string> splits=MultiSplitStr(ex_files[i],sep);
-                m=atoi(((splits.end()-2)->substr(6,2)).c_str());
-                if(mon!=m) continue;
+                    vector<string> splits=MultiSplitStr(ex_files[i],sep);
+                    m=atoi(((splits.end()-2)->substr(6,2)).c_str());
+                    if(mon!=m) continue;
 #endif
-                dcb_reader.file_=ex_files[i];
-                dcb_reader.Reading();
-            }
+                    no_code_dcb_flag= false;
+                    dcb_reader.file_=ex_files[i];
+                    dcb_reader.Reading();
+                }
 
-            for(i=0;i<36;i++) free(ex_files[i]);
+                for(i=0;i<36;i++) free(ex_files[i]);
+            }
         }
 
         // cas dcb
-        if(!C.fileC.cbias.empty()&&C.site_idx==1){
+        if((!C.fileC.cbias.empty()&&C.site_idx==1)){
             cReadGnssCodeBias cbias_reader(C.fileC.cbias, nav_,1);
+            cbias_reader.no_code_dcb_=no_code_dcb_flag;
             cbias_reader.Reading();
         }
         return true;
@@ -862,8 +867,8 @@ namespace PPPLib{
                 if(post==0) sat_info->prior_res_P[f]=omc;
 
                 char buff[MAX_BUFF]={'\0'};
-                sprintf(buff,"%s omc=%12.4f, var=%7.3f el=%3.1f dtr=%14.3f dts=%14.3f trp=%6.3f ion=%6.3f cbias=%6.3f obs=%14.3f range=%14.3f",
-                        sat_info->sat.sat_.id.c_str(),omc,meas_var,sat_info->el_az[0]*R2D,sys==SYS_GPS?rec_clk:x[idx],sat_clk,trp_err,ion_err,cod_bia,cor_P,r+sag_err);
+                sprintf(buff,"%s omc=%12.4f, var=%7.3f el=%3.1f dtr=%14.3f dts=%14.9f trp=%6.3f ion=%6.3f cbias=%6.3f obs=%14.3f range=%14.3f",
+                        sat_info->sat.sat_.id.c_str(),omc,meas_var,sat_info->el_az[0]*R2D,sys==SYS_GPS?rec_clk:x[idx],sat_clk/CLIGHT*1E6,trp_err,ion_err,cod_bia,cor_P,r+sag_err);
                 LOG(DEBUG)<<buff;
 
                 if(f==0){
@@ -3961,8 +3966,10 @@ namespace PPPLib{
         rover_res.resize(sat_idx.size()*num_used_frq*num_used_obs_type,0.0);
         base_res.resize(sat_idx.size()*num_used_frq*num_used_obs_type,0.0);
 
+        char buff[1024]={'\0'};
+        LOG(DEBUG)<<(rec==REC_ROVER?"ROVER ":"BASE ")<<"STATION ZERO RESIDUAL(omc = obs - (r - dtr^s + trp)): "<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1);
         for(int i=0;i<sat_idx.size();i++){
-
+            buff[0]='\0';
             sat_info=&sat_collect->at(sat_idx[i]);
             if(sat_info->stat!=SAT_USED){
                 LOG(DEBUG)<<sat_info->t_tag.GetTimeStr(1)<<" "<<(rec==REC_BASE?"BASE":"ROVER")<<" "<<sat_info->sat.sat_.id<<" NO USED("<<kGnssSatStatStr[sat_info->stat+1]<<")";
@@ -3980,12 +3987,12 @@ namespace PPPLib{
             }
 
             r+=gnss_err_corr_.SagnacCorr(sat_info->brd_pos,rec_xyz);
-//            gnss_err_corr_.trp_model_.InitSatInfo(sat_info,&rover_blh);
-//            gnss_err_corr_.trp_model_.GetTrpError(0.0,x,para_.IndexTrp());
-//            gnss_err_corr_.trp_model_.UpdateSatInfo();
-//            gnss_err_corr_.ion_model_.InitSatInfo(sat_info,&rover_blh);
-//            gnss_err_corr_.ion_model_.GetIonError();
-//            gnss_err_corr_.ion_model_.UpdateSatInfo();
+            gnss_err_corr_.trp_model_.InitSatInfo(sat_info,&rover_blh);
+            gnss_err_corr_.trp_model_.GetTrpError(0.0,x,para_.IndexTrp());
+            gnss_err_corr_.trp_model_.UpdateSatInfo();
+            gnss_err_corr_.ion_model_.InitSatInfo(sat_info,&rover_blh);
+            gnss_err_corr_.ion_model_.GetIonError();
+            gnss_err_corr_.ion_model_.UpdateSatInfo();
 //            gnss_err_corr_.ant_model_.SatPcvCorr(sat_info,rover_blh, nullptr);
 //            gnss_err_corr_.ant_model_.RecAntCorr(sat_info, nullptr,REC_ROVER);
 
@@ -4008,15 +4015,18 @@ namespace PPPLib{
                 }
 
                 if(meas==0.0) {
-                    LOG(DEBUG)<<sat_info->t_tag.GetTimeStr(1)<<" "<<(rec==REC_BASE?"BASE":"ROVER")<<" "<<sat_info->sat.sat_.id<<" MISSING "<<(obs_code?"P":"L")<<frq+1;
+//                    LOG(DEBUG)<<sat_info->t_tag.GetTimeStr(1)<<" "<<(rec==REC_BASE?"BASE":"ROVER")<<" "<<sat_info->sat.sat_.id<<" MISSING "<<(obs_code?"P":"L")<<frq+1;
                     continue;
                 }
 
                 double sat_clk=C.gnssC.eph_opt==EPH_BRD?sat_info->brd_clk[0]*CLIGHT:sat_info->pre_clk[0]*CLIGHT;
                 double trp_del=sat_info->trp_dry_delay[0]+sat_info->trp_wet_delay[0];
                 double ion_del=sat_info->ion_delay[0];
-                omc=meas-(r-sat_clk);
+                omc=meas-(r-sat_clk+trp_del);
                 res->at(i*num_used_frq*num_used_obs_type+f)=omc;
+
+                sprintf(buff,"%s %s%d omc=%6.3f obs=%12.3f r=%12.3f trp=%5.3f dts=%12.3f",sat_info->sat.sat_.id.c_str(),(obs_code?"P":"L"),frq+1,omc,meas,r,trp_del,sat_clk);
+                LOG(DEBUG)<<sat_info->sat.sat_.id<<" "<<buff;
             }
         }
 
@@ -4095,7 +4105,6 @@ namespace PPPLib{
 
                     omc=(rover_res[ref_sat_idx*nf+ifrq]-base_res[ref_sat_idx*nf+ifrq])-(rover_res[isat*nf+ifrq]-base_res[isat*nf+ifrq]);
 
-
                     double df=0.0,glo_bia=0.0;
                     if(sat_info->sat.sat_.sys==SYS_GLO&&ref_sat_info->sat.sat_.sys==SYS_GLO){
                         if(C.gnssC.glo_ar_mode==GLO_AR_AUTO&&frq<2){
@@ -4140,10 +4149,10 @@ namespace PPPLib{
                     Ri.push_back(GnssMeasVar(C,(obs_code?GNSS_OBS_CODE:GNSS_OBS_PHASE),*ref_sat_info));
                     double var=GnssMeasVar(C,(obs_code?GNSS_OBS_CODE:GNSS_OBS_PHASE),*sat_info);
                     if(obs_code){
-                        var*=sat_info->c_var_factor[frq];
+                        var*=previous_sat_info_[sat_info->sat.sat_.no-1].c_var_factor[frq];
                     }
                     else{
-                        var*=sat_info->p_var_factor[frq];
+                        var*=previous_sat_info_[sat_info->sat.sat_.no-1].p_var_factor[frq];
                     }
                     Rj.push_back(var);
                     if(!post){
@@ -4337,6 +4346,8 @@ namespace PPPLib{
             gnss_obs_operator_.GfCycleSlip(C,C.gnssC.sample_rate,dt,sat_info, base_sat);
 
             gnss_obs_operator_.SmoothMw(C,sat_info, base_sat);
+
+            for(int j=0;j<MAX_GNSS_USED_FRQ_NUM;j++) previous_sat_info_[sat_info->sat.sat_.no-1].slip[j]=sat_info->slip[j];
         }
 
 
@@ -4461,7 +4472,6 @@ namespace PPPLib{
                     }
                     amb=cp-pr/epoch_sat_info_collect_[ir[i]].lam[f];
                     bias.push_back(amb);
-
                 }
                 else{
 
@@ -4505,10 +4515,14 @@ namespace PPPLib{
         double k0=2.0,k1=3.0;
         bool reduce_weight=false;
 
-        if(qc_iter_>5) return false;
+        if(!kf_.qc_flag) return false;
+        if(qc_iter_>1) return false;
 
         for(i=0;i<omcs.size();i++){
             obs_type=(vflag_[i]>>4)&0xF;
+            sat1=(vflag_[i]>>16)&0xFF;
+            sat2=(vflag_[i]>>8)&0xFF;
+            f=(vflag_[i])&0xF;
 
             if(obs_type==1){
                 code_idx.push_back(i);
@@ -4567,8 +4581,8 @@ namespace PPPLib{
 
         if(code_flag){
             flag=true;
-            epoch_sat_info_collect_[ir[j1]].stat=SAT_NO_USE;
             el=epoch_sat_info_collect_[ir[j1]].el_az[0];
+            epoch_sat_info_collect_[ir[j1]].stat=SAT_NO_USE;
             f=(vflag_[code_idx[idx_max_v_code]])&0xF;
             if(iter==1) epoch_sat_info_collect_[ir[j1]].rejc[f]++;
             LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<epoch_sat_info_collect_[ir[j1]].sat.sat_.id<<" P"<<f+1<<" EXCULDED BY CODE RESIDUAL, res="<<*max_v_code<<" el="<<el*R2D;
@@ -4577,8 +4591,8 @@ namespace PPPLib{
 
         if(norm_code_flag){
             flag=true;
-            epoch_sat_info_collect_[ir[j2]].stat=SAT_NO_USE;
             el=epoch_sat_info_collect_[ir[j2]].el_az[0];
+            epoch_sat_info_collect_[ir[j2]].stat=SAT_NO_USE;
             f=(vflag_[code_idx[idx_max_norm_v_code]])&0xF;
             if(iter==1) epoch_sat_info_collect_[ir[j2]].rejc[f]++;
             LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<epoch_sat_info_collect_[ir[j2]].sat.sat_.id<<" P"<<f+1<<" EXCULDED BY NORM CODE RESIDUAL, norm_res="<<*max_norm_v_code<<" el="<<el*R2D;
@@ -4594,6 +4608,7 @@ namespace PPPLib{
             reduce_weight=true;
         }
 
+#if 0
         if(v_phase.size()){
             auto max_v_phase=max_element(begin(v_phase),end(v_phase));
             int idx_max_v_phase=distance(begin(v_phase),max_v_phase);
@@ -4640,23 +4655,26 @@ namespace PPPLib{
             }
 
             if(*max_norm_v_phase>k1){
-//                sat_no=epoch_sat_info_collect_[ir[j2]].sat.sat_.no;
-//                if(iter==1) epoch_sat_info_collect_[ir[j2]].rejc_phase[f]++;
-//                if(iter==1) epoch_sat_info_collect_[ir[j2]].rejc[f]++;
-//                ia=para_.IndexAmb(f2,sat_no);
-//                el=epoch_sat_info_collect_[ir[j2]].el_az[0];
-//
-//                if(epoch_sat_info_collect_[ir[j2]].rejc_phase[f]>1){
-//                    InitX(full_x_[ia],SQR(60.0),ia,full_x_.data(),full_Px_.data());
-//                    epoch_sat_info_collect_[ir[j2]].rejc_phase[f]=0;
-//                    LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<epoch_sat_info_collect_[ir[j2]].sat.sat_.id<<" L"<<f+1<<" RESET AMB BY NORM PHASE RESIDUAL,norm_res="<<*max_norm_v_phase<<" el="<<el*R2D;
-//                    return true;
-//                }
-//                else{
-//                    previous_sat_info_[epoch_sat_info_collect_[ir[j2]].sat.sat_.no-1].p_var_factor[f]*=10000;
-//                    LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<epoch_sat_info_collect_[ir[j2]].sat.sat_.id<<" L"<<f+1<<" REDUCE WEIGHT BY NORM PHASE RESIDUAL,norm_res"<<*max_norm_v_phase<<" el="<<el*R2D;
-//                    return true;
-//                }
+                sat_no=epoch_sat_info_collect_[ir[j2]].sat.sat_.no;
+                if(iter==1) epoch_sat_info_collect_[ir[j2]].rejc_phase[f]++;
+                if(iter==1) epoch_sat_info_collect_[ir[j2]].rejc[f]++;
+                ia=para_.IndexAmb(f2,sat_no);
+                el=epoch_sat_info_collect_[ir[j2]].el_az[0];
+
+                if(epoch_sat_info_collect_[ir[j2]].rejc_phase[f]>1){
+                    InitX(full_x_[ia],SQR(60.0),ia,full_x_.data(),full_Px_.data());
+                    epoch_sat_info_collect_[ir[j2]].rejc_phase[f]=0;
+                    LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<epoch_sat_info_collect_[ir[j2]].sat.sat_.id<<" L"<<f+1
+                    <<" RESET AMB BY NORM PHASE RESIDUAL,norm_res="<<*max_norm_v_phase<<" el="<<el*R2D<<" res="<<v_phase[idx_max_norm_v_phase];
+                    return true;
+                }
+                else{
+//                    epoch_sat_info_collect_[ir[j2]].stat=SAT_NO_USE;
+                    previous_sat_info_[epoch_sat_info_collect_[ir[j2]].sat.sat_.no-1].p_var_factor[f]*=10000;
+                    LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<epoch_sat_info_collect_[ir[j2]].sat.sat_.id<<" L"<<f+1
+                    <<" REDUCE WEIGHT BY NORM PHASE RESIDUAL,norm_res="<<*max_norm_v_phase<<" el="<<el*R2D<<" res="<<v_phase[idx_max_norm_v_phase];
+                    return true;
+                }
             }
 
 //            fact=k0/(*max_norm_v_phase)*SQR((k1-*max_norm_v_phase)/(k1-k0));
@@ -4666,8 +4684,8 @@ namespace PPPLib{
 //                previous_sat_info_[sat_no].p_var_factor[f]*=1.0/fact;
 //                reduce_weight=true;
 //            }
-
         }
+#endif
 
         v_code.clear();v_phase.clear();norm_v_code.clear();norm_v_phase.clear();code_idx.clear();phase_idx.clear();
         return reduce_weight;
@@ -4713,7 +4731,7 @@ namespace PPPLib{
         }
     }
 
-    int cPpkSolver::DdMat(double *D, int gps, int bds, int glo,int gal) {
+    int cPpkSolver::DdMat(double *D, int gps, int bds, int glo,int gal,double el_mask) {
         int i,j,k,f,nb=0,na=num_real_x_fix_,nf=para_.GetGnssUsedFrqs(),no_fix;
         double fix[MAX_SAT_NUM],ref[MAX_SAT_NUM],s[2];
         tSatInfoUnit *ref_sat_info= nullptr;
@@ -4786,7 +4804,7 @@ namespace PPPLib{
 
             if(sat_info->slip[f]) continue;
 
-            if(sat_info->lock[f]>=0&&!(sat_info->slip[f]&2)&&sat_info->vsat[f]&&sat_info->el_az[0]*R2D>=ppk_conf_.gnssC.ar_el_mask&&!no_fix){
+            if(sat_info->lock[f]>=0&&!(sat_info->slip[f]&2)&&sat_info->vsat[f]&&sat_info->el_az[0]*R2D>=el_mask&&!no_fix){
                 D[k+(na+nb)*num_full_x_]= 1.0;
                 D[j+(na+nb)*num_full_x_]=-1.0;
 
@@ -4812,7 +4830,7 @@ namespace PPPLib{
         return nb;
     }
 
-    int cPpkSolver::ResolveAmbLambda(double *xa, int gps, int bds,int glo,int gal, int qzs) {
+    int cPpkSolver::ResolveAmbLambda(double *xa, int gps, int bds,int glo,int gal, int qzs,double el_mask) {
         int i,j,ny,nb,info,na=num_real_x_fix_;
         VectorXd QQb(MAX_SAT_NUM);
         double var=0.0;
@@ -4826,7 +4844,7 @@ namespace PPPLib{
         }
 
         // skip AR if position variance too lager to avoid false fix
-#if 0
+#if 1
         for(i=0;i<3;i++) var+=full_Px_(i,i);
         var=var/3.0;
         if(var>ppk_conf_.gnssC.ar_thres[1]){ //0.25
@@ -4839,7 +4857,7 @@ namespace PPPLib{
         MatrixXd D(num_full_x_,num_full_x_);
         D=Eigen::MatrixXd::Zero(num_full_x_,num_full_x_);
 
-        if((nb=DdMat(D.data(),gps,bds,glo,gal))<(ppk_conf_.gnssC.min_sat_num2fix-1)){
+        if((nb=DdMat(D.data(),gps,bds,glo,gal,el_mask))<(ppk_conf_.gnssC.min_sat_num2fix-1)){
             LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" "<<"NO ENOUGH VALID SATELLITE MAKING DOUBLE DIFFERENCE MATRIX";
             return -1;
         }
@@ -4975,7 +4993,7 @@ namespace PPPLib{
         bool rerun=false;
         if(ppk_conf_.gnssC.glo_ar_mode!=GLO_AR_FIXHOLD||amb_hold_flag){
 
-            nb=ResolveAmbLambda(xa,ppk_conf_.gnssC.ar_mode,ppk_conf_.gnssC.bds_ar_mode,ppk_conf_.gnssC.glo_ar_mode,ppk_conf_.gnssC.gal_ar_mode,0);
+            nb=ResolveAmbLambda(xa,ppk_conf_.gnssC.ar_mode,ppk_conf_.gnssC.bds_ar_mode,ppk_conf_.gnssC.glo_ar_mode,ppk_conf_.gnssC.gal_ar_mode,0,ppk_conf_.gnssC.ar_el_mask);
 
             ratio1=ppplib_sol_.ratio;
             if(ppk_conf_.gnssC.ar_filter){
@@ -4996,9 +5014,24 @@ namespace PPPLib{
                 }
 
                 if(rerun){
-                    if((nb=ResolveAmbLambda(xa,ppk_conf_.gnssC.ar_mode,ppk_conf_.gnssC.bds_ar_mode,ppk_conf_.gnssC.glo_ar_mode,ppk_conf_.gnssC.gal_ar_mode,0))<2){
+                    if((nb=ResolveAmbLambda(xa,ppk_conf_.gnssC.ar_mode,ppk_conf_.gnssC.bds_ar_mode,ppk_conf_.gnssC.glo_ar_mode,ppk_conf_.gnssC.gal_ar_mode,0,ppk_conf_.gnssC.ar_el_mask))<2){
                         pre_epoch_ar_ratio1=pre_epoch_ar_ratio2=ratio1;
-                        return false;
+
+                        if(ppk_conf_.gnssC.par_ar){
+                            double el=ppk_conf_.gnssC.ar_el_mask;
+                            if(ppplib_sol_.num_ar_sat>3){
+                                for(int j=0;j<ppplib_sol_.num_ar_sat;j++){
+                                    el+=5.0;
+                                    if(ppplib_sol_.num_ar_sat-j<3) return false;
+                                    ResolveAmbLambda(xa,ppk_conf_.gnssC.ar_mode,ppk_conf_.gnssC.bds_ar_mode,ppk_conf_.gnssC.glo_ar_mode,ppk_conf_.gnssC.gal_ar_mode,0,el);
+                                    if(ppplib_sol_.num_ar_sat<3){
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                            return false;
                     }
                 }
             }
@@ -5121,7 +5154,7 @@ namespace PPPLib{
             if(fs_conf_.mode_opt==MODE_OPT_GSOF){
                 gnss_sols_[0].t_tag.Time2Gpst(&week, nullptr,SYS_GPS);
             }
-            else if(fs_conf_.mode_opt>MODE_OPT_GSOF){
+            else if(fs_conf_.mode_opt>MODE_OPT_SOL){
                 rover_obs_.GetGnssObs()[0].obs_time.Time2Gpst(&week, nullptr,SYS_GPS);
             }
 
@@ -5199,9 +5232,11 @@ namespace PPPLib{
         int iv=para_.IndexVel();
         int ia=para_.IndexAtt();
         Matrix3d Pp,Pv,Pa;
-        Pp=gnss_solver_->full_Px_.block<3,3>(ip,ip);
-        Pv=gnss_solver_->full_Px_.block<3,3>(iv,iv);
-        Pa=gnss_solver_->full_Px_.block<3,3>(ia,ia);
+        if(gnss_solver_){
+            Pp=gnss_solver_->full_Px_.block<3,3>(ip,ip);
+            Pv=gnss_solver_->full_Px_.block<3,3>(iv,iv);
+            Pa=gnss_solver_->full_Px_.block<3,3>(ia,ia);
+        }
 
         for(int i=0;i<3;i++) ppplib_sol.q_pos[i]=Pp(i,i);
         ppplib_sol.q_pos[3]=Pp(0,1);
@@ -5402,6 +5437,9 @@ namespace PPPLib{
             cDecodeGsof gsof_decoder;
             gsof_decoder.DecodeGsof(C.fileC.gsof,gnss_sols_);
         }
+        else if(fs_conf_.mode_opt==MODE_OPT_SOL){
+            ReadSol(C,C.fileC.gsof,gnss_sols_);
+        }
 
         if(C.insC.imu_type==IMU_M39){
             cDecodeImuM39 m39_decoder;
@@ -5416,7 +5454,7 @@ namespace PPPLib{
             imu_data_=*imu_reader.GetImus();
         }
 
-        if(fs_conf_.mode_opt>MODE_OPT_GSOF) gnss_solver_->rover_obs_=rover_obs_;
+        if(fs_conf_.mode_opt>MODE_OPT_SOL) gnss_solver_->rover_obs_=rover_obs_;
         if(tc_mode_) gnss_solver_->full_Px_=full_Px_;
     }
 
@@ -5428,7 +5466,7 @@ namespace PPPLib{
         int gnss_obs_flag=false,ins_align=false,gnss_sol_flag=false;
         while(InputImuData(5)){
             if(fs_conf_.mode>MODE_INS){
-                if(fs_conf_.mode_opt==MODE_OPT_GSOF){
+                if(fs_conf_.mode_opt==MODE_OPT_GSOF||fs_conf_.mode_opt==MODE_OPT_SOL){
                     gnss_sol_flag=MatchGnssSol();
                 }
                 else{
@@ -5646,7 +5684,7 @@ namespace PPPLib{
         double *meas_pos= nullptr,*meas_vel= nullptr;
         Vector3d q_pos,q_vel;
 
-        if(C.mode_opt>MODE_OPT_GSOF){
+        if(C.mode_opt>MODE_OPT_SOL){
             ppplib_sol_.stat=gnss_solver_->ppplib_sol_.stat;
             ppplib_sol_.pos=gnss_solver_->ppplib_sol_.pos;
             ppplib_sol_.vel=gnss_solver_->ppplib_sol_.vel;
@@ -5796,7 +5834,7 @@ namespace PPPLib{
         ppplib_sol_.ins_stat=SOL_INS_MECH;
         epoch_idx_++;
 
-        if(fs_conf_.mode_opt>MODE_OPT_GSOF){
+        if(fs_conf_.mode_opt>MODE_OPT_SOL){
 //            cout<<gnss_solver_->full_x_.transpose()<<endl;
             if(gnss_solver_->SolverProcess(gnss_conf_,rover_idx_)){
                 ppplib_sol_=gnss_solver_->ppplib_sol_;
