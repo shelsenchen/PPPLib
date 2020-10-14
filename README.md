@@ -18,6 +18,10 @@ NOTE: The program is still under development, and some bugs still exist in PPPLi
     
 2020/10/08 \
     fix bug in BDS-only PPP
+    
+2020/10/15 \
+    add forward/backward and combined filter for GNSS\
+    fix bug in SearchAntPcv() function
 
 
 **INTRODUCTION**
