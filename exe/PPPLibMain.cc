@@ -47,6 +47,13 @@ static int AutoMatchFile(string rover_path)
         kConf.fileC.imu=f;
     }
 
+    if(kConf.mode_opt==MODE_OPT_KINEMATIC&&kConf.solC.out_err_fmt){
+        vector<string> splits=MultiSplitStr(rover_path,".");
+        sprintf(f,"%s.reff",splits[0].c_str());
+        if((access(f,0))!=-1){
+            kConf.fileC.kine_ref=f;
+        }
+    }
 
     cMatchFile match_file;
     match_file.InitMatchFile(kConf,FILEPATHSEP);
@@ -94,6 +101,7 @@ static void LoadConf()
     double ep[6]={0};
     for(int i=0;i<3;i++) ep[i]=epoch[i];
     kConf.prc_date.Epoch2Time(ep);
+    kConf.filter_type= static_cast<FILTER_TYPE>(config->Get<int>("filter_type"));
 
     tGnssConf *gnssC=&kConf.gnssC;
     gnssC->restart_gap=config->Get<int>("restart_gap");
@@ -350,6 +358,7 @@ static int Processer()
         kConf.fileC.sol=config->Get<string>("rslt");
 
         solver->SolverProcess(kConf,0);
+
         return true;
     }
 
@@ -396,7 +405,6 @@ static int Processer()
         solver->InitReader(kConf);
         kConf.gnssC.sample_rate=solver->rover_obs_.GetGnssObs()[1].obs_time.TimeDiff(solver->rover_obs_.GetGnssObs()[0].obs_time.t_);
         solver->SolverProcess(kConf,-1);
-//        solver->CloseSolver();
         if(single_flag) break;
 
 

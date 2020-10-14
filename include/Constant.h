@@ -602,6 +602,16 @@ namespace PPPLib {
         SOLVE_KF,
     };
 
+    enum FILTER_TYPE {
+        FILTER_FORWARD,
+        FILTER_BACKWARD,
+        FILTER_COMBINED
+    };
+
+    const string kFilterTypeStr[]={
+            "F","B","C"
+    };
+
     enum PPPLIB_MODE {
         MODE_SPP=0,
         MODE_PPP,

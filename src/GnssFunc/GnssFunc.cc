@@ -584,17 +584,19 @@ namespace PPPLib{
         SetBitu(buff,pos,len,(unsigned int)data);
     }
 
-    bool cGnssObsOperator::LliCycleSlip(tPPPLibConf C, tSatInfoUnit& sat_info,int nf,double tt,RECEIVER_INDEX rcv) {
+    bool cGnssObsOperator::LliCycleSlip(tPPPLibConf C, tSatInfoUnit& sat_info,int nf,double tt,RECEIVER_INDEX rcv,
+                                        unsigned char *s) {
         int f;
         unsigned int slip=0,LLI;
         int slip_flag=false;
+        int sat=sat_info.sat.sat_.no;
 
         for(f=0;f<nf;f++){
-            if((sat_info.raw_L[f]==0.0||sat_info.LLI[f]==0)){
+            if((sat_info.raw_L[f]==0.0&&sat_info.LLI[f]==0)){
                 continue;
             }
-            if(rcv==REC_ROVER) LLI=GetBitu(&sat_info.slip[f],0,2);
-            else LLI=GetBitu(&sat_info.LLI[f],2,2);
+            if(rcv==REC_ROVER) LLI=GetBitu(&s[f],0,2);
+            else LLI=GetBitu(&s[f],2,2);
 
             if(tt>=0.0){
                 if(sat_info.LLI[f]&1){
@@ -609,13 +611,52 @@ namespace PPPLib{
                 slip=LLI;
             }
 
-            if(rcv==REC_ROVER) SetBitu(&sat_info.slip[f],0,2,sat_info.LLI[f]);
-            else SetBitu(&sat_info.slip[f],2,2,sat_info.LLI[f]);
+            if(((LLI&2)&&!(sat_info.LLI[f]&2))||(!(LLI&2)&&(sat_info.LLI[f]&2))){
+                slip|=1;
+            }
 
-            sat_info.slip[f]|=(unsigned char)slip;
+            if(rcv==REC_ROVER) SetBitu(&s[f],0,2,sat_info.LLI[f]);
+            else SetBitu(&s[f],2,2,sat_info.LLI[f]);
+
+            sat_info.slip[f]=(unsigned char)slip;
             if(slip) slip_flag=true;
         }
         return slip_flag;
+    }
+
+    bool cGnssObsOperator::LliCycleSlip(tPPPLibConf C, tSatInfoUnit &sat_info, tSatInfoUnit &pre_sat_info, int nf, double tt, RECEIVER_INDEX rcv) {
+        int f;
+        unsigned int slip=0,LLI;
+
+        for(f=0;f<nf;f++){
+            if((sat_info.raw_L[f]==0.0)&&sat_info.LLI[f]==0){
+                continue;
+            }
+            if(rcv==REC_ROVER) LLI=GetBitu(&pre_sat_info.slip[f],0,2);
+            else               LLI=GetBitu(&pre_sat_info.slip[f],2,2);
+
+            if(tt>=0.0){
+                if(sat_info.LLI[f]&1){
+                    LOG(WARNING)<<sat_info.t_tag.GetTimeStr(1)<<" "<<sat_info.sat.sat_.id<<" L"<<f+1<<" SLIP DETECTED FORWARD";
+                }
+                slip=sat_info.LLI[f];
+            }
+            else{
+                if(LLI&1){
+                    LOG(WARNING)<<sat_info.t_tag.GetTimeStr(1)<<" "<<sat_info.sat.sat_.id<<" L"<<f+1<<" SLIP DETECTED BACKWARD";
+                }
+                slip=LLI;
+            }
+//            if(((LLI&2)&&!(sat_info.LLI[f]&2))||(!(LLI&2)&&(sat_info.LLI[f]&2))){
+//                slip|=1;
+//            }
+
+            if(rcv==REC_ROVER) SetBitu(&pre_sat_info.slip[f],0,2,sat_info.LLI[f]);
+            else SetBitu(&pre_sat_info.slip[f],2,2,sat_info.LLI[f]);
+
+            sat_info.slip[f]=(unsigned char)slip;
+        }
+        return slip;
     }
 
     bool cGnssObsOperator::CodeMinuPhase(tPPPLibConf C, tSatInfoUnit &sat_info,tSatInfoUnit &pre_sat_info) {

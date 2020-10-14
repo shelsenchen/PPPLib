@@ -298,6 +298,7 @@ namespace PPPLib{
         PPPLIB_MODE_OPT mode_opt;
         int dynamic;
         SOLVE_ESTIMATOR estimator;
+        FILTER_TYPE filter_type;
         tGnssConf gnssC;
         tInsConf  insC;
         tFileConf fileC;

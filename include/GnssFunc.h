@@ -338,7 +338,8 @@ namespace PPPLib{
         double LinearCombLam(int i,int j,int k,tSatInfoUnit& sat_info);
 
         bool CodeMinuPhase(tPPPLibConf C, tSatInfoUnit& sat_info,tSatInfoUnit& pre_sat_info);
-        bool LliCycleSlip(tPPPLibConf C, tSatInfoUnit& sat_info,int nf,double tt,RECEIVER_INDEX rcv);
+        bool LliCycleSlip(tPPPLibConf C, tSatInfoUnit& sat_info,int nf,double tt,RECEIVER_INDEX rcv, unsigned char* s);
+        bool LliCycleSlip(tPPPLibConf C, tSatInfoUnit& sat_info, tSatInfoUnit& pre_sat_info,int nf, double tt, RECEIVER_INDEX rcv);
         void MwCycleSlip(tPPPLibConf C,double sample_dt,double dt,tSatInfoUnit* sat_info,tSatInfoUnit* base_sat,tTime last_time);
         void GfCycleSlip(tPPPLibConf C,double sample_dt,double dt,tSatInfoUnit* sat_info,tSatInfoUnit* base_sat);
         void SmoothMw(tPPPLibConf C,tSatInfoUnit* sat_info,tSatInfoUnit* base_sat);

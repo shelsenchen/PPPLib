@@ -30,16 +30,20 @@ namespace PPPLib{
         void UpdateGnssObs(tPPPLibConf C,tEpochSatUnit& epoch_sat,RECEIVER_INDEX rec);
         void CorrGnssObs(tPPPLibConf C,Vector3d& rr);
         virtual int GnssObsRes(int post,tPPPLibConf C,double* x);
+        void CombFbSol(tPPPLibConf C);
+        int Smoother(const VectorXd xf, const MatrixXd Qf, const VectorXd xb, const MatrixXd Qb, VectorXd& xs, MatrixXd& Qs, int n);
 
         virtual void InitSolver(tPPPLibConf C);
         virtual bool InitReader(tPPPLibConf C);
         virtual bool SolverProcess(tPPPLibConf C,int idx);
+        virtual bool SolverStart(int i,int idx);
         virtual bool SolverEpoch();
         virtual bool Estimator(tPPPLibConf C);
         virtual bool SolutionUpdate();
 
         void CloseSolver();
 
+        void ReinitSolver(tPPPLibConf C);
         void InitInsPx(tPPPLibConf C,int nx,MatrixXd& Px);
         void InitX(double xi,double var,int idx,double *x,double *xp);
         Eigen::MatrixXd InitQ(tPPPLibConf,double dt,int nx);
@@ -75,6 +79,8 @@ namespace PPPLib{
         tSolInfoUnit ppplib_sol_;
         tSatInfoUnit previous_sat_info_[MAX_SAT_NUM];
         cLambda lambda_;
+
+        vector<tSolInfoUnit> solf_,solb_;
 
     public:
         int num_full_x_;
@@ -146,6 +152,7 @@ namespace PPPLib{
     public:
         void InitSolver(tPPPLibConf C) override;
         bool SolverProcess(tPPPLibConf C,int idx) override;
+        bool SolverStart(int i,int idx) override ;
         bool SolverEpoch() override;
         bool Estimator(tPPPLibConf C) override;
         bool SolutionUpdate() override;
@@ -222,6 +229,7 @@ namespace PPPLib{
     public:
         void InitSolver(tPPPLibConf C) override;
         bool SolverProcess(tPPPLibConf C,int idx) override;
+        bool SolverStart(int i,int idx) override;
         bool SolverEpoch() override;
         bool Estimator(tPPPLibConf C) override;
         bool SolutionUpdate() override;

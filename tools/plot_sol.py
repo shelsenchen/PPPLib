@@ -361,7 +361,7 @@ def walk_files(dir):
 if __name__ == '__main__':
     BATCH_PLOT = 1
     # 指定路径,若路径后４位为'.pos',则处理单文件，否则处理该路径下的所有.pos文件
-    sol_dir = '/home/cc/dataset/data_mgex/result_wum/PPP_KINE'
+    sol_dir = '/home/cc/dataset/data_mgex/result_wum/PPP_STATIC/GB2B3_DF_IF/jfng_C.pos'
     # sol_dir = '/home/cc/dataset/data_batch/2020/2092/041/result_wum/PPP_KINE'
     # sol_dir = '/home/cc/dataset/data_batch/2020/2092/041/result_wum/PPP_KINE/G_DF_IF/abmf.pos'
 
@@ -385,8 +385,8 @@ if __name__ == '__main__':
         pos_dir = ''
         site = ''
         if sol_dir[-4:] == '.pos':
-            pos_dir = sol_dir[:-8]
-            site = sol_dir[-8:-4]
+            pos_dir = sol_dir[:-10]
+            site = sol_dir[-10:-4]
             data = parse_sol(pos_dir, site)
         if ENU_PLOT:
             enu_plot(pos_dir, site, data, '')

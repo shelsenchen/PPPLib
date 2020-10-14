@@ -294,19 +294,19 @@ namespace PPPLib{
         par_dir=f;f[0]='\0';
         CreateDir(par_dir.c_str());
         if(C_->gnssC.ar_mode>AR_OFF){
-            sprintf(f,"%s%s_ar.pos",par_dir.c_str(),C_->site_name.c_str());
+            sprintf(f,"%s%s_%s_ar.pos",par_dir.c_str(),C_->site_name.c_str(),kFilterTypeStr[C_->filter_type].c_str());
         }
         else{
-            sprintf(f,"%s%s.pos",par_dir.c_str(),C_->site_name.c_str());
+            sprintf(f,"%s%s_%s.pos",par_dir.c_str(),C_->site_name.c_str(),kFilterTypeStr[C_->filter_type].c_str());
         }
         C_->fileC.sol=f;
         f[0]='\0';
         if(C_->solC.out_stat){
             if(C_->gnssC.ar_mode>AR_OFF){
-                sprintf(f,"%s%s_ar.pos.stat",par_dir.c_str(),C_->site_name.c_str());
+                sprintf(f,"%s%s_%s_ar.pos.stat",par_dir.c_str(),C_->site_name.c_str(),kFilterTypeStr[C_->filter_type].c_str());
             }
             else{
-                sprintf(f,"%s%s.pos.stat",par_dir.c_str(),C_->site_name.c_str());
+                sprintf(f,"%s%s_%s.pos.stat",par_dir.c_str(),C_->site_name.c_str(),kFilterTypeStr[C_->filter_type].c_str());
             }
 
             C_->fileC.sol_stat=f;
