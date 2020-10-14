@@ -1861,6 +1861,7 @@ namespace PPPLib{
 
             for(i=0;i<ant_paras_.size();i++){
                 ant=&ant_paras_.at(i);
+                if(!strstr(ant->ant_type.c_str(),types[0])) continue;
                 if(strstr(ant->ant_type.c_str(),types[0])!=ant->ant_type) continue;
                 return ant;
             }
