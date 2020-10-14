@@ -21,6 +21,7 @@ NOTE: The program is still under development, and some bugs still exist in PPPLi
     
 2020/10/15 \
     add forward/backward and combined filter for GNSS\
+    add INS/GNSS sol(.pos) loosely coupled mode \
     fix bug in SearchAntPcv() function
 
 
