@@ -680,6 +680,11 @@ namespace PPPLib {
     const double UNC_ATT=(10.0*D2R);
     const double UNC_BA=(1000.0*MG2MS2);
     const double UNC_BG=(10.0*D2R/3600.0);
+    const double UNC_SA=(1E-4);
+    const double UNC_SG=(1E-4);
+    const double UNC_RA=(1E-4);
+    const double UNC_RG=(1E-4);
+    const double UNC_LEVER=(1E-4);
 
     #define DIS_FLAG 123456
 

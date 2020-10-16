@@ -244,11 +244,21 @@ namespace PPPLib{
         double init_att_unc;
         double init_ba_unc;
         double init_bg_unc;
+        double init_sa_unc;
+        double init_sg_unc;
+        double init_ra_unc;
+        double init_rg_unc;
+        double init_lever_unc;
         double psd_ba;
         double psd_bg;
         double psd_acce;
         double psd_gyro;
         bool err_model;
+        bool est_sa;
+        bool est_sg;
+        bool est_ra;
+        bool est_rg;
+        bool est_level;
     }tInsConf;
 
     typedef struct{
@@ -347,9 +357,18 @@ namespace PPPLib{
 
         int NumPos();
         int NumVel();
+
+        // para of INS
         int NumAtt();
         int NumBa();
         int NumBg();
+        int NumSa();
+        int NumSg();
+        int NumRa();
+        int NumRg();
+        int NumLever();
+
+        // para of GNSS
         int NumClPar();
         int NumClk();
         int NumPhaseClk();
@@ -367,6 +386,12 @@ namespace PPPLib{
         int IndexAtt();
         int IndexBa();
         int IndexBg();
+        int IndexSa();
+        int IndexSg();
+        int IndexRa();
+        int IndexRg();
+        int IndexLever();
+
         int IndexClk(int sys_index);
         int IndexPhaseClk(int sys_index);
         int IndexClkDritf(int sys_index);

@@ -41,16 +41,14 @@ namespace PPPLib{
         virtual bool Estimator(tPPPLibConf C);
         virtual bool SolutionUpdate();
 
-        void CloseSolver();
-
         void ReinitSolver(tPPPLibConf C);
         void InitInsPx(tPPPLibConf C,int nx,MatrixXd& Px);
         void InitX(double xi,double var,int idx,double *x,double *xp);
         Eigen::MatrixXd InitQ(tPPPLibConf,double dt,int nx);
+        Eigen::MatrixXd InitPrecQ(tPPPLibConf C,double dt,int nx,Matrix3d Cbe);
 
         void RemoveLever(const tImuInfoUnit& imu_info,Vector3d& lever,Vector3d& gnss_re,Vector3d& gnss_ve);
         void CloseLoopState(VectorXd& x,tImuInfoUnit* imu_info_corr);
-
 
     public:
         cGnssObsOperator gnss_obs_operator_;

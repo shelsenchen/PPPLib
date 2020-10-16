@@ -249,7 +249,7 @@ namespace PPPLib {
         return true;
     }
 
-    Eigen::MatrixXd cInsMech::StateTransferMat(tPPPLibConf C,PPPLib::tImuInfoUnit &pre_imu_info,
+    Eigen::MatrixXd cInsMech:: StateTransferMat(tPPPLibConf C,PPPLib::tImuInfoUnit &pre_imu_info,
                                                PPPLib::tImuInfoUnit &cur_imu_info,int nx,double dt) {
         using Eigen::Matrix3d;
         using Eigen::MatrixXd;
@@ -268,28 +268,42 @@ namespace PPPLib {
         int ia=6;
         int iba=9;
         int ibg=12;
+        int isa=0,isg=0,ira=0,irg=0,ilev=0;
+        if(C.insC.est_sa) isa=ibg+3;
+        else isa=ibg;
+        if(C.insC.est_sg) isg=isa+3;
+        else isg=isa;
+        if(C.insC.est_ra) ira=isg+3;
+        else ira=isg;
+        if(C.insC.est_rg) irg=ira+6;
+        else irg=ira;
+        if(C.insC.est_level) ilev=irg+6;
+        else ilev=irg;
 
-        //position-velocity
+        //position-velocity  Mpv
         F.block<3,3>(ip,iv)=Matrix3d::Identity();
 
-        //velocity-velocity
+        //velocity-velocity  Mvv
         F.block<3,3>(iv,iv)=(-2.0*VectorSkew(wiee));
-        //velocity-attitude
+        //velocity-attitude  Mva
         F.block<3,3>(iv,ia)=-VectorSkew(Cbe*fb);
         //velocity-ba
-        F.block<3,3>(iv,iba)=Cbe;
+        F.block<3,3>(iv,iba)=-Cbe;
 
-        //attitude-attitude
+        //attitude-attitude  Maa
         F.block<3,3>(ia,ia)=-1.0*VectorSkew(wiee);
         //attitute-bg
         F.block<3,3>(ia,ibg)=Cbe;
+//        cout<<F<<endl;
 
         //ba-ba
-//        F.block<3,3>(iba,iba)=Matrix3d::Identity()*(-1.0/C.insC.correction_time_ba);
+//        F.block<3,3>(iba,iba)=Matrix3d::Identity()*(-fabs(dt)/C.insC.correction_time_ba);
         F.block<3,3>(iba,iba)=Matrix3d::Zero();
         //bg-bg
-//        F.block<3,3>(ibg,ibg)=Matrix3d::Identity()*(-1.0/C.insC.correction_time_bg);
+//        F.block<3,3>(ibg,ibg)=Matrix3d::Identity()*(-fabs(dt)/C.insC.correction_time_bg);
         F.block<3,3>(ibg,ibg)=Matrix3d::Zero();
+
+//        cout<<MatrixXd::Identity(nx,nx)+F*dt<<endl;
 
         return MatrixXd::Identity(nx,nx)+F*dt;
     }
@@ -342,8 +356,8 @@ namespace PPPLib {
         LOG(DEBUG)<<"   "<<"ATTITUDE:(n)"<<setw(13)<<std::fixed<<setprecision(4)<<imu_info.rpy.transpose()*R2D<<" deg";
         LOG(DEBUG)<<"   "<<"VELOCITY:(n)"<<setw(13)<<std::fixed<<setprecision(4)<<imu_info.vn.transpose()<<" m/s";
         LOG(DEBUG)<<"   "<<"POSITION:(e)"<<setw(13)<<std::fixed<<setprecision(4)<<imu_info.re.transpose()<<" m";
-        LOG(DEBUG)<<"   "<<"GYRO BIAS:  "<<setw(13)<<std::fixed<<setprecision(6)<<imu_info.bg.transpose()<<" ";
-        LOG(DEBUG)<<"   "<<"ACCE BIAS:  "<<setw(13)<<std::fixed<<setprecision(6)<<imu_info.ba.transpose()<<" ";
+        LOG(DEBUG)<<"   "<<"GYRO BIAS:  "<<setw(13)<<std::fixed<<setprecision(6)<<imu_info.bg.transpose()<<" rad/s";
+        LOG(DEBUG)<<"   "<<"ACCE BIAS:  "<<setw(13)<<std::fixed<<setprecision(6)<<imu_info.ba.transpose()<<" m/s^2";
     }
 
     cInsAlign::cInsAlign() {}

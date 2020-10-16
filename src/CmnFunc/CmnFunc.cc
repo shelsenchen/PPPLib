@@ -1072,7 +1072,7 @@ namespace PPPLib{
 
     int cParSetting::GetInsTransParNum(tPPPLibConf C) {
         PPPLibC_=C;
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg();
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa()+NumRg()+NumLever();
     }
 
     int cParSetting::GetPPPLibPar(tPPPLibConf C) {
@@ -1134,6 +1134,31 @@ namespace PPPLib{
 
     int cParSetting::NumBg() {
         if(PPPLibC_.mode>MODE_INS) return 3;
+        else return 0;
+    }
+
+    int cParSetting::NumSa() {
+        if(PPPLibC_.mode>MODE_INS&&PPPLibC_.insC.est_sa) return 3;
+        else return 0;
+    }
+
+    int cParSetting::NumSg() {
+        if(PPPLibC_.mode>MODE_INS&&PPPLibC_.insC.est_sg) return 3;
+        else return 0;
+    }
+
+    int cParSetting::NumRa() {
+        if(PPPLibC_.mode>MODE_INS&&PPPLibC_.insC.est_ra) return 6;
+        else return 0;
+    }
+
+    int cParSetting::NumRg() {
+        if(PPPLibC_.mode>MODE_INS&&PPPLibC_.insC.est_rg) return 6;
+        else return 0;
+    }
+
+    int cParSetting::NumLever() {
+        if(PPPLibC_.mode>MODE_INS&&PPPLibC_.insC.est_level) return 3;
         else return 0;
     }
 
@@ -1240,48 +1265,69 @@ namespace PPPLib{
         if(NumBg()>0) return NumPos()+NumVel()+NumAtt()+NumBa();
     }
 
+    int cParSetting::IndexSa() {
+        if(NumSa()>0) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg();
+    }
+
+    int cParSetting::IndexSg() {
+        if(NumSg()>0) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa();
+    }
+
+    int cParSetting::IndexRa() {
+        if(NumRa()>0) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg();
+    }
+
+    int cParSetting::IndexRg() {
+        if(NumRg()>0) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa();
+    }
+
+    int cParSetting::IndexLever() {
+        if(NumLever()>0) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa()+NumRg();
+    }
+
     int cParSetting::IndexClk(int sys_index) {
-        if(NumClk()>0) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+sys_index;
+        if(NumClk()>0) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa()+NumRg()+NumLever()+sys_index;
         else return -1;
     }
 
     int cParSetting::IndexPhaseClk(int sys_index) {
-        if(NumPhaseClk()>0) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+sys_index;
+        if(NumPhaseClk()>0) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa()+NumRg()+NumLever()+NumClk()+sys_index;
     }
 
     int cParSetting::IndexClkDritf(int sys_index) {
-        if(NumClkDrift()) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+sys_index;
+        if(NumClkDrift()) return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa()+NumRg()+NumLever()+NumClk()+NumPhaseClk()+sys_index;
     }
 
     int cParSetting::IndexDcb(int sys_index) {
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+sys_index;
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa()+NumRg()+NumLever()+NumClk()+NumPhaseClk()+NumClkDrift()+sys_index;
     }
 
     int cParSetting::IndexIfb(int sys_index) {
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+NumDcb()+sys_index;
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa()+NumRg()+NumLever()+NumClk()+NumPhaseClk()+NumClkDrift()+NumDcb()+sys_index;
     }
 
     int cParSetting::IndexGloIfcb(int i) {
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+i-1;
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa()+NumRg()+NumLever()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+i-1;
     }
 
     int cParSetting::IndexGloIfpb() {
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+NumGloIfcb();
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa()+NumRg()+NumLever()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+NumGloIfcb();
     }
 
     int cParSetting::IndexTrp() {
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+NumGloIfcb()+NumGloIfpb();
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa()+NumRg()+NumLever()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+NumGloIfcb()+NumGloIfpb();
     }
 
     int cParSetting::IndexIon(int sat_no) {
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+NumGloIfcb()+NumGloIfpb()+NumTrp()+sat_no-1;
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa()+NumRg()+NumLever()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+NumGloIfcb()+NumGloIfpb()+NumTrp()+sat_no-1;
     }
 
     int cParSetting::IndexAmb(int f, int sat_no) {
         int a=NumPos();
         int b=NumClk();
         int c=f*MAX_SAT_NUM+sat_no-1;
-        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+NumGloIfcb()+NumGloIfpb()+NumTrp()+NumIon()
+
+        return NumPos()+NumVel()+NumAtt()+NumBa()+NumBg()+NumSa()+NumSg()+NumRa()+NumRg()+NumLever()+NumClk()+NumPhaseClk()+NumClkDrift()+NumIfb()+NumGloIfcb()+NumGloIfpb()+NumTrp()+NumIon()
                +f*MAX_SAT_NUM+sat_no-1;
     }
 

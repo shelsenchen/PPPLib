@@ -351,13 +351,6 @@ namespace PPPLib{
 
     bool cSolver::SolutionUpdate() {}
 
-    void cSolver::CloseSolver() {
-        out_->buff_.clear();
-        if(out_->ppplib_out_) out_->ppplib_out_.close();
-        if(out_->fout_) fclose(out_->fout_);
-        if(out_->fout_stat_) fclose(out_->fout_stat_);
-    }
-
     void cSolver::ReinitSolver(tPPPLibConf C) {
         para_=cParSetting(C);
         num_full_x_=para_.GetPPPLibPar(C);
@@ -369,10 +362,15 @@ namespace PPPLib{
         real_Px_fix_=MatrixXd::Zero(num_real_x_fix_,num_real_x_fix_);
     }
 
-    static void InitP(double unc,double unc0,int row_s,int col_s,MatrixXd& P){
+    static void InitP(double unc,double unc0,int row_s,int col_s,MatrixXd& P,int is,int ns,int nx){
         double q=unc==0.0?SQR(unc0):SQR(unc);
-        Vector3d vec(q,q,q);
-        P.block<3,3>(row_s,col_s)=vec.asDiagonal();
+//        Vector3d vec(q,q,q);
+//        P.block<3,3>(row_s,col_s)=vec.asDiagonal();
+        int i,j;
+        for(i=is;i<is+ns;i++) for(j=0;j<nx;j++){
+            if(j==i) P.data()[j+i*nx]=q;
+            else P.data()[j+i*nx]=P.data()[i+j*nx]=0.0;
+        }
     }
 
     void cSolver::InitInsPx(tPPPLibConf C,int nx,MatrixXd& Px) {
@@ -383,20 +381,41 @@ namespace PPPLib{
         int ia=para_.IndexAtt();
         int iba=para_.IndexBa();
         int ibg=para_.IndexBg();
+        int isa=para_.IndexSa();
+        int isg=para_.IndexSg();
+        int ira=para_.IndexRa();
+        int irg=para_.IndexRg();
+        int ilev=para_.IndexLever();
+
         if(para_.NumPos()>0){
-            InitP(C.insC.init_pos_unc,UNC_POS,ip,ip,Px);
+            InitP(C.insC.init_pos_unc,UNC_POS,ip,ip,Px,ip,3,nx);
         }
         if(para_.NumVel()>0){
-            InitP(C.insC.init_vel_unc,UNC_VEL,iv,iv,Px);
+            InitP(C.insC.init_vel_unc,UNC_VEL,iv,iv,Px,iv,3,nx);
         }
         if(para_.NumAtt()>0){
-            InitP(C.insC.init_att_unc,UNC_ATT,ia,ia,Px);
+            InitP(C.insC.init_att_unc,UNC_ATT,ia,ia,Px,ia,3,nx);
         }
         if(para_.NumBa()>0){
-            InitP(C.insC.init_ba_unc,UNC_BA,iba,iba,Px);
+            InitP(C.insC.init_ba_unc,UNC_BA,iba,iba,Px,iba,3,nx);
         }
         if(para_.NumBg()>0){
-            InitP(C.insC.init_bg_unc,UNC_BG,ibg,ibg,Px);
+            InitP(C.insC.init_bg_unc,UNC_BG,ibg,ibg,Px,ibg,3,nx);
+        }
+        if(para_.NumSa()>0){
+            InitP(C.insC.init_sa_unc,UNC_SA,isa,isa,Px,isa,3,nx);
+        }
+        if(para_.NumSg()>0){
+            InitP(C.insC.init_sg_unc,UNC_SG,isg,isg,Px,isg,3,nx);
+        }
+        if(para_.NumRa()>0){
+            InitP(C.insC.init_ra_unc,UNC_RA,ira,ira,Px,ira,6,nx);
+        }
+        if(para_.NumRg()>0){
+            InitP(C.insC.init_ra_unc,UNC_RA,ira,ira,Px,ira,6,nx);
+        }
+        if(para_.NumLever()>0){
+            InitP(C.insC.init_lever_unc,UNC_LEVER,ilev,ilev,Px,ilev,3,nx);
         }
     }
 
@@ -409,7 +428,7 @@ namespace PPPLib{
     }
 
     static void SetPsd(double psd,double dt,int row_s,int col_s,MatrixXd& Q){
-        Vector3d vec(psd*dt,psd*dt,psd*dt);
+        Vector3d vec((psd*dt),(psd*dt),(psd*dt));
         Q.block<3,3>(row_s,col_s)=vec.asDiagonal();
     }
 
@@ -417,16 +436,48 @@ namespace PPPLib{
         Eigen::MatrixXd Q;
         Q=MatrixXd::Zero(nx,nx);
 
-        int ip=para_.IndexPos();
         int iv=para_.IndexVel();
         int ia=para_.IndexAtt();
         int iba=para_.IndexBa();
         int ibg=para_.IndexBg();
-        SetPsd(C.insC.psd_acce,dt,iv,iv,Q);
-        SetPsd(C.insC.psd_gyro,dt,ia,ia,Q);
-        SetPsd(C.insC.psd_bg,dt,ibg,ibg,Q);
-        SetPsd(C.insC.psd_ba,dt,iba,iba,Q);
 
+        SetPsd(C.insC.psd_acce,dt,iv,iv,Q);
+        SetPsd(C.insC.psd_gyro*D2R,dt,ia,ia,Q);
+        SetPsd(C.insC.psd_ba,dt,iba,iba,Q);
+        SetPsd(C.insC.psd_bg*D2R,dt,ibg,ibg,Q);
+
+        return Q;
+    }
+
+    Eigen::MatrixXd cSolver::InitPrecQ(tPPPLibConf C, double dt, int nx,Matrix3d Cbe) {
+        MatrixXd Q, G;
+        int nprn=15;
+        Q=MatrixXd::Zero(nprn,nprn);
+        G=MatrixXd::Zero(nx,nprn);
+
+        int iv=3;
+        int ia=6;
+        int iba=9;
+        int ibg=12;
+        int i;
+
+        for(i=iv;i<iv+3;i++) Q.data()[i+i*nprn]=C.insC.psd_acce*fabs(dt);
+        for(i=ia;i<ia+3;i++) Q.data()[i+i*nprn]=C.insC.psd_gyro*fabs(dt);
+        for(i=iba;i<iba+3;i++) Q.data()[i+i*nprn]=C.insC.psd_ba*fabs(dt);
+        for(i=ibg;i<ibg+3;i++) Q.data()[i+i*nprn]=C.insC.psd_bg*fabs(dt);
+
+        G.block<3,3>(iv,iv)=-Cbe;
+        G.block<3,3>(ia,ia)=Cbe;
+        G.block<3,3>(iba,iba)=Matrix3d::Identity();
+        G.block<3,3>(ibg,ibg)=Matrix3d::Identity();
+
+//        cout<<G.transpose()<<endl<<endl;
+
+//        cout<<Q<<endl<<endl;
+
+        Q=G*Q*G.transpose();
+
+//        cout<<Q<<endl<<endl;
         return Q;
     }
 
@@ -479,9 +530,9 @@ namespace PPPLib{
 
         int iba=para_.IndexBa();
         if(x[iba]!=DIS_FLAG){
-            imu_info_corr->ba[0]+=x[iba+0];
-            imu_info_corr->ba[1]+=x[iba+1];
-            imu_info_corr->ba[2]+=x[iba+2];
+            imu_info_corr->ba[0]-=x[iba+0];
+            imu_info_corr->ba[1]-=x[iba+1];
+            imu_info_corr->ba[2]-=x[iba+2];
             sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
                     imu_info_corr->ba[0],x[iba],imu_info_corr->ba[1],x[iba+1],imu_info_corr->ba[2],x[iba+2]);
             LOG(DEBUG)<<"Ba: "<<buff;
@@ -5643,12 +5694,12 @@ namespace PPPLib{
                         continue;
                     }
                     // time update
-                    StateTimeUpdate();
                     ppplib_sol_.stat=SOL_NONE;
                     if(ins_mech_.InsMechanization(C.insC.err_model,pre_imu_info_,cur_imu_info_,++ins_mech_idx)){
                         ppplib_sol_.ins_stat=SOL_INS_MECH;
                         InsSol2PpplibSol(cur_imu_info_,ppplib_sol_);
                     }
+                    StateTimeUpdate();
                 }
             }
             else{
@@ -5695,17 +5746,31 @@ namespace PPPLib{
         F=MatrixXd::Zero(nx,nx);
 
         F=ins_mech_.StateTransferMat(fs_conf_,pre_imu_info_,cur_imu_info_,nx,dt);
-        Q=InitQ(fs_conf_,dt,nx);
 
+//        cout<<F<<endl<<endl;
+
+#if 0
+        Q=InitQ(fs_conf_,dt,nx);
+#else
+        Q=InitPrecQ(fs_conf_,dt,nx,cur_imu_info_.Cbe);
+#endif
         VectorXd x;
-        MatrixXd Px;
+        MatrixXd Px=MatrixXd::Zero(nx,nx);
+        int i,j;
         if(tc_mode_){
             x=Map<VectorXd>(gnss_solver_->full_x_.data(),nx);
-            Px=gnss_solver_->full_Px_.block<15,15>(0,0);
+
+            for(i=0;i<nx;i++) for(j=0;j<nx;j++){
+                Px.data()[i+j*nx]=gnss_solver_->full_Px_.data()[i+j*num_full_x_];
+            }
+//            Px=gnss_solver_->full_Px_.block<15,15>(0,0);
         }
         else{
             x=Map<VectorXd>(full_x_.data(),nx);
-            Px=full_Px_.block<15,15>(0,0);
+            for(i=0;i<nx;i++) for(j=0;j<nx;j++){
+                Px.data()[i+j*nx]=full_Px_.data()[i+j*num_full_x_];
+            }
+//            Px=full_Px_.block<15,15>(0,0);
         }
 
         if(fabs(dt)>60.0){
@@ -5718,23 +5783,33 @@ namespace PPPLib{
         for(int i=0;i<nx;i++) x[i]=1E-20;
         if(tc_mode_){
             gnss_solver_->full_x_.segment(0,nx)=Map<VectorXd>(x.data(),nx);
-            gnss_solver_->full_Px_.block<15,15>(0,0)=Px;
+
+            for(i=0;i<nx;i++) for(j=0;j<nx;j++){
+                gnss_solver_->full_Px_.data()[i+j*num_full_x_]=Px.data()[i+j*nx];
+            }
+//            gnss_solver_->full_Px_.block<15,15>(0,0)=Px;
         }
         else{
             full_x_.segment(0,nx)=Map<VectorXd>(x.data(),nx);
-            full_Px_.block<15,15>(0,0)=Px;
+            for(i=0;i<nx;i++) for(j=0;j<nx;j++){
+                full_Px_.data()[i+j*num_full_x_]=Px.data()[i+j*nx];
+            }
+//            full_Px_.block<15,15>(0,0)=Px;
         }
     }
 
     void cFusionSolver::PropVariance(MatrixXd& F,MatrixXd& Q,int nx,MatrixXd& Px) {
 
-        MatrixXd prior_P=Px.block<15,15>(0,0);
+        MatrixXd prior_P=Px;
         MatrixXd PQ(nx,nx),FPF(nx,nx);
 
         PQ=MatrixXd::Zero(nx,nx);FPF=MatrixXd::Zero(nx,nx);
+        int i,j;
+//        PQ.block<15,15>(0,0)=prior_P.block<15,15>(0,0)+0.5*Q.block<15,15>(0,0);
 
-        PQ.block<15,15>(0,0)=prior_P.block<15,15>(0,0)+0.5*Q.block<15,15>(0,0);
-
+        for(i=0;i<nx;i++){
+            for(j=0;j<nx;j++) PQ.data()[i+j*nx]=prior_P.data()[i+j*nx]+0.5*Q.data()[i+j*nx];
+        }
 
         FPF=F*PQ*F.transpose();
 
@@ -5750,9 +5825,10 @@ namespace PPPLib{
         cout<<std::fixed<<setprecision(10)<<FPF<<endl<<endl;
 #endif
 
-
-        Px.block<15,15>(0,0)=FPF+0.5*Q;
-
+//        Px.block<15,15>(0,0)=FPF+0.5*Q;
+        for(i=0;i<nx;i++){
+            for(j=0;j<nx;j++) Px.data()[i+j*nx]=FPF.data()[i+j*nx]+0.5*Q.data()[i+j*nx];
+        }
     }
 
     int cFusionSolver::BuildLcHVR(int post,tPPPLibConf C,tImuInfoUnit& imu_info,double *meas_pos,double *meas_vel,Vector3d& q_pos,Vector3d& q_vel) {
@@ -5963,13 +6039,12 @@ namespace PPPLib{
     }
 
     bool cFusionSolver::LooseCouple(tPPPLibConf C) {
-
-        StateTimeUpdate();
         ppplib_sol_.stat=SOL_NONE;
         ppplib_sol_.valid_sat_num=0;
         if(!ins_mech_.InsMechanization(C.insC.err_model,pre_imu_info_,cur_imu_info_,++ins_mech_idx)){
             return false;
         }
+        StateTimeUpdate();
 
         ppplib_sol_.ins_stat=SOL_INS_MECH;
         epoch_idx_++;
@@ -5990,8 +6065,6 @@ namespace PPPLib{
                 InsSol2PpplibSol(cur_imu_info_,ppplib_sol_);
             }
         }
-
-
     }
 
     bool cFusionSolver::TightCouple(tPPPLibConf C) {
