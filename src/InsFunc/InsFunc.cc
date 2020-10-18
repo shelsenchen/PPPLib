@@ -391,4 +391,141 @@ namespace PPPLib {
         }
     }
 
+    cInsSim::cInsSim() {}
+
+    cInsSim::cInsSim(double *ep) {
+        sim_time_.Epoch2Time(ep);
+    }
+
+    cInsSim::~cInsSim() {}
+
+    void cInsSim::LoadSimTrj(string trj_file) {
+        double data[11]={0};
+        tSolInfoUnit sol_info={0};
+        int i,week;
+        double sow;
+        ifstream inf;
+        string line_str,part_str;
+        cTime t_tag=sim_time_;
+        Vector3d blh(0,0,0);
+
+        inf.open(trj_file);
+        if(!inf.is_open()){
+            LOG(ERROR)<<"FILE OPEN ERROR"<<trj_file;
+        }
+
+        int line_num=0;
+        while(getline(inf,line_str)&&!inf.eof()){
+            line_num++;
+            istringstream read_str(line_str);
+
+            for(auto &j:data) j=0.0;
+
+            for(i=0;i<11;i++){
+                getline(read_str,part_str,',');
+                if(line_num==1&&i==0) continue;
+                data[i]=atof(part_str.c_str());
+            }
+            sol_info.att[0]=data[0]*D2R;  // roll  deg
+            sol_info.att[1]=data[1]*D2R;  // pitch deg
+            sol_info.att[2]=data[2]*D2R;  // yaw   deg
+            sol_info.vel[0]=data[3];      // m/s
+            sol_info.vel[1]=data[4];      // m/s
+            sol_info.vel[2]=data[5];      // m/s
+            blh[0]=data[6]*D2R;           // lat deg
+            blh[1]=data[7]*D2R;           // lon deg
+            blh[2]=data[8]*D2R;           // height m
+            sol_info.pos=Blh2Xyz(blh);
+            sol_info.t_tag=t_tag+data[9];
+            sim_rej_.push_back(sol_info);
+        }
+
+        inf.close();
+    }
+
+    void cInsSim::LoadSimImu(string imu_file) {
+        double data[8]={0};
+        tImuDataUnit imu_data={0};
+        ifstream inf;
+        string line_str,part_str;
+        cTime t_tag=sim_time_;
+        int i;
+        inf.open(imu_file);
+        if(!inf.is_open()){
+            LOG(ERROR)<<"FILE OPEN ERROR"<<imu_file;
+        }
+
+        int line_num=0;
+
+        while(getline(inf,line_str)&&!inf.eof()){
+            line_num++;
+            istringstream read_str(line_str);
+
+            for(auto &j:data) j=0.0;
+
+            for(i=0;i<8;i++){
+                getline(read_str,part_str,',');
+                if(line_num==1&&i==0) continue;
+                data[i]=atof(part_str.c_str());
+            }
+
+            imu_data.gyro[0]=data[0];
+            imu_data.gyro[1]=data[1];
+            imu_data.gyro[2]=data[2];
+            imu_data.acce[0]=data[3];
+            imu_data.acce[1]=data[4];
+            imu_data.acce[2]=data[5];
+            imu_data.t_tag=t_tag+data[6];
+            sim_imu_data_.data_.push_back(imu_data);
+        }
+        inf.close();
+        ImuErrSim(IMU_GRADE_INERTIAL);
+    }
+
+    /* IMU ERROR SETTING, refer to PSINS
+     * gyro constant bias (deg/h) -->rad/s
+     * acce constant bias (ug)
+     * angular random walk (deg/sqrt(h))
+     * velocity random walk (ug/sqrt(Hz))
+     * */
+    void cInsSim::ImuErrSim(PPPLib::IMU_GRADE grade) {
+        Vector3d err_gyro,err_acce;
+
+        if(grade==IMU_GRADE_INERTIAL){
+            gyro_bias_<<0.03*ARC_DEG_PER_HOUR,0.03*ARC_DEG_PER_HOUR,0.03*ARC_DEG_PER_HOUR;      // ==> rad/s
+            acce_bias_<<100*MILLI_G,100*MILLI_G,100*MILLI_G;                  // ==> m/s^2
+            ang_rw_<<0.001*ARC_DEG_PER_SQRT_HOUR,0.001*ARC_DEG_PER_SQRT_HOUR,0.001*ARC_DEG_PER_SQRT_HOUR; // ==> rad/s^{1/2}
+            vel_rw_<<5.0*UG_PER_SQRT_HZ,5.0*UG_PER_SQRT_HZ,5.0*UG_PER_SQRT_HZ;              // ==> m/s^{2.5}
+        }
+        else if(grade==IMU_GRADE_TACTICAL){
+
+        }
+        else if(grade==IMU_GRADE_MEMS){
+
+        }
+
+        double ts=1.0/sim_imu_data_.hz_;
+        double sts=sqrt(1.0/sim_imu_data_.hz_);
+        err_gyro[0]=ts*gyro_bias_[0]+sts*ang_rw_[0]*RandNorm(1.0);
+        err_gyro[1]=ts*gyro_bias_[1]+sts*ang_rw_[1]*RandNorm(1.0);
+        err_gyro[2]=ts*gyro_bias_[2]+sts*ang_rw_[2]*RandNorm(1.0);
+        err_acce[0]=ts*acce_bias_[0]+sts*vel_rw_[0]*RandNorm(1.0);
+        err_acce[1]=ts*acce_bias_[1]+sts*vel_rw_[1]*RandNorm(1.0);
+        err_acce[2]=ts*acce_bias_[2]+sts*vel_rw_[2]*RandNorm(1.0);
+
+        int i=0;
+        for(i=0;i<sim_imu_data_.data_.size();i++){
+            sim_imu_data_.data_.at(i).gyro+=err_gyro;
+            sim_imu_data_.data_.at(i).acce+=err_acce;
+
+            cout<<"GYRO SIM VALUE: "<<sim_imu_data_.data_.at(i).gyro.transpose()<<endl;
+            cout<<"ACCE SIM VALUE: "<<sim_imu_data_.data_.at(i).acce.transpose()<<endl;
+        }
+
+        init_att_err_<<30*60,-30*60,20;
+        init_vel_err_<<0.1,0.1,0.1;
+        init_pos_err_<<1.0/WGS84_EARTH_LONG_RADIUS,1.0/WGS84_EARTH_LONG_RADIUS,3;
+
+
+    }
 }

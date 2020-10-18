@@ -313,6 +313,7 @@ namespace PPPLib{
 
     private:
         cInsMech ins_mech_;
+        cInsSim  *ins_sim_;
         cSolver *gnss_alignor_;
         cSolver *gnss_solver_;
         tPPPLibConf fs_conf_;

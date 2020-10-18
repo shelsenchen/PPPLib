@@ -5631,6 +5631,13 @@ namespace PPPLib{
         else if(fs_conf_.mode_opt==MODE_OPT_SOL){
             ReadSol(C,C.fileC.gsof,gnss_sols_);
         }
+        else if(fs_conf_.mode_opt==MODE_OPT_SIM){
+            ins_sim_=new cInsSim(fs_conf_.prc_date.GetEpoch());
+            ins_sim_->LoadSimTrj(fs_conf_.fileC.gsof);
+            ins_sim_->sim_imu_data_.SetImu(fs_conf_.insC);
+            ins_sim_->LoadSimImu(fs_conf_.fileC.imu);
+            imu_data_=ins_sim_->sim_imu_data_;
+        }
 
         if(C.insC.imu_type==IMU_M39){
             cDecodeImuM39 m39_decoder;
@@ -5645,7 +5652,7 @@ namespace PPPLib{
             imu_data_=*imu_reader.GetImus();
         }
 
-        if(fs_conf_.mode_opt>MODE_OPT_SOL) gnss_solver_->rover_obs_=rover_obs_;
+        if(fs_conf_.mode_opt>MODE_OPT_SIM) gnss_solver_->rover_obs_=rover_obs_;
         if(tc_mode_) gnss_solver_->full_Px_=full_Px_;
     }
 
@@ -5718,6 +5725,8 @@ namespace PPPLib{
             }
             else if(ppplib_sol_.ins_stat!=SOL_INS_MECH) out_->WriteSol(ppplib_sol_,epoch_sat_info_collect_);
         }
+
+        if(ins_sim_) delete ins_sim_;
     }
 
     bool cFusionSolver::SolverEpoch() {

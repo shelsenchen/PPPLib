@@ -51,6 +51,21 @@ namespace PPPLib{
         return p;
     }
 
+    static double GetUniform(double min,double max) {
+        return 1.0*rand()/RAND_MAX*(max-min)+min;
+    }
+
+    double RandNorm(double std) {
+        if(std<0.0) std=-std;
+        double x1,x2,w,y1;
+        do{
+            x1=GetUniform(-1.0,1.0);
+            x2=GetUniform(-1.0,1.0);
+            w=x1*x1+x2*x2;
+        }while(w>=1.0);
+        w=sqrt((-2.0*log(w))/w);y1=x1*w;return std*y1;
+    }
+
     double ReNorm(double p){
         if(p==0.5) return 0.0;
         if(p>0.9999997) return 5.0;

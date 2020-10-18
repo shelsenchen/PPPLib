@@ -570,11 +570,12 @@ namespace PPPLib {
     // ins related constant definitions
     enum IMU_TYPE {
         IMU_UNKNOW=-1,
-        IMU_NOVTEL_CPT,
-        IMU_NOVTEL_A1,
-        IMU_M39,
-        IMU_MTI_CSV,
-        IMU_POS
+        IMU_NOVTEL_CPT=0,
+        IMU_NOVTEL_A1=1,
+        IMU_M39=2,
+        IMU_MTI_CSV=3,
+        IMU_POS=4,
+        IMU_SIM=5
     };
 
     enum IMU_COORD_TYPE {
@@ -590,6 +591,12 @@ namespace PPPLib {
     enum GYRO_DATA_FORMAT {
         GYRO_FORMAT_DEG,
         GYRO_FORMAT_RAD
+    };
+
+    enum IMU_GRADE {
+        IMU_GRADE_INERTIAL,
+        IMU_GRADE_TACTICAL,
+        IMU_GRADE_MEMS,
     };
 
     enum INS_ALIGN {
@@ -633,13 +640,14 @@ namespace PPPLib {
         MODE_OPT_KINEMATIC,
         MODE_OPT_GSOF,
         MODE_OPT_SOL,
+        MODE_OPT_SIM,
         MODE_OPT_SPP,
         MODE_OPT_PPP,
         MODE_OPT_PPK,
     };
 
     const string kPpplibModeOptStr[]={
-            "STATIC","KINE_SIM","KINE","GSOF","SOL","SPP","PPP","PPK"
+            "STATIC","KINE_SIM","KINE","GSOF","SOL","SIM","SPP","PPP","PPK"
     };
 
     enum SOL_STAT {
@@ -674,6 +682,27 @@ namespace PPPLib {
             126 ,127 ,128 ,129 ,131 ,132 ,133 ,134 ,135 ,137 ,
             138 ,139 ,140 ,142 ,143 ,144 ,145 ,147 ,148 ,149
     };
+
+    const double NORM_GRAVITY_VALUE=9.7803267714;       // m/s^2
+    const double MILLI_G=1.0E-03*NORM_GRAVITY_VALUE;
+    const double MICRO_G=1.0E-06*NORM_GRAVITY_VALUE;
+    const double PPM=1.0E-06;
+    const double HOUR=3600.0;
+    const double ARC_MIN=D2R/60.0;
+    const double ARC_SEC=ARC_MIN/60.0;
+    const double ARC_DEG=D2R;
+    const double ARC_DEG_PER_SECOND=ARC_DEG/1.0;
+    const double ARC_DEG_PER_HOUR=ARC_DEG/HOUR;
+    const double ARC_DEG_PER_SQRT_SECOND=ARC_DEG/sqrt(1.0);
+    const double ARC_DEG_PER_SQRT_HOUR=ARC_DEG/sqrt(HOUR);
+    const double ARC_DEG_PER_HOUR_PER_SQRT_HOUR=ARC_DEG_PER_HOUR/sqrt(HOUR);
+    const double HERTZ=1.0/1.0;                                             //s
+    const double ARC_DEG_PER_HOUR_PER_SQRT_HZ=ARC_DEG_PER_HOUR/HERTZ;
+    const double UG_PER_SQRT_HZ=MILLI_G/sqrt(HERTZ);                        //m/s^{2.5}
+    const double UG_PER_SQRT_HOUR=MILLI_G/sqrt(HOUR);                       //m/s^{2.5}
+    const double METER_PER_SQRT_HOUR=1.0/sqrt(HOUR);
+    const double METER_PER_SEC_PER_SQRT_HOUR=1.0/1.0/sqrt(HOUR);
+    const double PPM_PER_SQRT_HOUR=PPM/sqrt(HOUR);
 
     const double UNC_POS=30.0;
     const double UNC_VEL=30.0;

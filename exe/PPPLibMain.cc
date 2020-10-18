@@ -336,7 +336,7 @@ static int Processer()
                         solver=new cFusionSolver(kConf);break;
     }
 
-    if(kConf.mode==MODE_IGLC&&(kConf.mode_opt==MODE_OPT_GSOF||kConf.mode_opt==MODE_OPT_SOL)){
+    if((kConf.mode==MODE_INS||kConf.mode==MODE_IGLC)&&(kConf.mode_opt==MODE_OPT_GSOF||kConf.mode_opt==MODE_OPT_SOL||kConf.mode_opt==MODE_OPT_SIM)){
         Config::Ptr_ config=Config::GetInstance();
         string file=config->Get<string>("imu");
         if((access(file.c_str(),0))==-1){
@@ -349,6 +349,9 @@ static int Processer()
         }
         else if(kConf.mode_opt==MODE_OPT_SOL){
             file=config->Get<string>("gnss_sol");
+        }
+        else if(kConf.mode_opt==MODE_OPT_SIM){
+            file=config->Get<string>("sim_trj");
         }
         if((access(file.c_str(),0))==-1){
             LOG(ERROR)<<"GNSS SOLUTION FILE NO EXIST path="<<f;
@@ -406,7 +409,6 @@ static int Processer()
         kConf.gnssC.sample_rate=solver->rover_obs_.GetGnssObs()[1].obs_time.TimeDiff(solver->rover_obs_.GetGnssObs()[0].obs_time.t_);
         solver->SolverProcess(kConf,-1);
         if(single_flag) break;
-
 
         kConf.site_name.clear();
         long t2=clock();

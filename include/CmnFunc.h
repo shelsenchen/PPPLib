@@ -5,6 +5,7 @@
 #ifndef PPPLIB_CMNFUNC_H
 #define PPPLIB_CMNFUNC_H
 
+#define EIGEN_NO_DEBUG
 #include <Eigen/Dense>
 #include <iomanip>
 #include <regex>
@@ -31,6 +32,7 @@ namespace PPPLib{
     int Round(double d);
     double VectorMean(vector<double>& seri);
     double NormDistribution(const double u);
+    double RandNorm(double std);
     double ReNorm(double p);
 
     template <typename Iter1,typename Iter2>

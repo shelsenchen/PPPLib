@@ -93,7 +93,6 @@ namespace PPPLib {
         Eigen::Vector3d VelocityUpdate(tImuInfoUnit& pre_imu_info,tImuInfoUnit& cur_imu_info,double dt,Vector3d dv);
         Eigen::Vector3d PositionUpdate(const tImuInfoUnit& pre_imu_info,const Vector3d& cur_vel,double dt);
         void TraceInsMechInfo(tImuInfoUnit &imu_info,bool prior,int idx);
-
     };
 
     class cInsAlign{
@@ -116,6 +115,52 @@ namespace PPPLib {
     };
 
     void AdjustImuData(tImuDataUnit& imu_data,IMU_COORD_TYPE coord_type,IMU_DATA_FORMAT data_format,GYRO_DATA_FORMAT gyro_val_format,double dt);
+
+    class cInsSim {
+    public:
+        cInsSim();
+        cInsSim(double *ep);
+        ~cInsSim();
+
+    public:
+        void LoadSimTrj(string trj_file);
+        void LoadSimImu(string imu_file);
+        void ImuErrSim(IMU_GRADE grade);
+
+    public:
+        vector<tSolInfoUnit> sim_rej_;
+        cImuData sim_imu_data_;
+        cTime sim_time_;
+
+        Vector3d pos0_,vel0_,rpy0_;
+
+        Vector3d gyro_bias_;    // deg/h
+        Vector3d acce_bias_;    // ug
+        Vector3d ang_rw_;       // deg/sqrt(h)
+        Vector3d vel_rw_;       // ug/sqrt(Hz)
+        Vector3d init_att_err_;
+        Vector3d init_vel_err_;
+        Vector3d init_pos_err_;
+    };
+
+    class cIns {
+    public:
+        cIns();
+        ~cIns();
+
+    public:
+        void InitInsStat();
+
+    private:
+        double ts_;
+        int nts_;
+
+        tImuInfoUnit *cur_imu_info_;
+        tImuDataUnit *pre_imu_info_;
+
+        Vector3d pos0_,vel0_,att0_;
+    };
+
 }
 
 #endif //PPPLIB_INSFUNC_H
