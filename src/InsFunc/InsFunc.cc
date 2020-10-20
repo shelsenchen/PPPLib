@@ -39,6 +39,7 @@ namespace PPPLib {
     }
 
     Eigen::Matrix3d Euler2RotationMatrix(const Vector3d& rpy){
+        Eigen::Quaterniond aa=Euler2Quaternion(rpy);
         return Quaternion2RotationMatrix(Euler2Quaternion(rpy));
     }
 
@@ -86,6 +87,31 @@ namespace PPPLib {
         qfromrv.w()=cos(norm);
         qfromrv.vec()=norm<1E-8?rv_2:(sin(norm)/norm)*rv_2;
         return qfromrv;
+    }
+
+    Eigen::Vector3d RotateVec(const Vector3d& rv,const Vector3d& v){
+        double n2=SQR(rv.norm());
+        double q1,s,n,n_2;
+        if(n2<1.0E-08){
+            q1=1-n2*(1/8-n2/384);s=1/2-n2*(1/48-n2/3840);
+        }
+        else{
+            n=sqrt(n2);n_2=n/2;
+            q1=cos(n_2);s=sin(n_2)/n;
+        }
+        double q2=s*rv[0],q3=s*rv[1],q4=s*rv[2];
+        double qo1,qo2,qo3,qo4;
+        qo1=-q2*v[0]-q3*v[1]-q4*v[2];
+        qo2= q1*v[0]+q3*v[2]-q4*v[1];
+        qo3= q1*v[1]+q4*v[0]-q2*v[2];
+        qo4= q1*v[2]+q2*v[1]-q3*v[0];
+
+        Vector3d vo(0,0,0);
+        vo[0]=-qo1*q2+qo2*q1-qo3*q4+qo4*q3;
+        vo[1]=-qo1*q3+qo3*q1-qo4*q2+qo2*q4;
+        vo[2]=-qo1*q4+qo4*q1-qo2*q3+qo3*q2;
+
+        return vo;
     }
 
     cImuData::cImuData(){}
@@ -418,6 +444,7 @@ namespace PPPLib {
         while(getline(inf,line_str)&&!inf.eof()){
             line_num++;
             istringstream read_str(line_str);
+            t_tag=sim_time_;
 
             for(auto &j:data) j=0.0;
 
@@ -437,6 +464,7 @@ namespace PPPLib {
             blh[2]=data[8]*D2R;           // height m
             sol_info.pos=Blh2Xyz(blh);
             sol_info.t_tag=t_tag+data[9];
+            sol_info.stat=SOL_SIM;
             sim_rej_.push_back(sol_info);
         }
 
@@ -458,6 +486,7 @@ namespace PPPLib {
         int line_num=0;
 
         while(getline(inf,line_str)&&!inf.eof()){
+            t_tag=sim_time_;
             line_num++;
             istringstream read_str(line_str);
 
@@ -465,7 +494,7 @@ namespace PPPLib {
 
             for(i=0;i<8;i++){
                 getline(read_str,part_str,',');
-                if(line_num==1&&i==0) continue;
+//                if(line_num==1&&i==0) continue;
                 data[i]=atof(part_str.c_str());
             }
 
@@ -479,7 +508,7 @@ namespace PPPLib {
             sim_imu_data_.data_.push_back(imu_data);
         }
         inf.close();
-        ImuErrSim(IMU_GRADE_INERTIAL);
+//        ImuErrSim(IMU_GRADE_INERTIAL);
     }
 
     /* IMU ERROR SETTING, refer to PSINS
@@ -525,7 +554,339 @@ namespace PPPLib {
         init_att_err_<<30*60,-30*60,20;
         init_vel_err_<<0.1,0.1,0.1;
         init_pos_err_<<1.0/WGS84_EARTH_LONG_RADIUS,1.0/WGS84_EARTH_LONG_RADIUS,3;
-
-
     }
+
+    cIns::cIns() {}
+
+    cIns::cIns(PPPLib::tPPPLibConf C) {
+        C_=C;
+        ts_=1.0/C_.insC.sample_rate;
+        nts_=C_.insC.sample_number;
+    }
+
+    cIns::~cIns() {}
+
+    void cIns::InitInsStat() {
+        rpy0_<<-7.0513E-10,7.0513E-10,-1.6923E-06;
+        vn0_<<0.1,0.1,0.1;
+        rn0_<<0.5977,1.9008,383;
+
+        UpdateEarthPar(rn0_,vn0_);
+        Mpv_<<0,         1/eth_.RMh, 0,
+              1/eth_.cos_lat_RNh,         0, 0,
+              0,                  0, 1;
+    }
+
+    void cIns::UpdateVel() {
+        Vector3d fn=Cbn_*cur_imu_info_->cor_acce;
+        cur_imu_info_->an=RotateVec(-eth_.w_n_in*nts_*ts_/2,fn)+eth_.gcc;
+        cur_imu_info_->vn=pre_imu_info_.vn+cur_imu_info_->an*nts_*ts_;
+    }
+
+    void cIns::UpdatePos() {
+        Mpv_<<0,                   1/eth_.RMh, 0,
+              1/eth_.cos_lat_RNh,  0,          0,
+                0,                 0,          1;
+
+        Vector3d dv=Mpv_*(cur_imu_info_->vn+pre_imu_info_.vn)/2.0;
+        cur_imu_info_->rn=pre_imu_info_.rn+dv*nts_*ts_;
+    }
+
+    void cIns::UpdateAtt() {
+        Qbn_=AttUpdateRotVec(Qbn_,phim_,eth_.w_n_in*ts_*nts_);
+        cur_imu_info_->rpy=Quaternion2Euler(Qbn_);
+        cur_imu_info_->Cbn=Cbn_=Quaternion2RotationMatrix(Qbn_);
+    }
+
+    Eigen::Quaterniond cIns::AttUpdateRotVec(Eigen::Quaterniond qnb, Vector3d rv_ib, Vector3d rv_in) {
+
+        double n2=SQR(rv_ib.norm()),n,n_2;
+        double rv_ib0=0.0,s=0.0;
+        if(n2<1.0E-08){
+            rv_ib0=1-n2*(1/8.0-n2/384.0);s=1.0/2-n2*(1.0/48-n2/3840.0);
+        }
+        else{
+            n=sqrt(n2);n_2=n/2;
+            rv_ib0=cos(n_2);s=sin(n_2)/n;
+        }
+        rv_ib*=s;
+        double qb1,qb2,qb3,qb4;
+        qb1=qnb.w()*rv_ib0-qnb.x()*rv_ib[0]-qnb.y()*rv_ib[1]-qnb.z()*rv_ib[2];
+        qb2=qnb.w()*rv_ib[0]+qnb.x()*rv_ib0+qnb.y()*rv_ib[2]-qnb.z()*rv_ib[1];
+        qb3=qnb.w()*rv_ib[1]+qnb.y()*rv_ib0+qnb.z()*rv_ib[0]-qnb.x()*rv_ib[2];
+        qb4=qnb.w()*rv_ib[2]+qnb.z()*rv_ib0+qnb.x()*rv_ib[1]-qnb.y()*rv_ib[0];
+
+        double rv_in0=0.0;
+        n2=SQR(rv_in.norm());
+        Eigen::Quaterniond qnb1;
+        if(n2<1.0E-08){
+            rv_in0=1-n2*(1.0/8-n2/384);s=-1.0/2+n2*(1.0/48-n2/3840);
+        }
+        else{
+            n=sqrt(n2);n_2=n/2;
+            rv_in0=cos(n_2);s=-sin(n_2)/n;
+        }
+        rv_in*=s;
+        qnb1.w()=rv_in0*qb1-rv_in[0]*qb2-rv_in[1]*qb3-rv_in[2]*qb4;
+        qnb1.x()=rv_in0*qb2+rv_in[0]*qb1+rv_in[1]*qb4-rv_in[2]*qb3;
+        qnb1.y()=rv_in0*qb3+rv_in[1]*qb1+rv_in[2]*qb2-rv_in[0]*qb4;
+        qnb1.z()=rv_in0*qb4+rv_in[2]*qb1+rv_in[0]*qb3-rv_in[1]*qb2;
+
+        n2=SQR(qnb1.norm());
+        if(n2>1.000001||n2<0.999999){
+            double nq=1.0/sqrt(n2);
+            qnb1.w()*=nq;
+            qnb1.x()*=nq;
+            qnb1.y()*=nq;
+            qnb1.z()*=nq;
+        }
+        return qnb1;
+    }
+
+    /* ins mech in ENU */
+    void cIns::InsMech(PPPLib::tImuInfoUnit &cur_imu_info,const tImuInfoUnit pre_imu_info) {
+        cur_imu_info_=&cur_imu_info;
+        pre_imu_info_=pre_imu_info;
+
+        ConingScullingCompensation(0);
+        phim_-=pre_imu_info_.bg*ts_*nts_;
+        dvbm_-=pre_imu_info_.ba*ts_*nts_;
+
+        Vector3d vn_1=pre_imu_info_.vn+pre_imu_info_.an*(ts_*nts_/2.0);
+        Vector3d rn_1=pre_imu_info_.rn+Mpv_*vn_1*(ts_*nts_/2.0);
+
+        UpdateEarthPar(rn_1,vn_1);
+
+        cur_imu_info_->cor_gyro=phim_/(ts_*nts_);
+        cur_imu_info_->cor_acce=dvbm_/(ts_*nts_);
+        Qbn_=Euler2Quaternion(pre_imu_info_.rpy);
+        Cbn_=Euler2RotationMatrix(pre_imu_info_.rpy);
+        UpdateVel();
+        UpdatePos();
+        UpdateAtt();
+
+        Matrix3d Cen;
+        Cen=CalcCen(cur_imu_info_->rn,COORD_ENU);
+        cur_imu_info_->re=Blh2Xyz(cur_imu_info_->rn);
+        cur_imu_info_->ve=Cen.transpose()*cur_imu_info_->ve;
+        cur_imu_info_->ae=Cen.transpose()*cur_imu_info_->an;
+        cur_imu_info_->Cbe=Cen.transpose()*cur_imu_info_->Cbn;
+    }
+
+    /* 1: for poplinomial compensation method
+     * 0: for optimal coning compensation method
+     * 2: single sample+previous sample
+     * */
+    void cIns::ConingScullingCompensation(int type) {
+        int i,j;
+        phim_<<0,0,0;
+        dvbm_<<0,0,0;
+        MatrixXd cm(1,nts_-1),sm(1,nts_-1);
+        // coning compensation
+        Vector3d dphim(0,0,0);
+        if(C_.insC.sample_number==1&&type==2){
+            // single sample+previous sample
+            phim_=cur_imu_info_->raw_gyro;
+            CrossVec3(pre_imu_info_.raw_gyro.data(),cur_imu_info_->raw_gyro.data(),dphim.data());
+            dphim=1.0/12.0*dphim;
+        }
+        else if(type==1){
+            // for optimal coning compensation method
+        }
+        else if(type==0){
+            for(i=0;i<nts_;i++){
+                phim_[0]+=gyros_[i][0];
+                phim_[1]+=gyros_[i][1];
+                phim_[2]+=gyros_[i][2];
+            }
+
+            MatrixXd a(1,nts_-1),b(nts_-1,nts_-1);
+            cm=MatrixXd::Zero(1,nts_-1);
+            a=MatrixXd::Zero(1,nts_-1);b=MatrixXd::Zero(nts_-1,3);
+
+            for(i=0;i<nts_-1;i++){
+                a(0,i)=kConingCoeff[nts_-2][i];
+            }
+            for(i=0;i<nts_-1;i++){
+                for(j=0;j<3;j++){
+                    b(i,j)=gyros_[i][j];
+                }
+            }
+            cm=a*b;
+            CrossVec3(cm.data(),gyros_[nts_-1].data(),dphim.data());
+            phim_+=dphim;
+        }
+
+        // sculling compensation
+        Vector3d scull(0,0,0);
+        if(C_.insC.sample_number==1&&type==2){
+            // single sample+previous sample
+            dvbm_=cur_imu_info_->raw_acce;
+            Vector3d s1(0,0,0),s2(0,0,0);
+            CrossVec3(pre_imu_info_.raw_gyro.data(),cur_imu_info_->raw_acce.data(),s1.data());
+            CrossVec3(pre_imu_info_.raw_acce.data(),cur_imu_info_->raw_gyro.data(),s2.data());
+            scull=1/12.0*(s1+s2);
+        }
+        else if(type==1){
+
+        }
+        else if(type==0){
+            // for optimal coning compensation method
+            for(i=0;i<nts_;i++){
+                dvbm_[0]+=acces_[i][0];
+                dvbm_[1]+=acces_[i][1];
+                dvbm_[2]+=acces_[i][2];
+            }
+            MatrixXd sm(1,nts_-1),a(1,nts_-1),b(nts_-1,nts_-1);
+            sm=MatrixXd::Zero(1,nts_-1);
+            a=MatrixXd::Zero(1,nts_-1);b=MatrixXd::Zero(nts_-1,3);
+
+            for(i=0;i<nts_-1;i++){
+                a(0,i)=kConingCoeff[nts_-2][i];
+            }
+            for(i=0;i<nts_-1;i++){
+                for(j=0;j<3;j++){
+                    b(i,j)=acces_[i][j];
+                }
+            }
+            sm=a*b;
+            CrossVec3(cm.data(),acces_[nts_-1].data(),scull.data());
+            CrossVec3(sm.data(),gyros_[nts_-1].data(),a.data());
+            scull+=a;
+        }
+
+        Vector3d rotm(0,0,0);
+        CrossVec3(phim_.data(),dvbm_.data(),rotm.data());
+        dvbm_+=1.0/2.0*rotm+scull;
+    }
+
+    void cIns::UpdateEarthPar(Vector3d pos,Vector3d vel) {
+        eth_.rn=pos;eth_.vn=vel;
+        eth_.sin_lat=sin(pos[0]);eth_.cos_lat=cos(pos[0]);eth_.tan_lat=eth_.sin_lat/eth_.cos_lat;
+        eth_.sin_lat2=SQR(eth_.sin_lat);
+        eth_.sin_lat4=SQR(eth_.sin_lat2);
+        eth_.sq=1.0-WGS84_FIRST_E2*eth_.sin_lat2;
+        eth_.RN=WGS84_EARTH_LONG_RADIUS/sqrt(eth_.sq);
+        eth_.RNh=eth_.RN+pos[2]; eth_.cos_lat_RNh=eth_.cos_lat*eth_.RNh;
+        eth_.RMh=eth_.RN*(1.0-WGS84_FIRST_E2)/eth_.sq+pos[2];
+        eth_.w_n_ie<<0.0,OMGE_GPS*eth_.cos_lat,OMGE_GPS*eth_.sin_lat;
+        eth_.w_n_en<<-vel[1]/eth_.RMh,vel[0]/eth_.RNh,vel[0]/eth_.RNh*eth_.tan_lat;
+        eth_.w_n_in=eth_.w_n_ie+eth_.w_n_en;
+        eth_.w_n_ie_n=eth_.w_n_ie+eth_.w_n_in;
+        eth_.g=NORM_GRAVITY_VALUE*(1+5.27094E-03*eth_.sin_lat2+2.32718E-05*eth_.sin_lat4)-3.086E-06*pos[2];
+        eth_.gn<<0,0,-eth_.g;
+        eth_.gcc[0]=eth_.w_n_ie_n[2]*vel[1]-eth_.w_n_ie_n[1]*vel[2];
+        eth_.gcc[1]=eth_.w_n_ie_n[0]*vel[2]-eth_.w_n_ie_n[2]*vel[0];
+        eth_.gcc[2]=eth_.w_n_ie_n[1]*vel[0]-eth_.w_n_ie_n[0]*vel[1]+eth_.gn[2];
+    }
+
+    /* Error Transition Matrix in ENU
+     * Ft = [Mpp Mpv O33 O33 O33
+     *       Mvp Mvv Mva Cbn O33
+     *       Map Mav Maa O33 -Cbn]
+     * */
+    Eigen::MatrixXd cIns::StateTransferMat_N(tPPPLibConf C,tImuInfoUnit& pre_imu_info,tImuInfoUnit& cur_imu_info,int nx,double dt) {
+        double tan_lat=eth_.tan_lat,sec_lat=1.0/eth_.cos_lat;
+        double f_RMh=1.0/eth_.RMh, f_RNh=1.0/eth_.RNh,f_clRNh=1.0/eth_.cos_lat_RNh;
+        double f_RMh2=f_RMh*f_RMh, f_RNh2=f_RNh*f_RNh;
+        Vector3d vn=cur_imu_info.vn;
+        double ve_cl_RNh=vn[0]*f_clRNh,ve_RNh2=vn[0]*f_RNh2,vn_RMh2=vn[1]*f_RMh2;
+        Matrix3d O33=Matrix3d::Zero();
+
+        Matrix3d Mp1,Mp2;
+        Mp1=Matrix3d::Zero();Mp2=Matrix3d::Zero();
+        Mp1(1,0)=-eth_.w_n_ie[2];Mp1(2,0)=eth_.w_n_ie[1];
+        Mp2(2,0)=ve_cl_RNh*sec_lat;
+        Mp2(0,2)=vn_RMh2;
+        Mp2(1,2)=-ve_RNh2;
+        Mp2(2,2)=-ve_RNh2*tan_lat;
+
+        Matrix3d Avn=VectorSkew(vn);
+        Matrix3d Awn=VectorSkew(eth_.w_n_ie_n);
+        Matrix3d Maa;
+        Maa=Matrix3d::Zero();
+        Maa(1,0)=-eth_.w_n_in[2];
+        Maa(2,0)=eth_.w_n_in[1];
+        Maa(0,1)=eth_.w_n_in[2];
+        Maa(2,1)=-eth_.w_n_in[0];
+        Maa(0,2)=-eth_.w_n_in[1];
+        Maa(1,2)=eth_.w_n_in[0];
+
+        Matrix3d Mav,Map;
+        Mav=Matrix3d::Zero();
+        Mav(1,0)=f_RNh;
+        Mav(2,0)=f_RNh*tan_lat;
+        Mav(0,1)=-f_RNh;
+
+        Map=Mp1+Mp2;
+
+        Matrix3d Mva,Mvv,Mvp;
+        Mva=Matrix3d::Zero();
+        Vector3d fn=Cbn_*cur_imu_info.cor_acce;
+        Mva=VectorSkew(fn);
+        Mvv=Avn*Mav-Awn;
+        Mvp=Avn*(Mp1+Map);
+
+        double g0=9.7803267714;
+        double sc_lat=eth_.sin_lat*eth_.cos_lat;
+        Mvp(2,0)-=g0*(5.27094e-3*2+2.32718e-5*4*eth_.sin_lat2)*sc_lat;
+        Mvp(2,2)+=3.086e-6;
+
+        Matrix3d Mpv=Mpv_,Mpp;
+        Mpp=Matrix3d::Zero();
+        Mpp(1,0)=ve_cl_RNh*tan_lat;
+        Mpp(0,2)=-vn_RMh2;
+        Mpp(1,2)=-ve_RNh2*sec_lat;
+
+        MatrixXd F;
+        F=MatrixXd::Zero(nx,nx);
+
+        /*
+         * Ft=[ Mpp Mpv O33  O33  O33
+         *      Mvp Mvv Mva -Cbn  O33
+         *      Map Mav Maa  O33  Cbn
+         *      O33 O33 O33  Ta   O33
+         *      O33 O33 O33  O33  Tg ]
+         * */
+        int ip=0;
+        int iv=3;
+        int ia=6;
+        int iba=9;
+        int ibg=12;
+        int isa=0,isg=0,ira=0,irg=0,ilev=0;
+        if(C.insC.est_sa) isa=ibg+3;
+        else isa=ibg;
+        if(C.insC.est_sg) isg=isa+3;
+        else isg=isa;
+        if(C.insC.est_ra) ira=isg+3;
+        else ira=isg;
+        if(C.insC.est_rg) irg=ira+6;
+        else irg=ira;
+        if(C.insC.est_level) ilev=irg+6;
+        else ilev=irg;
+
+        F.block<3,3>(ip,ip)=Mpp;
+        F.block<3,3>(ip,iv)=Mpv;
+
+        F.block<3,3>(iv,ip)=Mvp;
+        F.block<3,3>(iv,iv)=Mvv;
+        F.block<3,3>(iv,ia)=Mva;
+        F.block<3,3>(iv,iba)=-cur_imu_info.Cbn;
+
+        F.block<3,3>(ia,ip)=Map;
+        F.block<3,3>(ia,iv)=Mav;
+        F.block<3,3>(ia,ia)=Maa;
+        F.block<3,3>(ia,ibg)=cur_imu_info.Cbn;
+
+        MatrixXd Fk=F*(nts_*ts_);
+        if(nts_*ts_>0.1){
+
+        }
+        else{
+            Fk+=MatrixXd::Identity(nx,nx);
+        }
+
+        return Fk;
+    }
+
 }

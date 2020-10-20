@@ -186,27 +186,48 @@ static void LoadConf()
         gnssC->rb=Blh2Xyz(blh);
     }
 
-    tInsConf *insC=&kConf.insC;
-    insC->imu_type= static_cast<IMU_TYPE>(config->Get<int>("imu_type"));
-    insC->coord_type= static_cast<IMU_COORD_TYPE>(config->Get<int>("coord_type"));
-    insC->data_format= static_cast<IMU_DATA_FORMAT>(config->Get<int>("data_format"));
-    insC->gyro_val_format= static_cast<GYRO_DATA_FORMAT>(config->Get<int>("gyro_val_format"));
-    insC->sample_rate=config->Get<double>("sample_hz");
-    insC->ins_align=static_cast<INS_ALIGN>(config->Get<int>("ins_align"));
-    ratio.clear();
-    ratio=config->GetArray<double>("lever");
-    for(i=0;i<ratio.size();i++) insC->lever[i]=ratio[i];
-    insC->correction_time_ba=config->Get<double>("correction_time_ba");
-    insC->correction_time_bg=config->Get<double>("correction_time_bg");
-    insC->init_pos_unc=config->Get<double>("init_pos_unc");
-    insC->init_vel_unc=config->Get<double>("init_vel_unc");
-    insC->init_att_unc=config->Get<double>("init_att_unc");
-    insC->init_ba_unc=config->Get<double>("init_ba_unc");
-    insC->init_bg_unc=config->Get<double>("init_bg_unc");
-    insC->psd_acce=config->Get<double>("psd_acce");
-    insC->psd_gyro=config->Get<double>("psd_gyro");
-    insC->psd_ba=config->Get<double>("psd_ba");
-    insC->psd_bg=config->Get<double>("psd_bg");
+    if(kConf.mode>=MODE_INS){
+        tInsConf *insC=&kConf.insC;
+        insC->imu_type= static_cast<IMU_TYPE>(config->Get<int>("imu_type"));
+        insC->coord_type= static_cast<IMU_COORD_TYPE>(config->Get<int>("coord_type"));
+        insC->data_format= static_cast<IMU_DATA_FORMAT>(config->Get<int>("data_format"));
+        insC->gyro_val_format= static_cast<GYRO_DATA_FORMAT>(config->Get<int>("gyro_val_format"));
+        insC->sample_rate=config->Get<double>("sample_hz");
+        insC->sample_number=config->Get<double>("sample_number");
+        insC->ins_align=static_cast<INS_ALIGN>(config->Get<int>("ins_align"));
+        ratio.clear();
+        ratio=config->GetArray<double>("lever");
+        for(i=0;i<ratio.size();i++) insC->lever[i]=ratio[i];
+        insC->correction_time_ba=config->Get<double>("correction_time_ba");
+        insC->correction_time_bg=config->Get<double>("correction_time_bg");
+        ratio.clear();
+        ratio=config->GetArray<double>("init_pos_unc");
+        for(i=0;i<3;i++) insC->init_pos_unc[i]=ratio[i];
+        ratio.clear();
+        ratio=config->GetArray<double>("init_vel_unc");
+        for(i=0;i<3;i++) insC->init_vel_unc[i]=ratio[i];
+        ratio.clear();
+        ratio=config->GetArray<double>("init_att_unc");
+        insC->init_att_unc[0]=ratio[0]*ARC_SEC;     // refer to arc
+        insC->init_att_unc[1]=ratio[1]*ARC_SEC;
+        insC->init_att_unc[2]=ratio[2]*ARC_MIN;
+        ratio.clear();
+        ratio=config->GetArray<double>("init_ba_unc");
+        for(i=0;i<3;i++) insC->init_ba_unc[i]=ratio[i]*MICRO_G;
+        ratio.clear();
+        ratio=config->GetArray<double>("init_bg_unc");
+        for(i=0;i<3;i++) insC->init_bg_unc[i]=ratio[i]*ARC_DEG_PER_HOUR;
+        ratio.clear();
+        double bias=0.0;
+        bias=config->Get<double>("gyro_bias");
+        for(int i=0;i<3;i++) insC->gyr_bias[i]=bias*ARC_DEG_PER_HOUR;
+        bias=config->Get<double>("acce_bias");
+        for(int i=0;i<3;i++) insC->acc_bias[i]=bias*MICRO_G;
+        insC->psd_vrw=config->Get<double>("psd_vel_rw")*UG_PER_SQRT_HZ;
+        insC->psd_arw=config->Get<double>("psd_ang_rw")*ARC_DEG_PER_SQRT_HOUR;
+        insC->psd_ba=config->Get<double>("psd_ba");
+        insC->psd_bg=config->Get<double>("psd_bg");
+    }
 
     tSolConf *solC=&kConf.solC;
     solC->out_sol=config->Get<int>("out_sol");
@@ -331,6 +352,7 @@ static int Processer()
         case MODE_SPP:  solver=new cSppSolver(kConf);break;
         case MODE_PPP:  solver=new cPppSolver(kConf);break;
         case MODE_PPK:  solver=new cPpkSolver(kConf);break;
+        case MODE_INS:
         case MODE_IGLC:
         case MODE_IGTC:
                         solver=new cFusionSolver(kConf);break;

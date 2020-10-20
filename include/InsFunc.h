@@ -10,6 +10,14 @@
 
 namespace PPPLib {
 
+    static const double kConingCoeff[5][5]={
+            {2/3.0,                 0,           0,           0,           0},
+            {9/20.0,          27/20.0,           0,           0,           0},
+            {54/105.0,       92/105.0,   214/105.0,           0,           0},
+            {250/504.0,     525/504.0,   650/504.0,  1375/504.0,           0},
+            {2315/4620.0, 4558/4620.0, 7296/4620.0, 7834/4620.0,15797/4620.0}
+    };
+
     Eigen::Matrix3d VectorSkew(const Eigen::Vector3d& vec);
     Eigen::Matrix3d Quaternion2RotationMatrix(const Eigen::Quaterniond& q);
     Eigen::Quaterniond RotationMatrix2Quaternion(const Eigen::Matrix3d& m);
@@ -18,8 +26,21 @@ namespace PPPLib {
     Eigen::Vector3d RotationMatrix2Euler(const Matrix3d &m);
     Eigen::Vector3d Quaternion2Euler(const Quaterniond& q);
     Eigen::Quaterniond RotationVector2Quaternion(const Vector3d& rv);
-
+    Eigen::Vector3d RotateVec(const Vector3d& rv,const Vector3d& v);
     Eigen::Vector3d CalculateGravity(const Vector3d coord_blh,bool is_ecef);
+
+
+    typedef struct {
+        Vector3d rn,vn;
+        double sin_lat,cos_lat,tan_lat;
+        double sin_lat2,sin_lat4;
+        double sq;
+        double RN,cos_lat_RNh;
+        double RNh,RMh;
+        double g;
+        Vector3d w_n_ie,w_n_en,w_n_in,w_n_ie_n;
+        Vector3d gn,gcc;
+    }tEarthPar;
 
     typedef struct{
         cTime t_tag;
@@ -64,8 +85,8 @@ namespace PPPLib {
 
     typedef struct{
         cTime t_tag;
-        Vector3d raw_gyro,raw_acce;
-        Vector3d cor_gyro,cor_acce;
+        Vector3d raw_gyro,raw_acce;       //increment in body-frame
+        Vector3d cor_gyro,cor_acce;       //rate in body-frame
 
         Vector3d re,ve,ae;
         Vector3d rn,vn,an;
@@ -146,19 +167,45 @@ namespace PPPLib {
     class cIns {
     public:
         cIns();
+        cIns(tPPPLibConf C);
         ~cIns();
 
     public:
         void InitInsStat();
+        void InsMech(tImuInfoUnit& cur_imu_info,const tImuInfoUnit pre_imu_info);
+        Eigen::MatrixXd StateTransferMat_N(tPPPLibConf C,tImuInfoUnit& pre_imu_info,tImuInfoUnit& cur_imu_info,int nx,double dt);
 
     private:
-        double ts_;
-        int nts_;
+        void ConingScullingCompensation(int type);
+        void UpdateEarthPar(Vector3d pos,Vector3d vel);
+        void UpdateAtt();
+        void UpdateVel();
+        void UpdatePos();
 
+        Eigen::Quaterniond AttUpdateRotVec(Eigen::Quaterniond qnb,Vector3d rv_ib, Vector3d rv_in);
+
+    public:
+        tPPPLibConf C_;
+        vector<Vector3d> gyros_,acces_;
         tImuInfoUnit *cur_imu_info_;
-        tImuDataUnit *pre_imu_info_;
+        tImuInfoUnit pre_imu_info_;
+        tEarthPar eth_;
 
-        Vector3d pos0_,vel0_,att0_;
+        Vector3d rn0_;
+        Vector3d vn0_;
+        Vector3d rpy0_;
+
+    private:
+        double ts_=0;
+        int nts_=0;                     // 默认单子样+前一周期
+
+        Matrix3d Mpv_;
+        Vector3d phim_;
+        Vector3d dvbm_;
+
+        Vector3d rpy_;
+        Matrix3d Cbe_,Cbn_;
+        Quaterniond Qbe_,Qbn_;
     };
 
 }

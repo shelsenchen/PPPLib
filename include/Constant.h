@@ -600,8 +600,9 @@ namespace PPPLib {
     };
 
     enum INS_ALIGN {
+        ALIGN_SETTING,
         ALIGN_GNSS_SOL,
-        ALIGN_GNSS_OBS
+        ALIGN_GNSS_OBS,
     };
 
     enum SOLVE_ESTIMATOR {
@@ -638,16 +639,16 @@ namespace PPPLib {
         MODE_OPT_STATIC=0,
         MODE_OPT_KINE_SIM,
         MODE_OPT_KINEMATIC,
+        MODE_OPT_SIM,
         MODE_OPT_GSOF,
         MODE_OPT_SOL,
-        MODE_OPT_SIM,
         MODE_OPT_SPP,
         MODE_OPT_PPP,
         MODE_OPT_PPK,
     };
 
     const string kPpplibModeOptStr[]={
-            "STATIC","KINE_SIM","KINE","GSOF","SOL","SIM","SPP","PPP","PPK"
+            "STATIC","KINE_SIM","KINE","SIM","GSOF","SOL","SPP","PPP","PPK"
     };
 
     enum SOL_STAT {
@@ -659,6 +660,7 @@ namespace PPPLib {
         SOL_SPP,
         SOL_PPP,
         SOL_REF,
+        SOL_SIM,
     };
 
     enum SOL_INS_STAT {
