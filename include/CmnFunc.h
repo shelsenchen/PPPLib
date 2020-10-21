@@ -34,6 +34,7 @@ namespace PPPLib{
     double NormDistribution(const double u);
     double RandNorm(double std);
     double ReNorm(double p);
+    double Random(int N);
 
     template <typename Iter1,typename Iter2>
     double Dot(const Iter1 VecA,const Iter2 VecB,int SizeVec){
@@ -236,6 +237,7 @@ namespace PPPLib{
         IMU_COORD_TYPE coord_type;
         IMU_DATA_FORMAT data_format;
         GYRO_DATA_FORMAT gyro_val_format;
+        INS_MECH_COORD mech_coord;
         INS_ALIGN ins_align;
         double sample_rate;
         int sample_number;
@@ -326,8 +328,8 @@ namespace PPPLib{
         SOL_INS_STAT ins_stat;
         int observed_sat_num;
         int valid_sat_num;
-        Vector3d pos;               //xyz
-        Vector3d vel;
+        Vector3d pos;               // xyz
+        Vector3d vel;               // xyz
         double q_pos[6];
         double q_vel[6];
         double clk_error[NSYS+1]; //clock+isb

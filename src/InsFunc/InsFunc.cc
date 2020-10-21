@@ -148,11 +148,11 @@ namespace PPPLib {
         Vector3d pre_da,pre_dv,cur_da,cur_dv;
         int i;
 
-        pre_da=pre_imu_info.cor_gyro*cur_imu_info.dt;
-        pre_dv=pre_imu_info.cor_acce*cur_imu_info.dt;
+        pre_da=pre_imu_info.cor_gyro_rate*dt;
+        pre_dv=pre_imu_info.cor_acce_rate*dt;
 
-        cur_da=cur_imu_info.cor_gyro*dt;
-        cur_dv=cur_imu_info.cor_acce*dt;
+        cur_da=cur_imu_info.cor_gyro_rate*dt;
+        cur_dv=cur_imu_info.cor_acce_rate*dt;
 
         Vector3d t1,t2,t3,t4;
         CrossVec3(cur_da.data(),cur_dv.data(),t1.data());
@@ -183,7 +183,7 @@ namespace PPPLib {
 
     Eigen::Quaterniond cInsMech::AttitudeUpdate(PPPLib::tImuInfoUnit &pre_imu_info,
                                                 PPPLib::tImuInfoUnit &cur_imu_info,double dt,Vector3d da) {
-        Vector3d theta_k(cur_imu_info.cor_gyro*dt),theta_k_1(pre_imu_info.cor_gyro*dt);
+        Vector3d theta_k(cur_imu_info.cor_gyro_rate*dt),theta_k_1(pre_imu_info.cor_gyro_rate*dt);
 
         //等效旋转矢量
         Vector3d cur_phi=theta_k+da; //单子样+前一周期
@@ -202,8 +202,8 @@ namespace PPPLib {
                                              PPPLib::tImuInfoUnit &cur_imu_info,double dt,Vector3d dv) {
         Vector3d pos=pre_imu_info.re, vel=pre_imu_info.ve;
         Vector3d wiee(0,0,OMGE_GPS);
-        Vector3d theta_k(cur_imu_info.cor_gyro*dt),theta_k_1(pre_imu_info.cor_gyro*dt);
-        Vector3d vb_k(cur_imu_info.cor_acce*dt+dv),vb_k_1(pre_imu_info.cor_acce*dt);
+        Vector3d theta_k(cur_imu_info.cor_gyro_rate*dt),theta_k_1(pre_imu_info.cor_gyro_rate*dt);
+        Vector3d vb_k(cur_imu_info.cor_acce_rate*dt+dv),vb_k_1(pre_imu_info.cor_acce_rate*dt);
 
         Vector3d coord_blh=Xyz2Blh(pos);
         Matrix3d Cen=CalcCen(coord_blh,COORD_NED);
@@ -251,8 +251,8 @@ namespace PPPLib {
         if(err_model){
 
         }else{
-            cur_imu_info.cor_gyro=cur_imu_info.raw_gyro-pre_imu_info.bg;
-            cur_imu_info.cor_acce=cur_imu_info.raw_acce-pre_imu_info.ba;
+            cur_imu_info.cor_gyro_rate=cur_imu_info.raw_gyro_incr-pre_imu_info.bg;
+            cur_imu_info.cor_acce_rate=cur_imu_info.raw_acce_incr-pre_imu_info.ba;
         }
 
         Vector3d da,dv;
@@ -282,8 +282,8 @@ namespace PPPLib {
         using Eigen::Vector3d;
 
         auto &vel=cur_imu_info.ve;
-        auto &fb=cur_imu_info.cor_acce;
-        auto &wb=cur_imu_info.cor_gyro;
+        auto &fb=cur_imu_info.cor_acce_rate;
+        auto &wb=cur_imu_info.cor_gyro_rate;
         Vector3d wiee(0,0,OMGE_GPS);
         auto &Cbe=cur_imu_info.Cbe;
 
@@ -377,8 +377,8 @@ namespace PPPLib {
 
     void cInsMech::TraceInsMechInfo(PPPLib::tImuInfoUnit &imu_info,bool prior,int idx) {
         LOG(DEBUG)<<"INS MECHANIZATION"<<(prior?"- ":"+ ")<< "("<<idx<<"): "<<imu_info.t_tag.GetTimeStr(4);
-        LOG(DEBUG)<<"   "<<"GYRO VALUE: "<<setw(13)<<std::fixed<<setprecision(4)<<imu_info.cor_gyro.transpose()<<" rad/s";
-        LOG(DEBUG)<<"   "<<"ACCE VALUE: "<<setw(13)<<std::fixed<<setprecision(4)<<imu_info.cor_acce.transpose()<<" m/s^2";
+        LOG(DEBUG)<<"   "<<"GYRO VALUE: "<<setw(13)<<std::fixed<<setprecision(4)<<imu_info.cor_gyro_rate.transpose()<<" rad/s";
+        LOG(DEBUG)<<"   "<<"ACCE VALUE: "<<setw(13)<<std::fixed<<setprecision(4)<<imu_info.cor_acce_rate.transpose()<<" m/s^2";
         LOG(DEBUG)<<"   "<<"ATTITUDE:(n)"<<setw(13)<<std::fixed<<setprecision(4)<<imu_info.rpy.transpose()*R2D<<" deg";
         LOG(DEBUG)<<"   "<<"VELOCITY:(n)"<<setw(13)<<std::fixed<<setprecision(4)<<imu_info.vn.transpose()<<" m/s";
         LOG(DEBUG)<<"   "<<"POSITION:(e)"<<setw(13)<<std::fixed<<setprecision(4)<<imu_info.re.transpose()<<" m";
@@ -408,9 +408,11 @@ namespace PPPLib {
             MatMul("NN",3,1,3,1.0,Crf,gyro.data(),0.0,imu_data.gyro.data());
             MatMul("NN",3,1,3,1.0,Crf,acce.data(),0.0,imu_data.acce.data());
         }
-        if(data_format==IMU_FORMAT_INCR){
-            for(int j=0;j<3;j++) imu_data.acce[j]/=dt;
-            for(int j=0;j<3;j++) imu_data.gyro[j]/=dt;
+
+        //
+        if(data_format==IMU_FORMAT_RATE){
+            for(int j=0;j<3;j++) imu_data.acce[j]*=dt;
+            for(int j=0;j<3;j++) imu_data.gyro[j]*=dt;
         }
         if(gyro_val_format==GYRO_FORMAT_DEG){
             for(int j=0;j<3;j++) imu_data.gyro[j]*=D2R;
@@ -453,15 +455,15 @@ namespace PPPLib {
                 if(line_num==1&&i==0) continue;
                 data[i]=atof(part_str.c_str());
             }
-            sol_info.att[0]=data[0]*D2R;  // roll  deg
-            sol_info.att[1]=data[1]*D2R;  // pitch deg
-            sol_info.att[2]=data[2]*D2R;  // yaw   deg
-            sol_info.vel[0]=data[3];      // m/s
-            sol_info.vel[1]=data[4];      // m/s
-            sol_info.vel[2]=data[5];      // m/s
-            blh[0]=data[6]*D2R;           // lat deg
-            blh[1]=data[7]*D2R;           // lon deg
-            blh[2]=data[8]*D2R;           // height m
+            sol_info.att[0]=data[0];  // roll
+            sol_info.att[1]=data[1];  // pitch
+            sol_info.att[2]=data[2];  // yaw
+            sol_info.vel[0]=data[3];  // m/s
+            sol_info.vel[1]=data[4];  // m/s
+            sol_info.vel[2]=data[5];  // m/s
+            blh[0]=data[6];           // lat    rad
+            blh[1]=data[7];           // lon    rad
+            blh[2]=data[8];           // height m
             sol_info.pos=Blh2Xyz(blh);
             sol_info.t_tag=t_tag+data[9];
             sol_info.stat=SOL_SIM;
@@ -577,13 +579,13 @@ namespace PPPLib {
               0,                  0, 1;
     }
 
-    void cIns::UpdateVel() {
-        Vector3d fn=Cbn_*cur_imu_info_->cor_acce;
+    void cIns::UpdateVel_N() {
+        Vector3d fn=Cbn_*cur_imu_info_->cor_acce_rate;
         cur_imu_info_->an=RotateVec(-eth_.w_n_in*nts_*ts_/2,fn)+eth_.gcc;
         cur_imu_info_->vn=pre_imu_info_.vn+cur_imu_info_->an*nts_*ts_;
     }
 
-    void cIns::UpdatePos() {
+    void cIns::UpdatePos_N() {
         Mpv_<<0,                   1/eth_.RMh, 0,
               1/eth_.cos_lat_RNh,  0,          0,
                 0,                 0,          1;
@@ -592,13 +594,13 @@ namespace PPPLib {
         cur_imu_info_->rn=pre_imu_info_.rn+dv*nts_*ts_;
     }
 
-    void cIns::UpdateAtt() {
-        Qbn_=AttUpdateRotVec(Qbn_,phim_,eth_.w_n_in*ts_*nts_);
+    void cIns::UpdateAtt_N() {
+        Qbn_=AttUpdateRotVec_N(Qbn_,phim_,eth_.w_n_in*ts_*nts_);
         cur_imu_info_->rpy=Quaternion2Euler(Qbn_);
         cur_imu_info_->Cbn=Cbn_=Quaternion2RotationMatrix(Qbn_);
     }
 
-    Eigen::Quaterniond cIns::AttUpdateRotVec(Eigen::Quaterniond qnb, Vector3d rv_ib, Vector3d rv_in) {
+    Eigen::Quaterniond cIns::AttUpdateRotVec_N(Eigen::Quaterniond qnb, Vector3d rv_ib, Vector3d rv_in) {
 
         double n2=SQR(rv_ib.norm()),n,n_2;
         double rv_ib0=0.0,s=0.0;
@@ -644,7 +646,7 @@ namespace PPPLib {
     }
 
     /* ins mech in ENU */
-    void cIns::InsMech(PPPLib::tImuInfoUnit &cur_imu_info,const tImuInfoUnit pre_imu_info) {
+    void cIns::InsMech_N(PPPLib::tImuInfoUnit &cur_imu_info,const tImuInfoUnit pre_imu_info) {
         cur_imu_info_=&cur_imu_info;
         pre_imu_info_=pre_imu_info;
 
@@ -657,20 +659,15 @@ namespace PPPLib {
 
         UpdateEarthPar(rn_1,vn_1);
 
-        cur_imu_info_->cor_gyro=phim_/(ts_*nts_);
-        cur_imu_info_->cor_acce=dvbm_/(ts_*nts_);
+        cur_imu_info_->cor_gyro_rate=phim_/(ts_*nts_);
+        cur_imu_info_->cor_acce_rate=dvbm_/(ts_*nts_);
         Qbn_=Euler2Quaternion(pre_imu_info_.rpy);
         Cbn_=Euler2RotationMatrix(pre_imu_info_.rpy);
-        UpdateVel();
-        UpdatePos();
-        UpdateAtt();
+        UpdateVel_N();
+        UpdatePos_N();
+        UpdateAtt_N();
 
-        Matrix3d Cen;
-        Cen=CalcCen(cur_imu_info_->rn,COORD_ENU);
-        cur_imu_info_->re=Blh2Xyz(cur_imu_info_->rn);
-        cur_imu_info_->ve=Cen.transpose()*cur_imu_info_->ve;
-        cur_imu_info_->ae=Cen.transpose()*cur_imu_info_->an;
-        cur_imu_info_->Cbe=Cen.transpose()*cur_imu_info_->Cbn;
+        gyros_.clear();acces_.clear();
     }
 
     /* 1: for poplinomial compensation method
@@ -686,8 +683,8 @@ namespace PPPLib {
         Vector3d dphim(0,0,0);
         if(C_.insC.sample_number==1&&type==2){
             // single sample+previous sample
-            phim_=cur_imu_info_->raw_gyro;
-            CrossVec3(pre_imu_info_.raw_gyro.data(),cur_imu_info_->raw_gyro.data(),dphim.data());
+            phim_=cur_imu_info_->raw_gyro_incr;
+            CrossVec3(pre_imu_info_.raw_gyro_incr.data(),cur_imu_info_->raw_gyro_incr.data(),dphim.data());
             dphim=1.0/12.0*dphim;
         }
         else if(type==1){
@@ -721,10 +718,10 @@ namespace PPPLib {
         Vector3d scull(0,0,0);
         if(C_.insC.sample_number==1&&type==2){
             // single sample+previous sample
-            dvbm_=cur_imu_info_->raw_acce;
+            dvbm_=cur_imu_info_->raw_acce_incr;
             Vector3d s1(0,0,0),s2(0,0,0);
-            CrossVec3(pre_imu_info_.raw_gyro.data(),cur_imu_info_->raw_acce.data(),s1.data());
-            CrossVec3(pre_imu_info_.raw_acce.data(),cur_imu_info_->raw_gyro.data(),s2.data());
+            CrossVec3(pre_imu_info_.raw_gyro_incr.data(),cur_imu_info_->raw_acce_incr.data(),s1.data());
+            CrossVec3(pre_imu_info_.raw_acce_incr.data(),cur_imu_info_->raw_gyro_incr.data(),s2.data());
             scull=1/12.0*(s1+s2);
         }
         else if(type==1){
@@ -822,7 +819,7 @@ namespace PPPLib {
 
         Matrix3d Mva,Mvv,Mvp;
         Mva=Matrix3d::Zero();
-        Vector3d fn=Cbn_*cur_imu_info.cor_acce;
+        Vector3d fn=Cbn_*cur_imu_info.cor_acce_rate;
         Mva=VectorSkew(fn);
         Mvv=Avn*Mav-Awn;
         Mvp=Avn*(Mp1+Map);
@@ -871,12 +868,12 @@ namespace PPPLib {
         F.block<3,3>(iv,ip)=Mvp;
         F.block<3,3>(iv,iv)=Mvv;
         F.block<3,3>(iv,ia)=Mva;
-        F.block<3,3>(iv,iba)=-cur_imu_info.Cbn;
+        F.block<3,3>(iv,iba)=cur_imu_info.Cbn;
 
         F.block<3,3>(ia,ip)=Map;
         F.block<3,3>(ia,iv)=Mav;
         F.block<3,3>(ia,ia)=Maa;
-        F.block<3,3>(ia,ibg)=cur_imu_info.Cbn;
+        F.block<3,3>(ia,ibg)=-cur_imu_info.Cbn;
 
         MatrixXd Fk=F*(nts_*ts_);
         if(nts_*ts_>0.1){

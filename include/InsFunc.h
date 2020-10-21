@@ -85,8 +85,8 @@ namespace PPPLib {
 
     typedef struct{
         cTime t_tag;
-        Vector3d raw_gyro,raw_acce;       //increment in body-frame
-        Vector3d cor_gyro,cor_acce;       //rate in body-frame
+        Vector3d raw_gyro_incr,raw_acce_incr;  //increment in body-frame
+        Vector3d cor_gyro_rate,cor_acce_rate;        //rate in body-frame
 
         Vector3d re,ve,ae;
         Vector3d rn,vn,an;
@@ -172,21 +172,21 @@ namespace PPPLib {
 
     public:
         void InitInsStat();
-        void InsMech(tImuInfoUnit& cur_imu_info,const tImuInfoUnit pre_imu_info);
+        void InsMech_N(tImuInfoUnit& cur_imu_info,const tImuInfoUnit pre_imu_info);
         Eigen::MatrixXd StateTransferMat_N(tPPPLibConf C,tImuInfoUnit& pre_imu_info,tImuInfoUnit& cur_imu_info,int nx,double dt);
 
     private:
         void ConingScullingCompensation(int type);
         void UpdateEarthPar(Vector3d pos,Vector3d vel);
-        void UpdateAtt();
-        void UpdateVel();
-        void UpdatePos();
+        void UpdateAtt_N();
+        void UpdateVel_N();
+        void UpdatePos_N();
 
-        Eigen::Quaterniond AttUpdateRotVec(Eigen::Quaterniond qnb,Vector3d rv_ib, Vector3d rv_in);
+        Eigen::Quaterniond AttUpdateRotVec_N(Eigen::Quaterniond qnb,Vector3d rv_ib, Vector3d rv_in);
 
     public:
         tPPPLibConf C_;
-        vector<Vector3d> gyros_,acces_;
+        vector<Vector3d> gyros_,acces_;  // multi-sample gyro and acce increment
         tImuInfoUnit *cur_imu_info_;
         tImuInfoUnit pre_imu_info_;
         tEarthPar eth_;

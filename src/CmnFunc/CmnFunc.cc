@@ -82,6 +82,10 @@ namespace PPPLib{
         return sqrt(y);
     }
 
+    double Random(int N){
+        return rand()%(N+1)/(float)(N+1);
+    }
+
     extern void MatMul(const char *tr, int n, int k, int m, double alpha,
                        const double *A, const double *B, double beta, double *C)
     {

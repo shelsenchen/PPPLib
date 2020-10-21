@@ -194,6 +194,7 @@ static void LoadConf()
         insC->gyro_val_format= static_cast<GYRO_DATA_FORMAT>(config->Get<int>("gyro_val_format"));
         insC->sample_rate=config->Get<double>("sample_hz");
         insC->sample_number=config->Get<double>("sample_number");
+        insC->mech_coord=static_cast<INS_MECH_COORD>(config->Get<double>("mech_coord"));
         insC->ins_align=static_cast<INS_ALIGN>(config->Get<int>("ins_align"));
         ratio.clear();
         ratio=config->GetArray<double>("lever");

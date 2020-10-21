@@ -432,7 +432,7 @@ namespace PPPLib{
     }
 
     static void SetPsd(double psd,double dt,int row_s,int col_s,MatrixXd& Q){
-        Vector3d vec((psd*dt),(psd*dt),(psd*dt));
+        Vector3d vec((SQR(psd)),(SQR(psd)),SQR(psd));
         Q.block<3,3>(row_s,col_s)=vec.asDiagonal();
     }
 
@@ -447,11 +447,10 @@ namespace PPPLib{
 
 #if 1
         SetPsd(C.insC.psd_vrw,dt,iv,iv,Q);
-        SetPsd(C.insC.psd_arw*D2R,dt,ia,ia,Q);
+        SetPsd(C.insC.psd_arw,dt,ia,ia,Q);
 //        SetPsd(C.insC.psd_ba,dt,iba,iba,Q);
 //        SetPsd(C.insC.psd_bg*D2R,dt,ibg,ibg,Q);
 #endif
-        cout<<Q<<endl;
         return Q;
     }
 
@@ -482,58 +481,108 @@ namespace PPPLib{
         return Q;
     }
 
-    void cSolver::RemoveLever(const tImuInfoUnit &imu_info, Vector3d &lever, Vector3d &gnss_re,
+    void cSolver::RemoveLever(tPPPLibConf C,const tImuInfoUnit &imu_info, Vector3d &lever, Vector3d &gnss_re,
                                     Vector3d &gnss_ve) {
-        Matrix3d Cbe=imu_info.Cbe;
-        Vector3d wiee(0.0,0.0,OMGE_GPS);
-        Vector3d T=Cbe*lever;
+        if(C.insC.mech_coord==MECH_ECEF){
+            Matrix3d Cbe=imu_info.Cbe;
+            Vector3d wiee(0.0,0.0,OMGE_GPS);
+            Vector3d T=Cbe*lever;
 
-        // position correction
-        gnss_re=imu_info.re+T;
+            // position correction
+            gnss_re=imu_info.re+T;
 
-        //velocity correction
-        Vector3d omge=imu_info.cor_gyro,W;
-        T=Cbe*VectorSkew(omge)*lever;
-        W=VectorSkew(wiee)*Cbe*lever;
-        gnss_ve=imu_info.ve+T-W;
+            //velocity correction
+            Vector3d omge=imu_info.cor_gyro_rate,W;
+            T=Cbe*VectorSkew(omge)*lever;
+            W=VectorSkew(wiee)*Cbe*lever;
+            gnss_ve=imu_info.ve+T-W;
+        }
+        else if(C.insC.mech_coord==MECH_ENU){
+            Matrix3d Cbn=imu_info.Cbn;
+            Vector3d wiee(0.0,0.0,OMGE_GPS);
+            Vector3d T=Cbn*lever;
+
+            // position correction
+            gnss_re=imu_info.rn+T;
+
+            //velocity correction
+            Vector3d omge=imu_info.cor_gyro_rate,W;
+            T=Cbn*VectorSkew(omge)*lever;
+            W=VectorSkew(wiee)*Cbn*lever;
+            gnss_ve=imu_info.vn+T-W;
+        }
+
     }
 
-    void cSolver::CloseLoopState(VectorXd& x,tImuInfoUnit* imu_info_corr) {
+    void cSolver::CloseLoopState(tPPPLibConf C,VectorXd& x,tImuInfoUnit* imu_info_corr) {
         char buff[1024]={'\0'};
-        int ip=para_.IndexPos();
-        imu_info_corr->re[0]-=x[ip+0];
-        imu_info_corr->re[1]-=x[ip+1];
-        imu_info_corr->re[2]-=x[ip+2];
-        imu_info_corr->rn=Xyz2Blh(imu_info_corr->re);
-        sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
-                imu_info_corr->re[0],x[ip],imu_info_corr->re[1],x[ip+1],imu_info_corr->re[2],x[ip+2]);
-        LOG(DEBUG)<<imu_info_corr->t_tag.GetTimeStr(1)<<" CLOSE LOOP STATE: ";
-        LOG(DEBUG)<<"POSITION: "<<buff;
-        buff[0]='\0';
 
-        int iv=para_.IndexVel();
-        imu_info_corr->ve[0]-=x[iv+0];
-        imu_info_corr->ve[1]-=x[iv+1];
-        imu_info_corr->ve[2]-=x[iv+2];
-        Matrix3d Cne=CalcCen(imu_info_corr->rn,COORD_NED).transpose();
-        imu_info_corr->vn=Cne.transpose()*imu_info_corr->ve;
-        sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
-                imu_info_corr->ve[0],x[iv],imu_info_corr->ve[1],x[iv+1],imu_info_corr->ve[2],x[iv+2]);
-        LOG(DEBUG)<<"VELOCITY: "<<buff;
-        buff[0]='\0';
+        if(C.insC.mech_coord==MECH_ECEF){
+            int ip=para_.IndexPos();
+            imu_info_corr->re[0]-=x[ip+0];
+            imu_info_corr->re[1]-=x[ip+1];
+            imu_info_corr->re[2]-=x[ip+2];
+            imu_info_corr->rn=Xyz2Blh(imu_info_corr->re);
+            sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
+                    imu_info_corr->re[0],x[ip],imu_info_corr->re[1],x[ip+1],imu_info_corr->re[2],x[ip+2]);
+            LOG(DEBUG)<<imu_info_corr->t_tag.GetTimeStr(1)<<" CLOSE LOOP STATE: ";
+            LOG(DEBUG)<<"POSITION: "<<buff;
+            buff[0]='\0';
 
-        int ia=para_.IndexAtt();
-        if(x[ia]!=DIS_FLAG){
-            Vector3d att(x[ia],x[ia+1],x[ia+2]);
-            Matrix3d T=Matrix3d::Identity()-VectorSkew(att);
-            imu_info_corr->Cbe=T*imu_info_corr->Cbe;
+            int iv=para_.IndexVel();
+            imu_info_corr->ve[0]-=x[iv+0];
+            imu_info_corr->ve[1]-=x[iv+1];
+            imu_info_corr->ve[2]-=x[iv+2];
+            Matrix3d Cne=CalcCen(imu_info_corr->rn,COORD_NED).transpose();
+            imu_info_corr->vn=Cne.transpose()*imu_info_corr->ve;
+            sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
+                    imu_info_corr->ve[0],x[iv],imu_info_corr->ve[1],x[iv+1],imu_info_corr->ve[2],x[iv+2]);
+            LOG(DEBUG)<<"VELOCITY: "<<buff;
+            buff[0]='\0';
+
+            int ia=para_.IndexAtt();
+            if(x[ia]!=DIS_FLAG){
+                Vector3d att(x[ia],x[ia+1],x[ia+2]);
+                Matrix3d T=Matrix3d::Identity()-VectorSkew(att);
+                imu_info_corr->Cbe=T*imu_info_corr->Cbe;
+            }
+        }
+        else if(C.insC.mech_coord==MECH_ENU){
+            int ip=para_.IndexPos();
+            imu_info_corr->rn[0]-=x[ip+0];
+            imu_info_corr->rn[1]-=x[ip+1];
+            imu_info_corr->rn[2]-=x[ip+2];
+            imu_info_corr->re=Blh2Xyz(imu_info_corr->rn);
+            sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
+                    imu_info_corr->rn[0],x[ip],imu_info_corr->rn[1],x[ip+1],imu_info_corr->rn[2],x[ip+2]);
+            LOG(DEBUG)<<imu_info_corr->t_tag.GetTimeStr(1)<<" CLOSE LOOP STATE: ";
+            LOG(DEBUG)<<"POSITION: "<<buff;
+            buff[0]='\0';
+
+            int iv=para_.IndexVel();
+            imu_info_corr->vn[0]-=x[iv+0];
+            imu_info_corr->vn[1]-=x[iv+1];
+            imu_info_corr->vn[2]-=x[iv+2];
+            Matrix3d Cne=CalcCen(imu_info_corr->rn,COORD_ENU).transpose();
+            imu_info_corr->ve=Cne*imu_info_corr->vn;
+            sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
+                    imu_info_corr->vn[0],x[iv],imu_info_corr->vn[1],x[iv+1],imu_info_corr->vn[2],x[iv+2]);
+            LOG(DEBUG)<<"VELOCITY: "<<buff;
+            buff[0]='\0';
+
+            int ia=para_.IndexAtt();
+            if(x[ia]!=DIS_FLAG){
+                Vector3d att(x[ia],x[ia+1],x[ia+2]);
+                Matrix3d T=Matrix3d::Identity()-VectorSkew(att);
+                imu_info_corr->Cbn=T*imu_info_corr->Cbn;
+            }
         }
 
         int iba=para_.IndexBa();
         if(x[iba]!=DIS_FLAG){
-            imu_info_corr->ba[0]-=x[iba+0];
-            imu_info_corr->ba[1]-=x[iba+1];
-            imu_info_corr->ba[2]-=x[iba+2];
+            imu_info_corr->ba[0]+=x[iba+0];
+            imu_info_corr->ba[1]+=x[iba+1];
+            imu_info_corr->ba[2]+=x[iba+2];
             sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
                     imu_info_corr->ba[0],x[iba],imu_info_corr->ba[1],x[iba+1],imu_info_corr->ba[2],x[iba+2]);
             LOG(DEBUG)<<"Ba: "<<buff;
@@ -1138,7 +1187,7 @@ namespace PPPLib{
         gnss_err_corr_.eph_model_.EphCorr(epoch_sat_info_collect_);
         Vector3d rr,ve;
         if(tc_mode_){
-            RemoveLever(cur_imu_info_,spp_conf_.insC.lever,rr,ve);
+            RemoveLever(spp_conf_,cur_imu_info_,spp_conf_.insC.lever,rr,ve);
             for(int i=0;i<3;i++) full_x_[i]=rr[i];
         }
         else{
@@ -1427,7 +1476,7 @@ namespace PPPLib{
 
         Vector3d re,ve;
         if(tc_mode_){
-            RemoveLever(cur_imu_info_,C.insC.lever,re,ve);
+            RemoveLever(ppp_conf_,cur_imu_info_,C.insC.lever,re,ve);
         }
         else{
             re<<full_x_[0],full_x_[1],full_x_[2];
@@ -1448,8 +1497,8 @@ namespace PPPLib{
             kf_.Adjustment(omc_L_,H_,R_,x,Px,num_L_,num_full_x_);
 
             if(tc_mode_){
-                CloseLoopState(x,&cor_imu_info);
-                RemoveLever(cor_imu_info,C.insC.lever,re,ve);
+                CloseLoopState(ppp_conf_,x,&cor_imu_info);
+                RemoveLever(ppp_conf_,cor_imu_info,C.insC.lever,re,ve);
             }
             else{
                 re<<x[0],x[1],x[2];
@@ -1503,8 +1552,8 @@ namespace PPPLib{
             if(ResolvePppAmbFixRef(2,x, Px)){
                 if(!GnssObsRes(5,C,x.data(),re)){
                     if(tc_mode_){
-                        CloseLoopState(x,&cur_imu_info_);
-                        RemoveLever(cur_imu_info_,C.insC.lever,re,ve);
+                        CloseLoopState(ppp_conf_,x,&cur_imu_info_);
+                        RemoveLever(ppp_conf_,cur_imu_info_,C.insC.lever,re,ve);
 
                     }
                     else{
@@ -4001,7 +4050,7 @@ namespace PPPLib{
             MatrixXd Px=full_Px_;
 
             if(tc_mode_){
-                RemoveLever(cur_imu_info_,C.insC.lever,rover_xyz,ve);
+                RemoveLever(ppk_conf_,cur_imu_info_,C.insC.lever,rover_xyz,ve);
             }
             else{
                 rover_xyz<<full_x_[0],full_x_[1],full_x_[2];
@@ -4022,8 +4071,8 @@ namespace PPPLib{
             }
 
             if(tc_mode_){
-                CloseLoopState(x,&cor_imu_info);
-                RemoveLever(cor_imu_info,C.insC.lever,rover_xyz,ve);
+                CloseLoopState(ppk_conf_,x,&cor_imu_info);
+                RemoveLever(ppk_conf_,cor_imu_info,C.insC.lever,rover_xyz,ve);
             }
             else{
                 rover_xyz<<x[0],x[1],x[2];
@@ -5335,19 +5384,15 @@ namespace PPPLib{
 
         if(imu_index_<0||imu_index_>=imu_data_.data_.size()) return false;
 
-        // prepare imu data for static detect
-//        for(i=imu_index_;i>=0&&i<ws&&i<imu_data_.data_.size();i++){
-//            imu_data_zd_.push_back(imu_data_.data_.at(i));
-//        }
-
-        // 多子样
+        /// save multi-sample imu observations for ins mech.
         for(i=imu_index_;i<fs_conf_.insC.sample_number+imu_index_&&i<imu_data_.data_.size();i++){
             ins_algor_->gyros_.push_back(imu_data_.data_[i].gyro);
             ins_algor_->acces_.push_back(imu_data_.data_[i].acce);
         }
-        cur_imu_info_.t_tag=imu_data_.data_[i-1].t_tag;
+        cur_imu_info_.t_tag=imu_data_.data_[i-1].t_tag; /// t_tag: last sample time tag in multi-sample
 
         if(fs_conf_.insC.imu_type==IMU_M39){
+            /// M39 need to adjust time due to only output week of seconds
             if(fs_conf_.mode_opt==MODE_OPT_GSOF){
                 gnss_sols_[0].t_tag.Time2Gpst(&week, nullptr,SYS_GPS);
             }
@@ -5357,8 +5402,10 @@ namespace PPPLib{
             cur_imu_info_.t_tag+=week*604800.0;
         }
 
-        cur_imu_info_.raw_gyro=imu_data_.data_[i-1].gyro;
-        cur_imu_info_.raw_acce=imu_data_.data_[i-1].acce;
+        /// save last sample imu observations(increment format)
+        cur_imu_info_.raw_gyro_incr=imu_data_.data_[i-1].gyro; /// rad
+        cur_imu_info_.raw_acce_incr=imu_data_.data_[i-1].acce; /// m/s
+
         imu_index_+=fs_conf_.insC.sample_number;
         return true;
     }
@@ -5410,9 +5457,6 @@ namespace PPPLib{
                     if(gnss_sols_[i].t_tag.t_.sec!=0.0){
                         info=false;break;
                     }
-                    else{
-                        int a=1;
-                    }
                 }
                 info=true;gnss_sol_idx=i;
                 break;
@@ -5426,6 +5470,7 @@ namespace PPPLib{
 
     void cFusionSolver::InsSol2PpplibSol(tImuInfoUnit &imu_sol, tSolInfoUnit &ppplib_sol) {
         ppplib_sol_.t_tag=imu_sol.t_tag;
+
         ppplib_sol.pos=imu_sol.re;
         ppplib_sol.vel=imu_sol.ve;
         ppplib_sol.att=imu_sol.rpy;
@@ -5461,6 +5506,23 @@ namespace PPPLib{
         }
     }
 
+    void cFusionSolver::StateSync(tImuInfoUnit &imu_info) {
+        if(fs_conf_.insC.mech_coord==MECH_ENU){
+            Matrix3d Cen=CalcCen(imu_info.rn,COORD_ENU);
+            imu_info.Cbe=Cen.transpose()*imu_info.Cbn;
+            imu_info.re=Blh2Xyz(imu_info.rn);
+            imu_info.ve=Cen.transpose()*imu_info.vn;
+            imu_info.ae=Cen.transpose()*imu_info.an;
+        }
+        else if(fs_conf_.insC.mech_coord==MECH_ECEF){
+            imu_info.rn=Xyz2Blh(imu_info.re);
+            Matrix3d Cen=CalcCen(imu_info.rn,COORD_ENU);
+            imu_info.Cbn=Cen*imu_info.Cbe;
+            imu_info.vn=Cen*imu_info.ve;
+            imu_info.an=Cen*imu_info.ae;
+        }
+    }
+
     double cFusionSolver::Vel2Yaw(Vector3d vn) {
         return atan2(vn[1],fabs(vn[0])<1E-4?1E-4:vn[0]);
     }
@@ -5488,11 +5550,13 @@ namespace PPPLib{
 
         // lever correct
         pre_imu_info_.re=re-pre_imu_info_.Cbe*fs_conf_.insC.lever;
-        Matrix3d T=VectorSkew(cur_imu_info_.raw_gyro*cur_imu_info_.dt);
+        Matrix3d T=VectorSkew(cur_imu_info_.raw_gyro_incr*cur_imu_info_.dt);
         Matrix3d Omge=VectorSkew(wiee);
         pre_imu_info_.ve=ve-pre_imu_info_.Cbe*T*fs_conf_.insC.lever+Omge*pre_imu_info_.Cbe*fs_conf_.insC.lever;
         pre_imu_info_.rn=Xyz2Blh(pre_imu_info_.re);
         pre_imu_info_.vn=Cne.transpose()*pre_imu_info_.ve;
+
+        StateSync(pre_imu_info_);
 
         return true;
     }
@@ -5500,16 +5564,18 @@ namespace PPPLib{
     bool cFusionSolver::InsAlign() {
         int num_sols=5;
         static vector<tSolInfoUnit>sols;
-        SOL_STAT  align_level=SOL_FIX;
+        SOL_STAT  align_level=SOL_FIX;  /// for PPK
+
+
         if(fs_conf_.mode_opt==MODE_OPT_PPP){
-            align_level=SOL_PPP;
+            align_level=SOL_PPP;       /// for PPP
         }
         else if(fs_conf_.mode_opt==MODE_OPT_SPP){
-            align_level=SOL_SPP;
+            align_level=SOL_SPP;       /// for SPP
         }
 
         if(fs_conf_.insC.ins_align==ALIGN_GNSS_OBS){
-
+            /// get gnss sol information using raw gnss obs
             if(gnss_alignor_->SolverProcess(gnss_conf_,rover_idx_)) {
                 LOG(DEBUG)<<"USING GNSS TO ALIGN INS("<<sols.size()<<"): "<<gnss_alignor_->ppplib_sol_.pos.transpose();
                 if(gnss_alignor_->ppplib_sol_.stat==align_level){
@@ -5523,6 +5589,7 @@ namespace PPPLib{
 
         }
         else if(fs_conf_.insC.ins_align==ALIGN_GNSS_SOL){
+            /// gnss sol format
             sols.push_back(gnss_sols_.at(gnss_sol_idx));
         }
 
@@ -5550,15 +5617,14 @@ namespace PPPLib{
             }
             else ve=sols.back().vel;
 
-            if(ve.norm()<5.0||cur_imu_info_.raw_gyro.norm()>30.0*D2R){
+            if(ve.norm()<5.0||cur_imu_info_.raw_gyro_incr.norm()>30.0*D2R){
                 sols.clear();
                 return false;
             }
 
-
             if(GnssSol2Ins(sols.back().pos,ve)){
                 LOG(INFO)<<cur_imu_info_.t_tag.GetTimeStr(3)<<" INS INITIALIZATION OK";
-                LOG(INFO)<<"INIT POSITION(e): "<<setw(13)<<std::fixed<<setprecision(3)<<pre_imu_info_.re.transpose()<<" m";
+                LOG(INFO)<<"INIT POSITION(n): "<<setw(13)<<std::fixed<<setprecision(3)<<pre_imu_info_.rn.transpose()<<" rad rad m";
                 LOG(INFO)<<"INIT VELOCITY(n): "<<setw(13)<<setprecision(3)<<pre_imu_info_.vn.transpose()<<" m/s";
                 LOG(INFO)<<"INIT ATTITUTE(n): "<<setw(13)<<setprecision(3)<<pre_imu_info_.rpy.transpose()*R2D<<" deg";
                 ppplib_sol_.ins_stat=SOL_INS_INIT;
@@ -5585,6 +5651,9 @@ namespace PPPLib{
             val.clear();
             val=config->GetArray<double>("init_att");
             for(int i=0;i<3;i++) cur_imu_info_.rpy[i]=pre_imu_info_.rpy[i]=val[i];
+
+            StateSync(cur_imu_info_);
+            StateSync(pre_imu_info_);
 
             LOG(INFO)<<cur_imu_info_.t_tag.GetTimeStr(3)<<" INS INITIALIZATION OK";
             LOG(INFO)<<"INIT POSITION(n): "<<setw(13)<<std::fixed<<setprecision(3)<<pre_imu_info_.rn.transpose()<<" m";
@@ -5710,51 +5779,75 @@ namespace PPPLib{
 
         int gnss_obs_flag=false,ins_align=false,gnss_sol_flag=false;
         while(InputImuData(5)){
+
+            /// loosely and tightly coupled
             if(fs_conf_.mode>MODE_INS){
                 if(fs_conf_.mode_opt==MODE_OPT_GSOF||fs_conf_.mode_opt==MODE_OPT_SOL||fs_conf_.mode_opt==MODE_OPT_SIM){
+                    /// match gnss solution for loosely coupled
                     gnss_sol_flag=MatchGnssSol();
                 }
                 else{
+                    /// match gnss raw observations for tightly coupled
                     gnss_obs_flag=MatchGnssObs();
                 }
 
+                /// for ins sim mode, can setting ins init stat by manual
                 if(fs_conf_.insC.ins_align==ALIGN_SETTING){
                     if(!ins_align) ins_align=InsAlign();
                 }
 
+                /// for ins align need to find gnss information, otherwise can not be aligned
+                /// for ins sim mode, if find gnss sol go to measurement update step
                 if(gnss_sol_flag||gnss_obs_flag){
+                    /// measurement update
                     if(!ins_align){
+
+                        /// align ins using gnss information
                         ins_align=InsAlign();
+
+                        /// save current sample imu obs
                         pre_imu_info_.t_tag=cur_imu_info_.t_tag;
-                        pre_imu_info_.raw_gyro=cur_imu_info_.raw_gyro;
-                        pre_imu_info_.raw_acce=cur_imu_info_.raw_acce;
+                        pre_imu_info_.raw_gyro_incr=cur_imu_info_.raw_gyro_incr;
+                        pre_imu_info_.raw_acce_incr=cur_imu_info_.raw_acce_incr;
+
+                        /// clear gnss solver information
                         epoch_sat_obs_.epoch_data.clear();
                         base_epoch_sat_obs_.epoch_data.clear();
+
+                        /// if not align, continue
                         if(!ins_align) continue;
                     }
-                    // measurement update
+
                     if(C.mode==MODE_IGLC){
+                        /// ins gnss loosely coupled
                         LooseCouple(C);
                     }
-                    else if(C.mode==MODE_IGTC) TightCouple(C);
+                    else if(C.mode==MODE_IGTC){
+                        /// ins gnss tightly coupled
+                        TightCouple(C);
+                    }
                 }
                 else{
+                    /// time update
+
                     if(!ins_align){
+                        /// for gnss sol and gnss obs align method
                         pre_imu_info_=cur_imu_info_;
                         continue;
                     }
-                    // time update
+
                     ppplib_sol_.stat=SOL_NONE;
-#if 0
-                    if(ins_mech_.InsMechanization(C.insC.err_model,pre_imu_info_,cur_imu_info_,++ins_mech_idx)){
-                        ppplib_sol_.ins_stat=SOL_INS_MECH;
-                        InsSol2PpplibSol(cur_imu_info_,ppplib_sol_);
-                    }
-#endif
-                    ins_algor_->InsMech(cur_imu_info_,pre_imu_info_);
+                    /// ins mech in ENU-RFU coord
+                    ins_algor_->InsMech_N(cur_imu_info_,pre_imu_info_);
+
+                    StateSync(cur_imu_info_);
+
+                    /// state transform
+                    StateTimeUpdate();
+
+                    /// for output solution
                     ppplib_sol_.ins_stat=SOL_INS_MECH;
                     InsSol2PpplibSol(cur_imu_info_,ppplib_sol_);
-                    StateTimeUpdate();
                 }
             }
             else{
@@ -5764,17 +5857,13 @@ namespace PPPLib{
                     ins_align=InsAlign();
                 }
 
-                ins_algor_->InsMech(cur_imu_info_,pre_imu_info_);
+                ins_algor_->InsMech_N(cur_imu_info_,pre_imu_info_);
+
                 ppplib_sol_.ins_stat=SOL_INS_MECH;
                 InsSol2PpplibSol(cur_imu_info_,ppplib_sol_);
-#if 0
-                if(ins_mech_.InsMechanization(C.insC.err_model,pre_imu_info_,cur_imu_info_,++ins_mech_idx)){
-                    ppplib_sol_.ins_stat=SOL_INS_MECH;
-                    InsSol2PpplibSol(cur_imu_info_,ppplib_sol_);
-                }
-#endif
             }
 
+            /// ending
             pre_imu_info_=cur_imu_info_;
             if(C.solC.out_ins_mech_frq!=0&&ins_mech_idx%C.solC.out_ins_mech_frq==0&&ppplib_sol_.ins_stat==SOL_INS_MECH){
                 ppplib_sol_.valid_sat_num=0;
@@ -5783,8 +5872,8 @@ namespace PPPLib{
             else if(ppplib_sol_.ins_stat!=SOL_INS_MECH) out_->WriteSol(ppplib_sol_,epoch_sat_info_collect_);
         }
 
-        if(ins_sim_) delete ins_sim_;
-        if(ins_algor_) delete ins_algor_;
+        delete ins_sim_;
+        delete ins_algor_;
     }
 
     bool cFusionSolver::SolverEpoch() {
@@ -5807,19 +5896,18 @@ namespace PPPLib{
     }
 
     void cFusionSolver::StateTimeUpdate() {
-        double dt=cur_imu_info_.dt=cur_imu_info_.t_tag.TimeDiff(pre_imu_info_.t_tag.t_);
+        double dt=1.0/fs_conf_.insC.sample_rate;
         int nx=para_.GetInsTransParNum(fs_conf_);
         MatrixXd F,Q;
         F=MatrixXd::Zero(nx,nx);
 
-//        F=ins_mech_.StateTransferMat(fs_conf_,pre_imu_info_,cur_imu_info_,nx,dt);
-        F=ins_algor_->StateTransferMat_N(fs_conf_,pre_imu_info_,cur_imu_info_,nx,dt);
+        if(fs_conf_.insC.mech_coord==MECH_ENU){
+            F=ins_algor_->StateTransferMat_N(fs_conf_,pre_imu_info_,cur_imu_info_,nx,dt);
+        }
+        cout<<F<<endl;
 
-#if 1
         Q=InitQ(fs_conf_,dt,nx);
-#else
-        Q=InitPrecQ(fs_conf_,dt,nx,cur_imu_info_.Cbe);
-#endif
+
         VectorXd x;
         MatrixXd Px=MatrixXd::Zero(nx,nx);
         int i,j;
@@ -5829,14 +5917,12 @@ namespace PPPLib{
             for(i=0;i<nx;i++) for(j=0;j<nx;j++){
                 Px.data()[i+j*nx]=gnss_solver_->full_Px_.data()[i+j*num_full_x_];
             }
-//            Px=gnss_solver_->full_Px_.block<15,15>(0,0);
         }
         else{
             x=Map<VectorXd>(full_x_.data(),nx);
             for(i=0;i<nx;i++) for(j=0;j<nx;j++){
                 Px.data()[i+j*nx]=full_Px_.data()[i+j*num_full_x_];
             }
-//            Px=full_Px_.block<15,15>(0,0);
         }
 
         if(fabs(dt)>60.0){
@@ -5846,6 +5932,7 @@ namespace PPPLib{
             PropVariance(F,Q,nx,Px);
         }
 
+
         for(int i=0;i<nx;i++) x[i]=1E-20;
         if(tc_mode_){
             gnss_solver_->full_x_.segment(0,nx)=Map<VectorXd>(x.data(),nx);
@@ -5853,25 +5940,23 @@ namespace PPPLib{
             for(i=0;i<nx;i++) for(j=0;j<nx;j++){
                 gnss_solver_->full_Px_.data()[i+j*num_full_x_]=Px.data()[i+j*nx];
             }
-//            gnss_solver_->full_Px_.block<15,15>(0,0)=Px;
         }
         else{
             full_x_.segment(0,nx)=Map<VectorXd>(x.data(),nx);
             for(i=0;i<nx;i++) for(j=0;j<nx;j++){
                 full_Px_.data()[i+j*num_full_x_]=Px.data()[i+j*nx];
             }
-//            full_Px_.block<15,15>(0,0)=Px;
         }
     }
 
     void cFusionSolver::PropVariance(MatrixXd& F,MatrixXd& Q,int nx,MatrixXd& Px) {
+#if 0
 
         MatrixXd prior_P=Px;
         MatrixXd PQ(nx,nx),FPF(nx,nx);
 
         PQ=MatrixXd::Zero(nx,nx);FPF=MatrixXd::Zero(nx,nx);
         int i,j;
-//        PQ.block<15,15>(0,0)=prior_P.block<15,15>(0,0)+0.5*Q.block<15,15>(0,0);
 
         for(i=0;i<nx;i++){
             for(j=0;j<nx;j++) PQ.data()[i+j*nx]=prior_P.data()[i+j*nx]+0.5*Q.data()[i+j*nx];
@@ -5891,15 +5976,16 @@ namespace PPPLib{
         cout<<std::fixed<<setprecision(10)<<FPF<<endl<<endl;
 #endif
 
-//        Px.block<15,15>(0,0)=FPF+0.5*Q;
         for(i=0;i<nx;i++){
             for(j=0;j<nx;j++) Px.data()[i+j*nx]=FPF.data()[i+j*nx]+0.5*Q.data()[i+j*nx];
         }
+#endif
+        Px=F*Px*F.transpose()+Q;
     }
 
     int cFusionSolver::BuildLcHVR(int post,tPPPLibConf C,tImuInfoUnit& imu_info,double *meas_pos,double *meas_vel,Vector3d& q_pos,Vector3d& q_vel) {
-        Vector3d gnss_re,gnss_ve;
-        Matrix3d Cbe=imu_info.Cbe;
+        Vector3d ins_pos,ins_vel;
+        Matrix3d Cbe=imu_info.Cbe,Cbn=imu_info.Cbn;
         double omc=0.0;
         vector<double>omcs;
         num_L_=0;
@@ -5910,7 +5996,7 @@ namespace PPPLib{
         H_=MatrixXd::Zero(num_L_,num_full_x_);
         R_=MatrixXd::Zero(num_L_,num_L_);
 
-        RemoveLever(imu_info,C.insC.lever,gnss_re,gnss_ve);
+        RemoveLever(fs_conf_,imu_info,C.insC.lever,ins_pos,ins_vel);
 
         int ip=para_.IndexPos();
         int iv=para_.IndexVel();
@@ -5918,23 +6004,24 @@ namespace PPPLib{
         int iba=para_.IndexBa();
         if(meas_pos){
             for(int i=0;i<3;i++){
-                omc=meas_pos[i]-gnss_re[i];
+                omc=meas_pos[i]-ins_pos[i];
                 omcs.push_back(omc);
             }
 
             if(!post){
                 // position to position jacobian
-                H_.block<3,3>(ip,ip)=-1.0*Matrix3d::Identity();
+                H_.block<3,3>(ip,ip)=1.0*Matrix3d::Identity();
 
                 // position to attitude jacobian
-                H_.block<3,3>(ip,ia)=VectorSkew(Cbe*C.insC.lever);
+//                H_.block<3,3>(ip,ia)=VectorSkew(Cbe*C.insC.lever);
             }
+
             R_.block<3,3>(ip,ip)=q_pos.asDiagonal();
         }
 
         if(meas_vel){
             for(int i=0;i<3;i++){
-                omc=meas_vel[i]-gnss_ve[i];
+                omc=meas_vel[i]-ins_vel[i];
                 omcs.push_back(omc);
             }
 
@@ -5945,7 +6032,7 @@ namespace PPPLib{
                 // velocity to attitude jacobian
                 Vector3d wiee(0.0,0.0,OMGE_GPS);
                 Vector3d T,W;
-                T=Cbe*VectorSkew(imu_info.cor_gyro)*C.insC.lever;
+                T=Cbe*VectorSkew(imu_info.cor_gyro_rate)*C.insC.lever;
                 W=VectorSkew(wiee)*Cbe*C.insC.lever;
                 H_.block<3,3>(iv,ia)=VectorSkew(T-W);
 
@@ -5965,6 +6052,7 @@ namespace PPPLib{
     bool cFusionSolver::LcFilter(tPPPLibConf C) {
         double *meas_pos= nullptr,*meas_vel= nullptr;
         Vector3d q_pos,q_vel;
+        StateSync(cur_imu_info_);
 
         if(C.mode_opt>MODE_OPT_SOL){
             ppplib_sol_.stat=gnss_solver_->ppplib_sol_.stat;
@@ -5998,14 +6086,22 @@ namespace PPPLib{
             }
         }
         else if(C.mode_opt==MODE_OPT_SIM){
-            cout<<gnss_sols_[gnss_sol_idx].pos<<endl;
-            Vector3d blh=Xyz2Blh(gnss_sols_[gnss_sol_idx].pos);
-            for(int i=0;i<3;i++) blh[i]+=fs_conf_.insC.init_pos_unc[i]*(rand()%(3-1+1)+1);
-            meas_pos=blh.data();
-            q_pos<<1.0/WGS84_EARTH_LONG_RADIUS,1.0/WGS84_EARTH_LONG_RADIUS,3.0;
+            Vector3d pos(0,0,0);
+            if(fs_conf_.insC.mech_coord==MECH_ENU){
+                pos=Xyz2Blh(gnss_sols_[gnss_sol_idx].pos);
+                q_pos<<SQR(1.0/WGS84_EARTH_LONG_RADIUS),SQR(1.0/WGS84_EARTH_LONG_RADIUS),SQR(3.0);
+            }
+            else if(fs_conf_.insC.mech_coord==MECH_ECEF){
+                pos=gnss_sols_[gnss_sol_idx].pos;
+            }
+            for(int i=0;i<3;i++){
+                C.insC.init_pos_unc[0]/=WGS84_EARTH_LONG_RADIUS;
+                C.insC.init_pos_unc[1]/=WGS84_EARTH_LONG_RADIUS;
+                double a=Random(99);
+                pos[i]+=C.insC.init_pos_unc[i]*Random(99);
+            }
+            meas_pos=pos.data();
         }
-
-        Vector3d ins_re=cur_imu_info_.rn,ins_ve=cur_imu_info_.vn;
 
         Vector3d pos,vel;
         for(int i=0;i<3;i++){
@@ -6043,8 +6139,8 @@ namespace PPPLib{
             cout<<full_Px_<<endl;
 #endif
             kf_.Adjustment(omc_L_,H_.transpose(),R_,x,Px,num_L_,num_full_x_);
-
-            CloseLoopState(x,&imu_corr);
+            cout<<R_<<endl;
+            CloseLoopState(fs_conf_,x,&imu_corr);
 
             if(BuildLcHVR(1,C,imu_corr,meas_pos,meas_vel,q_pos,q_vel)){
 
@@ -6066,6 +6162,7 @@ namespace PPPLib{
             stat=false;
         }
 
+        StateSync(cur_imu_info_);
         return stat;
     }
 
@@ -6120,7 +6217,8 @@ namespace PPPLib{
             return false;
         }
 #endif
-        ins_algor_->InsMech(cur_imu_info_,pre_imu_info_);
+        /// ins mech for current sample
+        ins_algor_->InsMech_N(cur_imu_info_,pre_imu_info_);
         ppplib_sol_.ins_stat=SOL_INS_MECH;
         StateTimeUpdate();
 
@@ -6128,7 +6226,6 @@ namespace PPPLib{
         epoch_idx_++;
 
         if(fs_conf_.mode_opt>MODE_OPT_SOL){
-//            cout<<gnss_solver_->full_x_.transpose()<<endl;
             if(gnss_solver_->SolverProcess(gnss_conf_,rover_idx_)){
                 ppplib_sol_=gnss_solver_->ppplib_sol_;
                 if(LcFilter(C)){

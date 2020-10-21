@@ -1662,7 +1662,7 @@ namespace PPPLib{
         string code_pair;
         double cbias=0.0;
         int i,j=0,type=0;
-        char str1[5]={0},str2[10]={0};
+        char str1[20]={0},str2[20]={0};
 
         while(getline(inf_,line_str_)&&!inf_.eof()){
             if      (!line_str_.find("DIFFERENTIAL (P1-P2) CODE BIASES")) type=1;

@@ -47,8 +47,8 @@ namespace PPPLib{
         Eigen::MatrixXd InitQ(tPPPLibConf,double dt,int nx);
         Eigen::MatrixXd InitPrecQ(tPPPLibConf C,double dt,int nx,Matrix3d Cbe);
 
-        void RemoveLever(const tImuInfoUnit& imu_info,Vector3d& lever,Vector3d& gnss_re,Vector3d& gnss_ve);
-        void CloseLoopState(VectorXd& x,tImuInfoUnit* imu_info_corr);
+        void RemoveLever(tPPPLibConf C,const tImuInfoUnit& imu_info,Vector3d& lever,Vector3d& gnss_re,Vector3d& gnss_ve);
+        void CloseLoopState(tPPPLibConf C,VectorXd& x,tImuInfoUnit* imu_info_corr);
 
     public:
         cGnssObsOperator gnss_obs_operator_;
@@ -286,6 +286,7 @@ namespace PPPLib{
         bool MatchGnssObs();
         bool MatchGnssSol();
         void InsSol2PpplibSol(tImuInfoUnit &imu_sol,tSolInfoUnit &ppplib_sol);
+        void StateSync(tImuInfoUnit &imu_sol);
 
         double Vel2Yaw(Vector3d vn);
         bool GnssSol2Ins(Vector3d re,Vector3d ve);

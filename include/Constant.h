@@ -605,6 +605,11 @@ namespace PPPLib {
         ALIGN_GNSS_OBS,
     };
 
+    enum INS_MECH_COORD {
+        MECH_ECEF,
+        MECH_ENU
+    };
+
     enum SOLVE_ESTIMATOR {
         SOLVE_LSQ,
         SOLVE_KF,
@@ -700,7 +705,7 @@ namespace PPPLib {
     const double ARC_DEG_PER_HOUR_PER_SQRT_HOUR=ARC_DEG_PER_HOUR/sqrt(HOUR);
     const double HERTZ=1.0/1.0;                                             //s
     const double ARC_DEG_PER_HOUR_PER_SQRT_HZ=ARC_DEG_PER_HOUR/HERTZ;
-    const double UG_PER_SQRT_HZ=MILLI_G/sqrt(HERTZ);                        //m/s^{2.5}
+    const double UG_PER_SQRT_HZ=MICRO_G/sqrt(HERTZ);                        //m/s^{2.5}
     const double UG_PER_SQRT_HOUR=MILLI_G/sqrt(HOUR);                       //m/s^{2.5}
     const double METER_PER_SQRT_HOUR=1.0/sqrt(HOUR);
     const double METER_PER_SEC_PER_SQRT_HOUR=1.0/1.0/sqrt(HOUR);
