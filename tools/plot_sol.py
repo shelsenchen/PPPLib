@@ -189,7 +189,7 @@ def enu_plot(dir, site, data, pre):
         ax.axhline(y=0.3, color='y', linestyle='-', linewidth=0.4)
         ax.axhline(y=-0.3, color='y', linestyle='-', linewidth=0.4)
     else:
-        plt.ylim([-0.2, 0.2])
+        plt.ylim([-0.05, 0.05])
         ax.axhline(y=0.1, color='y', linestyle='-', linewidth=0.4)
         ax.axhline(y=-0.1, color='y', linestyle='-', linewidth=0.4)
     legend_font = {'size': 6}
@@ -361,7 +361,7 @@ def walk_files(dir):
 if __name__ == '__main__':
     BATCH_PLOT = 1
     # 指定路径,若路径后４位为'.pos',则处理单文件，否则处理该路径下的所有.pos文件
-    sol_dir = '/home/cc/dataset/data_mgex/result_wum/PPP_STATIC/GB2B3_DF_IF/jfng_C.pos'
+    sol_dir = '/home/cc/dataset/data_test/result_gbm/PPP_STATIC/G_DF_IF/albh_F.pos'
     # sol_dir = '/home/cc/dataset/data_batch/2020/2092/041/result_wum/PPP_KINE'
     # sol_dir = '/home/cc/dataset/data_batch/2020/2092/041/result_wum/PPP_KINE/G_DF_IF/abmf.pos'
 
