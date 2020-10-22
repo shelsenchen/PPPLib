@@ -573,7 +573,7 @@ namespace PPPLib{
             int ia=para_.IndexAtt();
             if(x[ia]!=DIS_FLAG){
                 Vector3d att(x[ia],x[ia+1],x[ia+2]);
-                Matrix3d T=Matrix3d::Identity()-VectorSkew(att);
+                Matrix3d T=Matrix3d::Identity()+VectorSkew(att);
                 imu_info_corr->Cbn=T*imu_info_corr->Cbn;
             }
         }
@@ -5508,6 +5508,8 @@ namespace PPPLib{
 
     void cFusionSolver::StateSync(tImuInfoUnit &imu_info) {
         if(fs_conf_.insC.mech_coord==MECH_ENU){
+//            imu_info.Qbn=Euler2Quaternion(imu_info.rpy);
+            imu_info.Cbn=Quaternion2RotationMatrix(imu_info.Qbn);
             Matrix3d Cen=CalcCen(imu_info.rn,COORD_ENU);
             imu_info.Cbe=Cen.transpose()*imu_info.Cbn;
             imu_info.re=Blh2Xyz(imu_info.rn);
@@ -5515,6 +5517,8 @@ namespace PPPLib{
             imu_info.ae=Cen.transpose()*imu_info.an;
         }
         else if(fs_conf_.insC.mech_coord==MECH_ECEF){
+//            imu_info.Qbe=Euler2Quaternion(imu_info.rpy);
+            imu_info.Cbe=Quaternion2RotationMatrix(imu_info.Qbe);
             imu_info.rn=Xyz2Blh(imu_info.re);
             Matrix3d Cen=CalcCen(imu_info.rn,COORD_ENU);
             imu_info.Cbn=Cen*imu_info.Cbe;
@@ -5651,9 +5655,15 @@ namespace PPPLib{
             val.clear();
             val=config->GetArray<double>("init_att");
             for(int i=0;i<3;i++) cur_imu_info_.rpy[i]=pre_imu_info_.rpy[i]=val[i];
+            if(fs_conf_.insC.mech_coord==MECH_ENU){
+                cur_imu_info_.Qbn=Euler2Quaternion(cur_imu_info_.rpy);
+            }
+            else if(fs_conf_.insC.mech_coord==MECH_ECEF){
+                cur_imu_info_.Qbe=Euler2Quaternion(cur_imu_info_.rpy);
+            }
 
             StateSync(cur_imu_info_);
-            StateSync(pre_imu_info_);
+            pre_imu_info_=cur_imu_info_;
 
             LOG(INFO)<<cur_imu_info_.t_tag.GetTimeStr(3)<<" INS INITIALIZATION OK";
             LOG(INFO)<<"INIT POSITION(n): "<<setw(13)<<std::fixed<<setprecision(3)<<pre_imu_info_.rn.transpose()<<" m";
@@ -5904,7 +5914,8 @@ namespace PPPLib{
         if(fs_conf_.insC.mech_coord==MECH_ENU){
             F=ins_algor_->StateTransferMat_N(fs_conf_,pre_imu_info_,cur_imu_info_,nx,dt);
         }
-        cout<<F<<endl;
+        cout<<"F:"<<endl;
+        cout<<F<<endl<<endl;
 
         Q=InitQ(fs_conf_,dt,nx);
 
@@ -5932,6 +5943,8 @@ namespace PPPLib{
             PropVariance(F,Q,nx,Px);
         }
 
+        cout<<"Px"<<endl;
+        cout<<Px<<endl<<endl;
 
         for(int i=0;i<nx;i++) x[i]=1E-20;
         if(tc_mode_){
@@ -6109,10 +6122,10 @@ namespace PPPLib{
             if(meas_vel) vel[i]=meas_vel[i];
         }
         LOG(DEBUG)<<"INS GNSS   FUSION(-): "<<cur_imu_info_.t_tag.GetTimeStr(3);
-        LOG(DEBUG)<<"INS MECH POSITION(e): "<<setw(13)<<std::fixed<<setprecision(3)<<cur_imu_info_.re.transpose();
-        LOG(DEBUG)<<"INS MECH VELOCITY(e): "<<setw(13)<<std::fixed<<setprecision(3)<<cur_imu_info_.ve.transpose();
-        LOG(DEBUG)<<"GNSS     POSITION(e): "<<setw(13)<<std::fixed<<setprecision(3)<<pos.transpose()<<" "<<q_pos.transpose();
-        LOG(DEBUG)<<"GNSS     VELOCITY(e): "<<setw(13)<<std::fixed<<setprecision(3)<<vel.transpose()<<" "<<q_vel.transpose();
+        LOG(DEBUG)<<"INS MECH POSITION(n): "<<setw(13)<<std::fixed<<setprecision(3)<<cur_imu_info_.rn.transpose();
+        LOG(DEBUG)<<"INS MECH VELOCITY(n): "<<setw(13)<<std::fixed<<setprecision(3)<<cur_imu_info_.vn.transpose();
+        LOG(DEBUG)<<"GNSS     POSITION(n): "<<setw(13)<<std::fixed<<setprecision(3)<<pos.transpose()<<" "<<q_pos.transpose();
+        LOG(DEBUG)<<"GNSS     VELOCITY(n): "<<setw(13)<<std::fixed<<setprecision(3)<<vel.transpose()<<" "<<q_vel.transpose();
 
         VectorXd x=full_x_;
         MatrixXd Px=full_Px_;
@@ -6139,12 +6152,19 @@ namespace PPPLib{
             cout<<full_Px_<<endl;
 #endif
             kf_.Adjustment(omc_L_,H_.transpose(),R_,x,Px,num_L_,num_full_x_);
-            cout<<R_<<endl;
+            cout<<"R:"<<endl;
+            cout<<R_<<endl<<endl;
+
+            cout<<"Px:"<<endl;
+            cout<<Px<<endl<<endl;
+
+            cout<<x.transpose()<<endl;
             CloseLoopState(fs_conf_,x,&imu_corr);
 
             if(BuildLcHVR(1,C,imu_corr,meas_pos,meas_vel,q_pos,q_vel)){
 
                 stat=ValidSol(x, 10.0);
+                stat=true;
                 if(stat){
                     full_x_=x;
                     full_Px_=Px;

@@ -70,9 +70,9 @@ namespace PPPLib {
 //        return m.eulerAngles(2,1,0);
 //        return EulerAngles(m);
         Vector3d rpy;
-        rpy[0]=atan2(m(1,2),m(2,2));
-        rpy[1]=-asin(m(0,2));
-        rpy[2]=atan2(m(0,1),m(0,0));
+        rpy[0]=-atan2(m(1,2),m(2,2));
+        rpy[1]=asin(m(0,2));
+        rpy[2]=-atan2(m(0,1),m(0,0));
         return rpy;
     }
 
@@ -596,8 +596,11 @@ namespace PPPLib {
 
     void cIns::UpdateAtt_N() {
         Qbn_=AttUpdateRotVec_N(Qbn_,phim_,eth_.w_n_in*ts_*nts_);
-        cur_imu_info_->rpy=Quaternion2Euler(Qbn_);
+        cur_imu_info_->Qbn=Qbn_;
         cur_imu_info_->Cbn=Cbn_=Quaternion2RotationMatrix(Qbn_);
+        cur_imu_info_->rpy=Quaternion2Euler(Qbn_);
+        cout<<"Cbn"<<endl;
+        cout<<cur_imu_info_->Cbn<<endl<<endl;
     }
 
     Eigen::Quaterniond cIns::AttUpdateRotVec_N(Eigen::Quaterniond qnb, Vector3d rv_ib, Vector3d rv_in) {
@@ -661,8 +664,8 @@ namespace PPPLib {
 
         cur_imu_info_->cor_gyro_rate=phim_/(ts_*nts_);
         cur_imu_info_->cor_acce_rate=dvbm_/(ts_*nts_);
-        Qbn_=Euler2Quaternion(pre_imu_info_.rpy);
-        Cbn_=Euler2RotationMatrix(pre_imu_info_.rpy);
+        Qbn_=pre_imu_info_.Qbn;
+        Cbn_=pre_imu_info_.Cbn;
         UpdateVel_N();
         UpdatePos_N();
         UpdateAtt_N();
