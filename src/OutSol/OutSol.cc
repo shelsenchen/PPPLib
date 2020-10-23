@@ -209,23 +209,27 @@ namespace PPPLib{
         wos=sol->t_tag.Time2Gpst(&week,nullptr,SYS_GPS);
         char epoch[1024]={'\0'};
         sprintf(epoch,"$EPOCH    %12s %4d %10.2f %5d %d %3d %3d %5.1f",
-                sol->t_tag.GetTimeStr(1).c_str(),week,wos,sol->epoch_idx,sol->stat,sol->observed_sat_num,sol->valid_sat_num,sol->dops[1]);
+                sol->t_tag.GetTimeStr(2).c_str(),week,wos,sol->epoch_idx,sol->stat,sol->observed_sat_num,sol->valid_sat_num,sol->dops[1]);
         ppplib_out_<<epoch<<endl;
 
-        if(sol->stat>SOL_NONE){
+        if(sol->stat!=SOL_NONE||sol->ins_stat!=SOL_INS_NONE){
             char pos[1024]={'\0'};
             int d=12;
             if(C_.solC.out_err_fmt) d=5;
             sprintf(pos,"$POS   %15.3f %15.3f %15.3f\n",out_pos[0],out_pos[1],out_pos[2]);
-            char clk[1024]={'\0'};
-            sprintf(clk,"$CLK   %15.3f %15.3f %15.3f %15.3f %15.3f %15.3f\n",sol->clk_error[0],sol->clk_error[1],sol->clk_error[2],sol->clk_error[3],sol->clk_error[4],sol->clk_error[5]);
-            char trp[1024]={'\0'};
-            sprintf(trp,"$TRP   %15.3f %15.3f\n",sol->zenith_trp_delay[0],sol->zenith_trp_delay[1]);
             ppplib_out_<<pos;
-            ppplib_out_<<clk;
-            ppplib_out_<<trp;
+
+            if(C_.mode!=MODE_IGLC){
+                char clk[1024]={'\0'};
+                sprintf(clk,"$CLK   %15.3f %15.3f %15.3f %15.3f %15.3f %15.3f\n",sol->clk_error[0],sol->clk_error[1],sol->clk_error[2],sol->clk_error[3],sol->clk_error[4],sol->clk_error[5]);
+                char trp[1024]={'\0'};
+                sprintf(trp,"$TRP   %15.3f %15.3f\n",sol->zenith_trp_delay[0],sol->zenith_trp_delay[1]);
+                ppplib_out_<<clk;
+                ppplib_out_<<trp;
+            }
+
             if(C_.solC.out_stat){
-             PPPLibOutSat(epoch_sat_info);
+                PPPLibOutSat(epoch_sat_info);
             }
             ppplib_out_<<endl;
         }

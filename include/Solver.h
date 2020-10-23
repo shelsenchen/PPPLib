@@ -302,7 +302,7 @@ namespace PPPLib{
     private:
         void DisableX(VectorXd& x,int idx);
         void StateTimeUpdate();
-        void PropVariance(MatrixXd& F,MatrixXd& Q,int nx,MatrixXd& Px);
+        void PropVariance(MatrixXd& F,MatrixXd& Q,MatrixXd& Px);
         int BuildLcHVR(int post,tPPPLibConf C,tImuInfoUnit& imu_info,double *meas_pos,double *meas_vel,Vector3d& q_pos,Vector3d& q_vel);
         bool LcFilter(tPPPLibConf C);
         bool ValidSol(VectorXd& x, double thres);

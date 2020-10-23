@@ -39,7 +39,8 @@ namespace PPPLib {
         double RNh,RMh;
         double g;
         Vector3d w_n_ie,w_n_en,w_n_in,w_n_ie_n;
-        Vector3d gn,gcc;
+        Vector3d w_e_ie;
+        Vector3d gn,ge,gcc_n,gcc_e;
     }tEarthPar;
 
     typedef struct{
@@ -173,8 +174,9 @@ namespace PPPLib {
 
     public:
         void InitInsStat();
-        void InsMech_N(tImuInfoUnit& cur_imu_info,const tImuInfoUnit pre_imu_info);
+        void InsMech(tImuInfoUnit& cur_imu_info,const tImuInfoUnit pre_imu_info,int idx);
         Eigen::MatrixXd StateTransferMat_N(tPPPLibConf C,tImuInfoUnit& pre_imu_info,tImuInfoUnit& cur_imu_info,int nx,double dt);
+        Eigen::MatrixXd StateTransferMat_E(tPPPLibConf C,tImuInfoUnit& pre_imu_info,tImuInfoUnit& cur_imu_info,int nx,double dt);
 
     private:
         void ConingScullingCompensation(int type);
@@ -182,8 +184,12 @@ namespace PPPLib {
         void UpdateAtt_N();
         void UpdateVel_N();
         void UpdatePos_N();
+        void UpdateAtt_E();
+        void UpdateVel_E();
+        void UpdatePos_E();
 
-        Eigen::Quaterniond AttUpdateRotVec_N(Eigen::Quaterniond qnb,Vector3d rv_ib, Vector3d rv_in);
+        Eigen::Quaterniond AttUpdateRotVec(Eigen::Quaterniond qnb,Vector3d rv_ib, Vector3d rv_in);
+        void TraceInsMechInfo(tImuInfoUnit imu_info,bool prior,int idx);
 
     public:
         tPPPLibConf C_;

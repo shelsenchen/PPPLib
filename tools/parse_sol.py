@@ -179,7 +179,7 @@ def parse_sol(dir, site_name):
                 if len(line) != 10:
                     raise ValueError
                 time = ' '.join(line[1:3])
-                time = datetime.strptime(time, '%Y/%m/%d %H:%M:%S.0')
+                time = datetime.strptime(time, '%Y/%m/%d %H:%M:%S.%f')
                 line[3] = int(line[3])  # WEEK
                 line[4] = float(line[4])  # WOS
                 line[5] = int(line[5])  # Epoch

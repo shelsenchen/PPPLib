@@ -96,7 +96,7 @@ namespace PPPLib {
             for(j=0;j<nl;j++) H_(i,j)=H(zip_idx[i],j);
         }
 
-#if 1
+#if 0
         cout<<X_.transpose()<<endl;
         cout<<H_.transpose()<<endl;
         cout<<Px_.transpose()<<endl;

@@ -573,16 +573,16 @@ namespace PPPLib{
             int ia=para_.IndexAtt();
             if(x[ia]!=DIS_FLAG){
                 Vector3d att(x[ia],x[ia+1],x[ia+2]);
-                Matrix3d T=Matrix3d::Identity()+VectorSkew(att);
+                Matrix3d T=Matrix3d::Identity()-VectorSkew(att);
                 imu_info_corr->Cbn=T*imu_info_corr->Cbn;
             }
         }
 
         int iba=para_.IndexBa();
         if(x[iba]!=DIS_FLAG){
-            imu_info_corr->ba[0]+=x[iba+0];
-            imu_info_corr->ba[1]+=x[iba+1];
-            imu_info_corr->ba[2]+=x[iba+2];
+            imu_info_corr->ba[0]-=x[iba+0];
+            imu_info_corr->ba[1]-=x[iba+1];
+            imu_info_corr->ba[2]-=x[iba+2];
             sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
                     imu_info_corr->ba[0],x[iba],imu_info_corr->ba[1],x[iba+1],imu_info_corr->ba[2],x[iba+2]);
             LOG(DEBUG)<<"Ba: "<<buff;
@@ -591,9 +591,9 @@ namespace PPPLib{
 
         int ibg=para_.IndexBg();
         if(x[ibg]!=DIS_FLAG){
-            imu_info_corr->bg[0]+=x[ibg+0];
-            imu_info_corr->bg[1]+=x[ibg+1];
-            imu_info_corr->bg[2]+=x[ibg+2];
+            imu_info_corr->bg[0]-=x[ibg+0];
+            imu_info_corr->bg[1]-=x[ibg+1];
+            imu_info_corr->bg[2]-=x[ibg+2];
             sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
                     imu_info_corr->bg[0],x[ibg],imu_info_corr->bg[1],x[ibg+1],imu_info_corr->bg[2],x[ibg+2]);
             LOG(DEBUG)<<"Bg: "<<buff;
@@ -5783,13 +5783,11 @@ namespace PPPLib{
     }
 
     bool cFusionSolver::SolverProcess(tPPPLibConf C,int idx) {
-
         InitSolver(C);
         tSatInfoUnit sat_info;
 
         int gnss_obs_flag=false,ins_align=false,gnss_sol_flag=false;
         while(InputImuData(5)){
-
             /// loosely and tightly coupled
             if(fs_conf_.mode>MODE_INS){
                 if(fs_conf_.mode_opt==MODE_OPT_GSOF||fs_conf_.mode_opt==MODE_OPT_SOL||fs_conf_.mode_opt==MODE_OPT_SIM){
@@ -5847,9 +5845,7 @@ namespace PPPLib{
                     }
 
                     ppplib_sol_.stat=SOL_NONE;
-                    /// ins mech in ENU-RFU coord
-                    ins_algor_->InsMech_N(cur_imu_info_,pre_imu_info_);
-
+                    ins_algor_->InsMech(cur_imu_info_,pre_imu_info_,imu_index_/C.insC.sample_number);
                     StateSync(cur_imu_info_);
 
                     /// state transform
@@ -5861,13 +5857,15 @@ namespace PPPLib{
                 }
             }
             else{
-                // pure ins mech
-                ppplib_sol_.stat=SOL_NONE;
+                /// pure ins mech
+
                 if(!ins_align){
                     ins_align=InsAlign();
                 }
 
-                ins_algor_->InsMech_N(cur_imu_info_,pre_imu_info_);
+                ppplib_sol_.stat=SOL_NONE;
+                ins_algor_->InsMech(cur_imu_info_,pre_imu_info_,imu_index_/C.insC.sample_number);
+                StateSync(cur_imu_info_);
 
                 ppplib_sol_.ins_stat=SOL_INS_MECH;
                 InsSol2PpplibSol(cur_imu_info_,ppplib_sol_);
@@ -5877,9 +5875,15 @@ namespace PPPLib{
             pre_imu_info_=cur_imu_info_;
             if(C.solC.out_ins_mech_frq!=0&&ins_mech_idx%C.solC.out_ins_mech_frq==0&&ppplib_sol_.ins_stat==SOL_INS_MECH){
                 ppplib_sol_.valid_sat_num=0;
+
                 out_->WriteSol(ppplib_sol_,epoch_sat_info_collect_);
             }
-            else if(ppplib_sol_.ins_stat!=SOL_INS_MECH) out_->WriteSol(ppplib_sol_,epoch_sat_info_collect_);
+            else if(ppplib_sol_.ins_stat!=SOL_INS_MECH){
+                if(C.solC.out_err_fmt&&C.mode_opt==MODE_OPT_SIM){
+                    out_->ref_sol_=gnss_sols_[gnss_sol_idx];
+                }
+                out_->WriteSol(ppplib_sol_,epoch_sat_info_collect_);
+            }
         }
 
         delete ins_sim_;
@@ -5914,8 +5918,9 @@ namespace PPPLib{
         if(fs_conf_.insC.mech_coord==MECH_ENU){
             F=ins_algor_->StateTransferMat_N(fs_conf_,pre_imu_info_,cur_imu_info_,nx,dt);
         }
-        cout<<"F:"<<endl;
-        cout<<F<<endl<<endl;
+        else if(fs_conf_.insC.mech_coord==MECH_ECEF){
+            F=ins_algor_->StateTransferMat_E(fs_conf_,pre_imu_info_,cur_imu_info_,nx,dt);
+        }
 
         Q=InitQ(fs_conf_,dt,nx);
 
@@ -5940,11 +5945,8 @@ namespace PPPLib{
             InitInsPx(fs_conf_,nx,Px);
         }
         else{
-            PropVariance(F,Q,nx,Px);
+            PropVariance(F,Q,Px);
         }
-
-        cout<<"Px"<<endl;
-        cout<<Px<<endl<<endl;
 
         for(int i=0;i<nx;i++) x[i]=1E-20;
         if(tc_mode_){
@@ -5962,37 +5964,7 @@ namespace PPPLib{
         }
     }
 
-    void cFusionSolver::PropVariance(MatrixXd& F,MatrixXd& Q,int nx,MatrixXd& Px) {
-#if 0
-
-        MatrixXd prior_P=Px;
-        MatrixXd PQ(nx,nx),FPF(nx,nx);
-
-        PQ=MatrixXd::Zero(nx,nx);FPF=MatrixXd::Zero(nx,nx);
-        int i,j;
-
-        for(i=0;i<nx;i++){
-            for(j=0;j<nx;j++) PQ.data()[i+j*nx]=prior_P.data()[i+j*nx]+0.5*Q.data()[i+j*nx];
-        }
-
-        FPF=F*PQ*F.transpose();
-
-#if 0
-        cout<<std::fixed<<setprecision(12)<<prior_P<<endl<<endl;
-
-        cout<<std::fixed<<setprecision(12)<<Q<<endl<<endl;
-
-        cout<<std::fixed<<setprecision(10)<<PQ<<endl<<endl;
-
-        cout<<std::fixed<<setprecision(10)<<F<<endl<<endl;
-
-        cout<<std::fixed<<setprecision(10)<<FPF<<endl<<endl;
-#endif
-
-        for(i=0;i<nx;i++){
-            for(j=0;j<nx;j++) Px.data()[i+j*nx]=FPF.data()[i+j*nx]+0.5*Q.data()[i+j*nx];
-        }
-#endif
+    void cFusionSolver::PropVariance(MatrixXd& F,MatrixXd& Q,MatrixXd& Px) {
         Px=F*Px*F.transpose()+Q;
     }
 
@@ -6023,7 +5995,7 @@ namespace PPPLib{
 
             if(!post){
                 // position to position jacobian
-                H_.block<3,3>(ip,ip)=1.0*Matrix3d::Identity();
+                H_.block<3,3>(ip,ip)=-1.0*Matrix3d::Identity();
 
                 // position to attitude jacobian
 //                H_.block<3,3>(ip,ia)=VectorSkew(Cbe*C.insC.lever);
@@ -6152,28 +6124,21 @@ namespace PPPLib{
             cout<<full_Px_<<endl;
 #endif
             kf_.Adjustment(omc_L_,H_.transpose(),R_,x,Px,num_L_,num_full_x_);
-            cout<<"R:"<<endl;
-            cout<<R_<<endl<<endl;
 
-            cout<<"Px:"<<endl;
-            cout<<Px<<endl<<endl;
-
-            cout<<x.transpose()<<endl;
             CloseLoopState(fs_conf_,x,&imu_corr);
 
             if(BuildLcHVR(1,C,imu_corr,meas_pos,meas_vel,q_pos,q_vel)){
 
                 stat=ValidSol(x, 10.0);
-                stat=true;
                 if(stat){
                     full_x_=x;
                     full_Px_=Px;
                     cur_imu_info_=imu_corr;
                     LOG(DEBUG)<<"INS GNSS   FUSION(+): "<<cur_imu_info_.t_tag.GetTimeStr(3);
-                    LOG(DEBUG)<<"INS MECH POSITION(e): "<<setw(13)<<std::fixed<<setprecision(3)<<cur_imu_info_.re.transpose();
-                    LOG(DEBUG)<<"INS MECH VELOCITY(e): "<<setw(13)<<std::fixed<<setprecision(3)<<cur_imu_info_.ve.transpose();
-                    LOG(DEBUG)<<"GNSS     POSITION(e): "<<setw(13)<<std::fixed<<setprecision(3)<<pos.transpose()<<" "<<q_pos.transpose();
-                    LOG(DEBUG)<<"GNSS     VELOCITY(e): "<<setw(13)<<std::fixed<<setprecision(3)<<vel.transpose()<<" "<<q_vel.transpose();
+                    LOG(DEBUG)<<"INS MECH POSITION(n): "<<setw(13)<<std::fixed<<setprecision(3)<<cur_imu_info_.rn.transpose();
+                    LOG(DEBUG)<<"INS MECH VELOCITY(n): "<<setw(13)<<std::fixed<<setprecision(3)<<cur_imu_info_.vn.transpose();
+                    LOG(DEBUG)<<"GNSS     POSITION(n): "<<setw(13)<<std::fixed<<setprecision(3)<<pos.transpose()<<" "<<q_pos.transpose();
+                    LOG(DEBUG)<<"GNSS     VELOCITY(n): "<<setw(13)<<std::fixed<<setprecision(3)<<vel.transpose()<<" "<<q_vel.transpose();
                 }
             }
         }
@@ -6225,7 +6190,7 @@ namespace PPPLib{
             if(omc_L_[i]*omc_L_[i]<fact*R_.data()[i+i*num_L_]) continue;
             j++;
         }
-        return j<num_L_;
+        return j<num_L_?false:true;
     }
 
     bool cFusionSolver::LooseCouple(tPPPLibConf C) {
@@ -6238,7 +6203,8 @@ namespace PPPLib{
         }
 #endif
         /// ins mech for current sample
-        ins_algor_->InsMech_N(cur_imu_info_,pre_imu_info_);
+
+        ins_algor_->InsMech(cur_imu_info_,pre_imu_info_,imu_index_/(C.insC.sample_number));
         ppplib_sol_.ins_stat=SOL_INS_MECH;
         StateTimeUpdate();
 
@@ -6272,9 +6238,6 @@ namespace PPPLib{
         ppplib_sol_.stat=SOL_NONE;
         ppplib_sol_.ins_stat=SOL_INS_MECH;
         ppplib_sol_.valid_sat_num=0;
-
-//        cout<<gnss_solver_->full_Px_.block<15,15>(0,0)<<endl<<endl;
-//        cout<<gnss_solver_->full_x_.transpose()<<endl<<endl;
 
         epoch_idx_++;
         gnss_solver_->cur_imu_info_=cur_imu_info_;
