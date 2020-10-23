@@ -601,8 +601,9 @@ namespace PPPLib {
     }
 
     void cIns::UpdateVel_N() {
-        Vector3d fn=Cbn_*cur_imu_info_->cor_acce_rate;
-        cur_imu_info_->an=RotateVec(-eth_.w_n_in*nts_*ts_/2,fn)+eth_.gcc_n;
+        cur_imu_info_->fn=Cbn_*cur_imu_info_->fb;
+        Vector3d aaa=RotateVec(-eth_.w_n_in*nts_*ts_/2,cur_imu_info_->fn);
+        cur_imu_info_->an=RotateVec(-eth_.w_n_in*nts_*ts_/2,cur_imu_info_->fn)+eth_.gcc_n;
         cur_imu_info_->vn=pre_imu_info_.vn+cur_imu_info_->an*nts_*ts_;
     }
 
@@ -689,7 +690,7 @@ namespace PPPLib {
         phim_-=pre_imu_info_.bg*ts_*nts_;
         dvbm_-=pre_imu_info_.ba*ts_*nts_;
         cur_imu_info_->cor_gyro_rate=phim_/(ts_*nts_);
-        cur_imu_info_->cor_acce_rate=dvbm_/(ts_*nts_);
+        cur_imu_info_->fb=cur_imu_info_->cor_acce_rate=dvbm_/(ts_*nts_);
 
         if(C_.insC.mech_coord==MECH_ENU){
             Vector3d vn_1=pre_imu_info_.vn+pre_imu_info_.an*(ts_*nts_/2.0);

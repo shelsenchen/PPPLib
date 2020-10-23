@@ -91,6 +91,7 @@ namespace PPPLib {
 
         Vector3d re,ve,ae;
         Vector3d rn,vn,an;
+        Vector3d fb,fn,fe;
         Matrix3d Cbe,Cbn;
         Quaterniond Qbe,Qbn;
         Vector3d rpy;

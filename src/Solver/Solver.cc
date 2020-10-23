@@ -6083,7 +6083,7 @@ namespace PPPLib{
                 C.insC.init_pos_unc[0]/=WGS84_EARTH_LONG_RADIUS;
                 C.insC.init_pos_unc[1]/=WGS84_EARTH_LONG_RADIUS;
                 double a=Random(99);
-                pos[i]+=C.insC.init_pos_unc[i]*Random(99);
+//                pos[i]+=C.insC.init_pos_unc[i]*Random(99);
             }
             meas_pos=pos.data();
         }
