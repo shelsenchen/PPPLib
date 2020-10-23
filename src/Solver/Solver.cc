@@ -1298,6 +1298,7 @@ namespace PPPLib{
     }
 
     bool cPppSolver::SolverProcess(tPPPLibConf C,int idx) {
+        bool stat=false;
         double rate=0.0;
         if(idx==-1) InitSolver(C);
 
@@ -1315,15 +1316,17 @@ namespace PPPLib{
 
         if(C.filter_type==FILTER_FORWARD){
             for(i=idx==-1?0:idx;i<num_epochs;i++){
-                SolverStart(i,idx);
+                stat=SolverStart(i,idx);
             }
-            LOG(INFO)<<" TOTAL EPOCH (FORWARD): "<<rover_obs_.epoch_num<<", SOLVE SUCCESS EPOCH: "<<epoch_ok_<<", SOLVE FAILED EPOCH: "<<epoch_fail_;
+            if(idx!=-1) return stat;
+            else LOG(INFO)<<" TOTAL EPOCH (FORWARD): "<<rover_obs_.epoch_num<<", SOLVE SUCCESS EPOCH: "<<epoch_ok_<<", SOLVE FAILED EPOCH: "<<epoch_fail_;
         }
         else if(C.filter_type==FILTER_BACKWARD){
             for(i=idx==-1?num_epochs-1:idx;i>=0;i--){
-                SolverStart(i,idx);
+                stat=SolverStart(i,idx);
             }
-            LOG(INFO)<<" TOTAL EPOCH (BACKWARD): "<<rover_obs_.epoch_num<<", SOLVE SUCCESS EPOCH: "<<epoch_ok_<<", SOLVE FAILED EPOCH: "<<epoch_fail_;
+            if(idx!=-1) return stat;
+            else LOG(INFO)<<" TOTAL EPOCH (BACKWARD): "<<rover_obs_.epoch_num<<", SOLVE SUCCESS EPOCH: "<<epoch_ok_<<", SOLVE FAILED EPOCH: "<<epoch_fail_;
         }
         else if(C.filter_type==FILTER_COMBINED){
             for(i=idx==-1?0:idx;i<num_epochs;i++){
@@ -3849,7 +3852,7 @@ namespace PPPLib{
     }
 
     bool cPpkSolver::SolverProcess(tPPPLibConf C,int idx) {
-
+        bool stat=false;
         if(idx==-1) InitSolver(C);
 
         int i=idx,num_epochs=rover_obs_.epoch_num;
@@ -3859,15 +3862,17 @@ namespace PPPLib{
 
         if(C.filter_type==FILTER_FORWARD){
             for(i=idx==-1?0:idx;i<num_epochs;i++){
-                SolverStart(i,idx);
+                stat=SolverStart(i,idx);
             }
-            LOG(INFO)<<" TOTAL EPOCH (FORWARD): "<<rover_obs_.epoch_num<<", SOLVE SUCCESS EPOCH: "<<epoch_ok_<<", SOLVE FAILED EPOCH: "<<epoch_fail_;
+            if(idx!=-1) return stat;
+            else LOG(INFO)<<" TOTAL EPOCH (FORWARD): "<<rover_obs_.epoch_num<<", SOLVE SUCCESS EPOCH: "<<epoch_ok_<<", SOLVE FAILED EPOCH: "<<epoch_fail_;
         }
         else if(C.filter_type==FILTER_BACKWARD){
             for(i=idx==-1?num_epochs-1:idx;i>=0;i--){
-                SolverStart(i,idx);
+                stat=SolverStart(i,idx);
             }
-            LOG(INFO)<<" TOTAL EPOCH (BACKWARD): "<<rover_obs_.epoch_num<<", SOLVE SUCCESS EPOCH: "<<epoch_ok_<<", SOLVE FAILED EPOCH: "<<epoch_fail_;
+            if(idx!=-1) return stat;
+            else LOG(INFO)<<" TOTAL EPOCH (BACKWARD): "<<rover_obs_.epoch_num<<", SOLVE SUCCESS EPOCH: "<<epoch_ok_<<", SOLVE FAILED EPOCH: "<<epoch_fail_;
         }
         else if(C.filter_type==FILTER_COMBINED){
             for(i=idx==-1?0:idx;i<num_epochs;i++){
