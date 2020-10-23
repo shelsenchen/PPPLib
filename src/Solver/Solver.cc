@@ -2114,7 +2114,7 @@ namespace PPPLib{
             sat_info=&epoch_sat_info_collect_.at(i);
 
             // LLI 探测周跳
-            gnss_obs_operator_.LliCycleSlip(C,*sat_info,previous_sat_info_[sat_info->sat.sat_.no-1],para_.GetGnssUsedFrqs(),dt,REC_ROVER);
+            //gnss_obs_operator_.LliCycleSlip(C,*sat_info,previous_sat_info_[sat_info->sat.sat_.no-1],para_.GetGnssUsedFrqs(),dt,REC_ROVER);
 
             if(ppp_conf_.gnssC.frq_opt==FRQ_SINGLE){
                 // 单频使用伪距－相位
