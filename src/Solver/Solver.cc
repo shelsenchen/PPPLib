@@ -373,7 +373,7 @@ namespace PPPLib{
         }
     }
 
-    void cSolver::InitInsPx(tPPPLibConf C,int nx,MatrixXd& Px) {
+    void cSolver::InitInsPx(tPPPLibConf C,int nx,MatrixXd& Px,VectorXd& x) {
         int i=0;
         Px=MatrixXd::Zero(nx,nx);
         Vector3d vec(0,0,0);
@@ -420,6 +420,8 @@ namespace PPPLib{
         if(para_.NumLever()>0){
             InitP(C.insC.init_lever_unc.data(),UNC_LEVER,ilev,ilev,Px,ilev,3,nx);
         }
+
+        for(int i=0;i<nx;i++) x[i]=1E-20;
 
     }
 
@@ -511,11 +513,11 @@ namespace PPPLib{
             W=VectorSkew(wiee)*Cbn*lever;
             gnss_ve=imu_info.vn+T-W;
         }
-
     }
 
     void cSolver::CloseLoopState(tPPPLibConf C,VectorXd& x,tImuInfoUnit* imu_info_corr) {
         char buff[1024]={'\0'};
+        double fact=C.insC.clp_fact;
 
         if(C.insC.mech_coord==MECH_ECEF){
             int ip=para_.IndexPos();
@@ -549,55 +551,87 @@ namespace PPPLib{
         }
         else if(C.insC.mech_coord==MECH_ENU){
             int ip=para_.IndexPos();
-            imu_info_corr->rn[0]-=x[ip+0];
-            imu_info_corr->rn[1]-=x[ip+1];
-            imu_info_corr->rn[2]-=x[ip+2];
-            imu_info_corr->re=Blh2Xyz(imu_info_corr->rn);
-            sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
-                    imu_info_corr->rn[0],x[ip],imu_info_corr->rn[1],x[ip+1],imu_info_corr->rn[2],x[ip+2]);
-            LOG(DEBUG)<<imu_info_corr->t_tag.GetTimeStr(1)<<" CLOSE LOOP STATE: ";
-            LOG(DEBUG)<<"POSITION: "<<buff;
-            buff[0]='\0';
+            if(C.insC.clp_pos&&fact!=0.0){
+
+                /// if fact<1.0, partial feedback
+                imu_info_corr->rn[0]-=fact*x[ip+0];
+                imu_info_corr->rn[1]-=fact*x[ip+1];
+                imu_info_corr->rn[2]-=fact*x[ip+2];
+                imu_info_corr->re=Blh2Xyz(imu_info_corr->rn);
+
+                sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
+                        imu_info_corr->rn[0],x[ip],imu_info_corr->rn[1],x[ip+1],imu_info_corr->rn[2],x[ip+2]);
+                LOG(DEBUG)<<imu_info_corr->t_tag.GetTimeStr(1)<<" CLOSE LOOP STATE: ";
+                LOG(DEBUG)<<"POSITION: "<<buff;
+                buff[0]='\0';
+
+                for(int i=0;i<3;i++) x[ip+i]=(fact==1.0?1E-20:x[ip+i]-fact*x[ip+i]);
+            }
+            else{
+                /// no feedback
+                for(int i=0;i<3;i++) imu_info_corr->rn[i]=x[ip+i];
+            }
 
             int iv=para_.IndexVel();
-            imu_info_corr->vn[0]-=x[iv+0];
-            imu_info_corr->vn[1]-=x[iv+1];
-            imu_info_corr->vn[2]-=x[iv+2];
-            Matrix3d Cne=CalcCen(imu_info_corr->rn,COORD_ENU).transpose();
-            imu_info_corr->ve=Cne*imu_info_corr->vn;
-            sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
-                    imu_info_corr->vn[0],x[iv],imu_info_corr->vn[1],x[iv+1],imu_info_corr->vn[2],x[iv+2]);
-            LOG(DEBUG)<<"VELOCITY: "<<buff;
-            buff[0]='\0';
+            if(C.insC.clp_vel&&fact!=0.0){
+                imu_info_corr->vn[0]-=fact*x[iv+0];
+                imu_info_corr->vn[1]-=fact*x[iv+1];
+                imu_info_corr->vn[2]-=fact*x[iv+2];
+                Matrix3d Cne=CalcCen(imu_info_corr->rn,COORD_ENU).transpose();
+                imu_info_corr->ve=Cne*imu_info_corr->vn;
+
+                sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
+                        imu_info_corr->vn[0],x[iv],imu_info_corr->vn[1],x[iv+1],imu_info_corr->vn[2],x[iv+2]);
+                LOG(DEBUG)<<"VELOCITY: "<<buff;
+                buff[0]='\0';
+
+                for(int i=0;i<3;i++) x[iv+i]=(fact==1.0?1E-20:x[iv+i]-fact*x[iv+i]);
+            }
+            else{
+                for(int i=0;i<3;i++) imu_info_corr->vn[i]=x[iv+i];
+            }
 
             int ia=para_.IndexAtt();
-            if(x[ia]!=DIS_FLAG){
-                Vector3d att(x[ia],x[ia+1],x[ia+2]);
-                Matrix3d T=Matrix3d::Identity()-VectorSkew(att);
+            if(x[ia]!=DIS_FLAG&&C.insC.clp_att&&fact!=0.0){
+                Vector3d att(fact*x[ia],fact*x[ia+1],fact*x[ia+2]);
+                Matrix3d T=Matrix3d::Identity()+VectorSkew(att);
                 imu_info_corr->Cbn=T*imu_info_corr->Cbn;
+                for(int i=0;i<3;i++) x[ia+i]=(fact==1.0?1E-20:x[ia+i]-fact*x[ia+i]);
+            }
+            else{
+                for(int i=0;i<3;i++) imu_info_corr->rpy[i]=x[ia+i];
             }
         }
 
         int iba=para_.IndexBa();
-        if(x[iba]!=DIS_FLAG){
-            imu_info_corr->ba[0]-=x[iba+0];
-            imu_info_corr->ba[1]-=x[iba+1];
-            imu_info_corr->ba[2]-=x[iba+2];
+        if(x[iba]!=DIS_FLAG&&C.insC.clp_ba&&fact!=0.0){
+            imu_info_corr->ba[0]+=fact*x[iba+0];
+            imu_info_corr->ba[1]+=fact*x[iba+1];
+            imu_info_corr->ba[2]+=fact*x[iba+2];
             sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
                     imu_info_corr->ba[0],x[iba],imu_info_corr->ba[1],x[iba+1],imu_info_corr->ba[2],x[iba+2]);
             LOG(DEBUG)<<"Ba: "<<buff;
             buff[0]='\0';
+            for(int i=0;i<3;i++) x[iba+i]=(fact==1.0?1E-20:x[iba+i]-fact*x[iba+i]);
+        }
+        else{
+            for(int i=0;i<3;i++) imu_info_corr->ba[i]=x[iba+i];
         }
 
         int ibg=para_.IndexBg();
-        if(x[ibg]!=DIS_FLAG){
-            imu_info_corr->bg[0]-=x[ibg+0];
-            imu_info_corr->bg[1]-=x[ibg+1];
-            imu_info_corr->bg[2]-=x[ibg+2];
+        if(x[ibg]!=DIS_FLAG&&C.insC.clp_bg&&fact!=0.0){
+            imu_info_corr->bg[0]+=x[ibg+0];
+            imu_info_corr->bg[1]+=x[ibg+1];
+            imu_info_corr->bg[2]+=x[ibg+2];
             sprintf(buff,"%10.3f - %5.3f, %10.3f - %5.3f  %10.3f - %5.3f",
                     imu_info_corr->bg[0],x[ibg],imu_info_corr->bg[1],x[ibg+1],imu_info_corr->bg[2],x[ibg+2]);
             LOG(DEBUG)<<"Bg: "<<buff;
             buff[0]='\0';
+            for(int i=0;i<3;i++) x[ibg+i]=1E-20;
+            for(int i=0;i<3;i++) x[ibg+i]=(fact==1.0?1E-20:x[ibg+i]-fact*x[ibg+i]);
+        }
+        else{
+            for(int i=0;i<3;i++) imu_info_corr->bg[i]=x[ibg+i];
         }
     }
 
@@ -5684,7 +5718,7 @@ namespace PPPLib{
         out_=new cOutSol(C);
         out_->InitOutSol(C,C.fileC.sol);
         out_->WriteHead();
-        InitInsPx(C,num_full_x_,full_Px_);
+        InitInsPx(C,num_full_x_,full_Px_,full_x_);
         ins_algor_=new cIns(fs_conf_);
 
         if(fs_conf_.mode==MODE_IGTC) tc_mode_=true;
@@ -5942,13 +5976,13 @@ namespace PPPLib{
         }
 
         if(fabs(dt)>60.0){
-            InitInsPx(fs_conf_,nx,Px);
+            InitInsPx(fs_conf_,nx,Px,x);
         }
         else{
-            PropVariance(F,Q,Px);
+            x=F*x;
+            Px=F*Px*F.transpose()+Q;
         }
 
-        for(int i=0;i<nx;i++) x[i]=1E-20;
         if(tc_mode_){
             gnss_solver_->full_x_.segment(0,nx)=Map<VectorXd>(x.data(),nx);
 
@@ -6083,7 +6117,7 @@ namespace PPPLib{
                 C.insC.init_pos_unc[0]/=WGS84_EARTH_LONG_RADIUS;
                 C.insC.init_pos_unc[1]/=WGS84_EARTH_LONG_RADIUS;
                 double a=Random(99);
-//                pos[i]+=C.insC.init_pos_unc[i]*Random(99);
+                pos[i]+=C.insC.init_pos_unc[i]*a;
             }
             meas_pos=pos.data();
         }
@@ -6128,7 +6162,6 @@ namespace PPPLib{
             CloseLoopState(fs_conf_,x,&imu_corr);
 
             if(BuildLcHVR(1,C,imu_corr,meas_pos,meas_vel,q_pos,q_vel)){
-
                 stat=ValidSol(x, 10.0);
                 if(stat){
                     full_x_=x;
@@ -6156,7 +6189,7 @@ namespace PPPLib{
         for(int i=0;i<3;i++) {
             var+=SQRT(Px(i,i));
         }
-        if((var/3)>SQR(100)) InitInsPx(fs_conf_,nx,Px);
+//        if((var/3)>SQR(100)) InitInsPx(fs_conf_,nx,Px);
     }
 
     bool cFusionSolver::ValidSol(VectorXd& x, double thres) {

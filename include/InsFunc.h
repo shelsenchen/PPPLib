@@ -52,7 +52,7 @@ namespace PPPLib {
 
     typedef struct {
         cTime t_tag;
-        Vector3d gyro;
+        Vector3d gyro;      // increment
         Vector3d acce;
 
         unsigned int pps;
@@ -166,6 +166,7 @@ namespace PPPLib {
         Vector3d init_vel_err_;
         Vector3d init_pos_err_;
     };
+
 
     class cIns {
     public:

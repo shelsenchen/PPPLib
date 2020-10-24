@@ -254,6 +254,12 @@ namespace PPPLib{
         Vector3d init_ra_unc;
         Vector3d init_rg_unc;
         Vector3d init_lever_unc;
+        bool clp_att;
+        bool clp_vel;
+        bool clp_pos;
+        bool clp_ba;
+        bool clp_bg;
+        double clp_fact;
         double psd_ba;
         double psd_bg;
         double psd_vrw;

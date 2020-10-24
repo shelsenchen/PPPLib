@@ -220,6 +220,12 @@ static void LoadConf()
         for(i=0;i<3;i++) insC->init_bg_unc[i]=ratio[i]*ARC_DEG_PER_HOUR;
         ratio.clear();
         double bias=0.0;
+        insC->clp_pos=config->Get<int>("clp_pos");
+        insC->clp_vel=config->Get<int>("clp_vel");
+        insC->clp_att=config->Get<int>("clp_att");
+        insC->clp_ba=config->Get<int>("clp_ba");
+        insC->clp_bg=config->Get<int>("clp_bg");
+        insC->clp_fact=config->Get<double>("clp_fact");
         bias=config->Get<double>("gyro_bias");
         for(int i=0;i<3;i++) insC->gyr_bias[i]=bias*ARC_DEG_PER_HOUR;
         bias=config->Get<double>("acce_bias");

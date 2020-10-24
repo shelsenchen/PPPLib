@@ -42,7 +42,7 @@ namespace PPPLib{
         virtual bool SolutionUpdate();
 
         void ReinitSolver(tPPPLibConf C);
-        void InitInsPx(tPPPLibConf C,int nx,MatrixXd& Px);
+        void InitInsPx(tPPPLibConf C,int nx,MatrixXd& Px,VectorXd& x);
         void InitX(double xi,double var,int idx,double *x,double *xp);
         Eigen::MatrixXd InitQ(tPPPLibConf,double dt,int nx);
         Eigen::MatrixXd InitPrecQ(tPPPLibConf C,double dt,int nx,Matrix3d Cbe);

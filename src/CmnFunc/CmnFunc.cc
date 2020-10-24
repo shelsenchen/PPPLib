@@ -1265,15 +1265,18 @@ namespace PPPLib{
 
     int cParSetting::IndexPos() {
         return 0;
+//        return NumAtt()+NumVel();
     }
 
     int cParSetting::IndexVel() {
         if(NumVel()>0) return NumPos();
+//        if(NumVel()>0) return NumAtt();
         else return -1;
     }
 
     int cParSetting::IndexAtt() {
         if(NumAtt()>0) return NumPos()+NumVel();
+//        if(NumAtt()>0) return 0;
     }
 
     int cParSetting::IndexBa() {

@@ -420,6 +420,8 @@ namespace PPPLib {
 
     }
 
+    /// 程序在ENU-RFU框架下进行ins编排,
+    /// imu数据应存储为RFU坐标系并表示为增量形式
     void AdjustImuData(tImuDataUnit& imu_data,IMU_COORD_TYPE coord_type,IMU_DATA_FORMAT data_format,GYRO_DATA_FORMAT gyro_val_format,double dt) {
         Vector3d gyro,acce;
 
@@ -430,7 +432,6 @@ namespace PPPLib {
             MatMul("NN",3,1,3,1.0,Crf,acce.data(),0.0,imu_data.acce.data());
         }
 
-        //
         if(data_format==IMU_FORMAT_RATE){
             for(int j=0;j<3;j++) imu_data.acce[j]*=dt;
             for(int j=0;j<3;j++) imu_data.gyro[j]*=dt;
@@ -438,6 +439,7 @@ namespace PPPLib {
         if(gyro_val_format==GYRO_FORMAT_DEG){
             for(int j=0;j<3;j++) imu_data.gyro[j]*=D2R;
         }
+
     }
 
     cInsSim::cInsSim() {}
@@ -687,8 +689,12 @@ namespace PPPLib {
         TraceInsMechInfo(pre_imu_info_,true,idx);
 
         ConingScullingCompensation(0);
-        phim_-=pre_imu_info_.bg*ts_*nts_;
-        dvbm_-=pre_imu_info_.ba*ts_*nts_;
+        if(C_.insC.clp_bg&&C_.insC.clp_fact!=0.0){
+            phim_-=pre_imu_info_.bg*ts_*nts_;
+        }
+        if(C_.insC.clp_ba&&C_.insC.clp_fact!=0.0){
+            dvbm_-=pre_imu_info_.ba*ts_*nts_;
+        }
         cur_imu_info_->cor_gyro_rate=phim_/(ts_*nts_);
         cur_imu_info_->fb=cur_imu_info_->cor_acce_rate=dvbm_/(ts_*nts_);
 
@@ -830,7 +836,7 @@ namespace PPPLib {
         eth_.gcc_e=-2.0*VectorSkew(eth_.w_e_ie)*vel+eth_.ge;
     }
 
-    /* Error Transition Matrix in ENU
+    /* Error Transition Matrix in ENU-RFU
      * Ft = [Mpp Mpv O33 O33 O33
      *       Mvp Mvv Mva -Cbn O33
      *       Map Mav Maa O33 Cbn
@@ -923,12 +929,12 @@ namespace PPPLib {
         F.block<3,3>(iv,ip)=Mvp;
         F.block<3,3>(iv,iv)=Mvv;
         F.block<3,3>(iv,ia)=Mva;
-        F.block<3,3>(iv,iba)=-cur_imu_info.Cbn;
+        F.block<3,3>(iv,iba)=cur_imu_info.Cbn;
 
         F.block<3,3>(ia,ip)=Map;
         F.block<3,3>(ia,iv)=Mav;
         F.block<3,3>(ia,ia)=Maa;
-        F.block<3,3>(ia,ibg)=cur_imu_info.Cbn;
+        F.block<3,3>(ia,ibg)=-cur_imu_info.Cbn;
 
         MatrixXd Fk=F*(nts_*ts_);
         if(nts_*ts_>0.1){
