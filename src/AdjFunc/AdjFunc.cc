@@ -104,7 +104,7 @@ namespace PPPLib {
 
         dx_=K*L;
 
-#if 1
+#if 0
         cout<<"X:"<<endl;
         cout<<X_.transpose()<<endl<<endl;
         cout<<"H:"<<endl;

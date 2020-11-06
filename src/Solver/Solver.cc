@@ -444,7 +444,7 @@ namespace PPPLib{
         int ia=para_.IndexAtt();
         int iba=para_.IndexBa();
         int ibg=para_.IndexBg();
-#if 1
+#if 0
 
         SetPsd(C.insC.psd_vrw,dt,iv,iv,Q);
         SetPsd(C.insC.psd_arw,dt,ia,ia,Q);
@@ -459,10 +459,15 @@ namespace PPPLib{
 //        G.block<3,3>(ibg,ibg)=Matrix3d::Identity();
 //        Q=G*Q*G.transpose();
 #else
-        SetPsd(SQRT(1.44677872529987E-07),dt,iv,iv,Q);
-        SetPsd(SQRT(1.88223526765957E-10),dt,ia,ia,Q);
-        SetPsd(SQRT(3.32134693595E-11),dt,iba,iba,Q);
-        SetPsd(SQRT(1.30580169661655E-16),dt,ibg,ibg,Q);
+        SetPsd(SQRT(4.687E-7),dt,iv,iv,Q);         /// 7
+        SetPsd(SQRT(8.28159E-10),dt,ia,ia,Q);     /// 10
+        SetPsd(SQRT(4.389E-8),dt,iba,iba,Q);      /// 7
+        SetPsd(SQRT(3.74024E-13),dt,ibg,ibg,Q);  ///-10
+
+//        SetPsd(SQRT(4.687E-6),dt,iv,iv,Q);
+//        SetPsd(SQRT(8.28159E-6),dt,ia,ia,Q);
+//        SetPsd(SQRT(4.389E-5),dt,iba,iba,Q);
+//        SetPsd(SQRT(3.74024E-14),dt,ibg,ibg,Q);
 
 #endif
 
@@ -5715,6 +5720,7 @@ namespace PPPLib{
             if(GnssSol2Ins(sols.back().pos,ve)){
                 LOG(INFO)<<cur_imu_info_.t_tag.GetTimeStr(3)<<" INS INITIALIZATION OK";
                 LOG(INFO)<<"INIT POSITION(n): "<<setw(13)<<std::fixed<<setprecision(6)<<pre_imu_info_.rn.transpose()<<" rad rad m";
+                LOG(INFO)<<"INIT POSITION(e): "<<setw(13)<<std::fixed<<setprecision(3)<<pre_imu_info_.re.transpose()<<" m m m";
                 LOG(INFO)<<"INIT VELOCITY(n): "<<setw(13)<<setprecision(6)<<pre_imu_info_.vn.transpose()<<" m/s";
                 LOG(INFO)<<"INIT ATTITUTE(n): "<<setw(13)<<setprecision(6)<<pre_imu_info_.rpy_n.transpose()*R2D<<" deg";
                 ppplib_sol_.ins_stat=SOL_INS_INIT;
@@ -6094,12 +6100,11 @@ namespace PPPLib{
             InitInsPx(fs_conf_,nx,Px,x);
         }
         else{
-            x=F*x;
+            for(i=0;i<nx;i++) x[i]=1E-20;
             Px=F*Px*F.transpose()+Q;
-//            Px=F*(Px+0.5*Q)*F.transpose()+0.5*Q;
         }
 
-#if 1
+#if 0
         cout<<"F:"<<endl;
         cout<<F<<endl<<endl;
 
@@ -6125,6 +6130,24 @@ namespace PPPLib{
             for(i=0;i<nx;i++) for(j=0;j<nx;j++){
                 full_Px_.data()[i+j*num_full_x_]=Px.data()[i+j*nx];
             }
+        }
+    }
+
+    void cFusionSolver::PropVariance(MatrixXd &F, MatrixXd &Q, int nx, MatrixXd &Px) {
+        MatrixXd prior_P=Px;
+        MatrixXd PQ(nx,nx),FPF(nx,nx);
+
+        PQ=MatrixXd::Zero(nx,nx);FPF=MatrixXd::Zero(nx,nx);
+        int i,j;
+
+        for(i=0;i<nx;i++){
+            for(j=0;j<nx;j++) PQ.data()[i+j*nx]=prior_P.data()[i+j*nx]+0.5*Q.data()[i+j*nx];
+        }
+
+        FPF=F*PQ*F.transpose();
+
+        for(i=0;i<nx;i++){
+            for(j=0;j<nx;j++) Px.data()[i+j*nx]=FPF.data()[i+j*nx]+0.5*Q.data()[i+j*nx];
         }
     }
 

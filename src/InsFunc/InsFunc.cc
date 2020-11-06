@@ -960,6 +960,7 @@ namespace PPPLib {
         Vector3d rn=imu_info.rn;
         rn[0]*=R2D;rn[1]*=R2D;
         LOG(DEBUG)<<"   "<<"POSITION(ned):"<<setw(13)<<std::fixed<<setprecision(6)<<rn.transpose()<<" deg deg m";
+        LOG(DEBUG)<<"   "<<"POSITION(e)  :"<<setw(13)<<std::fixed<<setprecision(3)<<imu_info.re.transpose()<<" m m m";
         LOG(DEBUG)<<"   "<<"GYRO BIAS(b) :"<<setw(13)<<std::fixed<<setprecision(6)<<imu_info.bg.transpose()/ARC_DEG_PER_HOUR<<" deg/h";
         LOG(DEBUG)<<"   "<<"ACCE BIAS(b) :"<<setw(13)<<std::fixed<<setprecision(6)<<imu_info.ba.transpose()/MICRO_G<<" ug";
     }
