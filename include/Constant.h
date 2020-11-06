@@ -67,6 +67,7 @@ namespace PPPLib {
     const double WGS84_EARTH_LONG_RADIUS=6378137.0;
     const double WGS84_EARTH_SHORT_RADIUS=6356752.3142;
     const double WGS84_EARTH_OBLATEO=1.0/298.257223563;
+    const double WGS84_ECCEN=0.0818191908425;
     const double WGS84_FIRST_E2=0.00669437999013;
     const double WGS84_SECOND_E2=0.006739496742227;
     const double WGS84_GM=3.986005e14;
@@ -302,7 +303,7 @@ namespace PPPLib {
     const double OMGE_BDS=7.292115E-5;
     const double OMGE_GAL=7.2921151467E-5;
     const double OMGE_GLO=7.292115E-5;
-    const double MU_GPS=3.9860050E14;
+    const double MU_GPS=3.986004418E14;
     const double MU_BDS=3.986004418E14;
     const double MU_GAL=3.986004418E14;
     const double MU_GLO=3.9860044E14;
@@ -575,7 +576,9 @@ namespace PPPLib {
         IMU_M39=2,
         IMU_MTI_CSV=3,
         IMU_POS=4,
-        IMU_SIM=5
+        IMU_SIM_AIAV=5,
+        IMU_SIM_TACTICAL=6,
+        IMU_SIM_MEMS=7
     };
 
     enum IMU_COORD_TYPE {
@@ -591,12 +594,6 @@ namespace PPPLib {
     enum GYRO_DATA_FORMAT {
         GYRO_FORMAT_DEG,
         GYRO_FORMAT_RAD
-    };
-
-    enum IMU_GRADE {
-        IMU_GRADE_INERTIAL,
-        IMU_GRADE_TACTICAL,
-        IMU_GRADE_MEMS,
     };
 
     enum INS_ALIGN {

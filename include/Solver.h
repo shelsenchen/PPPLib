@@ -33,6 +33,7 @@ namespace PPPLib{
         void CombFbSol(tPPPLibConf C);
         int Smoother(const VectorXd xf, const MatrixXd Qf, const VectorXd xb, const MatrixXd Qb, VectorXd& xs, MatrixXd& Qs, int n);
 
+
         virtual void InitSolver(tPPPLibConf C);
         virtual bool InitReader(tPPPLibConf C);
         virtual bool SolverProcess(tPPPLibConf C,int idx);
@@ -44,12 +45,12 @@ namespace PPPLib{
         void ReinitSolver(tPPPLibConf C);
         void InitInsPx(tPPPLibConf C,int nx,MatrixXd& Px,VectorXd& x);
         void InitX(double xi,double var,int idx,double *x,double *xp);
-        Eigen::MatrixXd InitQ(tPPPLibConf,double dt,int nx);
+        Eigen::MatrixXd InitQ(tPPPLibConf,double dt,int nx,Matrix3d Cbe);
         Eigen::MatrixXd InitPrecQ(tPPPLibConf C,double dt,int nx,Matrix3d Cbe);
 
         void RemoveLever(tPPPLibConf C,const tImuInfoUnit& imu_info,Vector3d& lever,Vector3d& gnss_re,Vector3d& gnss_ve);
         void CloseLoopState(tPPPLibConf C,VectorXd& x,tImuInfoUnit* imu_info_corr);
-
+        bool ValidSol(VectorXd& x, double thres);
     public:
         cGnssObsOperator gnss_obs_operator_;
         cGnssErrCorr gnss_err_corr_;
@@ -286,6 +287,7 @@ namespace PPPLib{
         bool MatchGnssObs();
         bool MatchGnssSol();
         void InsSol2PpplibSol(tImuInfoUnit &imu_sol,tSolInfoUnit &ppplib_sol);
+        void SolSync(tImuInfoUnit &imu_info,COORDINATE_TYPE coord);
         void StateSync(tImuInfoUnit &imu_sol);
 
         double Vel2Yaw(Vector3d vn);
@@ -302,10 +304,8 @@ namespace PPPLib{
     private:
         void DisableX(VectorXd& x,int idx);
         void StateTimeUpdate();
-        void PropVariance(MatrixXd& F,MatrixXd& Q,MatrixXd& Px);
         int BuildLcHVR(int post,tPPPLibConf C,tImuInfoUnit& imu_info,double *meas_pos,double *meas_vel,Vector3d& q_pos,Vector3d& q_vel);
         bool LcFilter(tPPPLibConf C);
-        bool ValidSol(VectorXd& x, double thres);
         void ControlPx(int nx,MatrixXd& Px);
 
     public:
@@ -326,13 +326,14 @@ namespace PPPLib{
         vector<tSolInfoUnit> gnss_sols_;
 
     private:
+        cTime gnss_t_;
         int imu_index_=0;
         int rover_idx_=0;
         int base_idx_=0;
         int gnss_sol_idx=0;
         int ins_mech_idx=0;
-        tImuInfoUnit cur_imu_info_={0};
-        tImuInfoUnit pre_imu_info_={0};
+        tImuInfoUnit cur_imu_info_;
+        tImuInfoUnit pre_imu_info_;
         vector<tImuDataUnit> imu_data_zd_;
     };
 }

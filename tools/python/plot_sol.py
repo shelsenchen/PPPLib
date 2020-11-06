@@ -189,7 +189,7 @@ def enu_plot(dir, site, data, pre):
         ax.axhline(y=0.3, color='y', linestyle='-', linewidth=0.4)
         ax.axhline(y=-0.3, color='y', linestyle='-', linewidth=0.4)
     else:
-        plt.ylim([-3.0, 3.0])
+        # plt.ylim([-1.5, 1.5])
         ax.axhline(y=0.1, color='y', linestyle='-', linewidth=0.4)
         ax.axhline(y=-0.1, color='y', linestyle='-', linewidth=0.4)
     legend_font = {'size': 6}

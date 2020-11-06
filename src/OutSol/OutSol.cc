@@ -156,11 +156,11 @@ namespace PPPLib{
                        sep,SQRT(sol.q_att[0])*R2D,sep,SQRT(sol.q_att[1])*R2D,sep,SQRT(sol.q_att[2])*R2D);
         }
         if(C_.solC.out_ba&&C_.mode>=MODE_IGLC){
-            p+=sprintf(p,"%s%10.6lf%s%10.6lf%s%10.6lf",sep,sol.accl_bias[0],sep,sol.accl_bias[1],sep,sol.accl_bias[2]);
+            p+=sprintf(p,"%s%10.6lf%s%10.6lf%s%10.6lf",sep,sol.accl_bias[0]/MICRO_G,sep,sol.accl_bias[1]/MICRO_G,sep,sol.accl_bias[2]/MICRO_G);
 
         }
         if(C_.solC.out_bg&&C_.mode>=MODE_IGLC){
-            p+=sprintf(p,"%s%10.6lf%s%10.6lf%s%10.6lf",sep,sol.gyro_bias[0],sep,sol.gyro_bias[1],sep,sol.gyro_bias[2]);
+            p+=sprintf(p,"%s%10.6lf%s%10.6lf%s%10.6lf",sep,sol.gyro_bias[0]/ARC_DEG_PER_HOUR,sep,sol.gyro_bias[1]/ARC_DEG_PER_HOUR,sep,sol.gyro_bias[2]/ARC_DEG_PER_HOUR);
         }
 
         p+=sprintf(p,"\n");
@@ -321,10 +321,10 @@ namespace PPPLib{
                         sep,"sdroll",sep,"sdpitch",sep,"sdyaw");
             }
             if(C_.solC.out_ba&&C_.mode>=MODE_IGLC){
-                fprintf(fout_,"%s%10s%s%10s%s%10s",sep,"bax(m/s^2)",sep,"bay(m/s^2)",sep,"baz(m/s^2)");
+                fprintf(fout_,"%s%10s%s%10s%s%10s",sep,"bax(ug)",sep,"bay(ug)",sep,"baz(ug)");
             }
             if(C_.solC.out_bg&&C_.mode>=MODE_IGLC){
-                fprintf(fout_,"%s%10s%s%10s%s%10s",sep,"bgx(rad/s)",sep,"bgy(rad/s)",sep,"bgz(rad/s)");
+                fprintf(fout_,"%s%10s%s%10s%s%10s",sep,"bgx(deg/h)",sep,"bgy(deg/h)",sep,"bgz(deg/h)");
             }
             fprintf(fout_,"\n");
         }

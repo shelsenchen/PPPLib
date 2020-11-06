@@ -194,6 +194,7 @@ static void LoadConf()
         insC->gyro_val_format= static_cast<GYRO_DATA_FORMAT>(config->Get<int>("gyro_val_format"));
         insC->sample_rate=config->Get<double>("sample_hz");
         insC->sample_number=config->Get<double>("sample_number");
+        insC->dttol=config->Get<double>("dttol");
         insC->mech_coord=static_cast<INS_MECH_COORD>(config->Get<double>("mech_coord"));
         insC->ins_align=static_cast<INS_ALIGN>(config->Get<int>("ins_align"));
         ratio.clear();
@@ -202,6 +203,15 @@ static void LoadConf()
         insC->correction_time_ba=config->Get<double>("correction_time_ba");
         insC->correction_time_bg=config->Get<double>("correction_time_bg");
         ratio.clear();
+        ratio=config->GetArray<double>("init_pos_err");
+        for(i=0;i<3;i++) insC->init_pos_err[i]=ratio[i];
+        ratio.clear();
+        ratio=config->GetArray<double>("init_vel_err");
+        for(i=0;i<3;i++) insC->init_vel_err[i]=ratio[i];
+        ratio.clear();
+        ratio=config->GetArray<double>("init_att_err");
+        for(i=0;i<3;i++) insC->init_att_err[i]=ratio[i]*D2R;
+        ratio.clear();
         ratio=config->GetArray<double>("init_pos_unc");
         for(i=0;i<3;i++) insC->init_pos_unc[i]=ratio[i];
         ratio.clear();
@@ -209,9 +219,9 @@ static void LoadConf()
         for(i=0;i<3;i++) insC->init_vel_unc[i]=ratio[i];
         ratio.clear();
         ratio=config->GetArray<double>("init_att_unc");
-        insC->init_att_unc[0]=ratio[0]*ARC_SEC;     // refer to arc
-        insC->init_att_unc[1]=ratio[1]*ARC_SEC;
-        insC->init_att_unc[2]=ratio[2]*ARC_MIN;
+        insC->init_att_unc[0]=ratio[0]*D2R;     // refer to arc
+        insC->init_att_unc[1]=ratio[1]*D2R;
+        insC->init_att_unc[2]=ratio[2]*D2R;
         ratio.clear();
         ratio=config->GetArray<double>("init_ba_unc");
         for(i=0;i<3;i++) insC->init_ba_unc[i]=ratio[i]*MICRO_G;
@@ -230,10 +240,13 @@ static void LoadConf()
         for(int i=0;i<3;i++) insC->gyr_bias[i]=bias*ARC_DEG_PER_HOUR;
         bias=config->Get<double>("acce_bias");
         for(int i=0;i<3;i++) insC->acc_bias[i]=bias*MICRO_G;
-        insC->psd_vrw=config->Get<double>("psd_vel_rw")*UG_PER_SQRT_HZ;
-        insC->psd_arw=config->Get<double>("psd_ang_rw")*ARC_DEG_PER_SQRT_HOUR;
-        insC->psd_ba=config->Get<double>("psd_ba");
-        insC->psd_bg=config->Get<double>("psd_bg");
+
+        insC->psd_vrw=config->Get<double>("psd_vel_rw")*UG_PER_SQRT_HZ;        /// m/s^{2.5} ==>    m^2/s^3
+        insC->psd_arw=config->Get<double>("psd_ang_rw")*ARC_DEG_PER_SQRT_HOUR; /// rad/s^{-0.5} ==> rad^2/s
+        double a=SQR(insC->psd_vrw);
+        double b=SQR(insC->psd_arw);
+        insC->psd_ba=config->Get<double>("psd_ba");                            /// accelerometer bias random walk PSD (m^2/s^(-5))
+        insC->psd_bg=config->Get<double>("psd_bg");                            /// gyro bias random walk PSD (rad^2/s^(-3))
     }
 
     tSolConf *solC=&kConf.solC;
@@ -368,10 +381,10 @@ static int Processer()
     if((kConf.mode==MODE_INS||kConf.mode==MODE_IGLC)&&(kConf.mode_opt==MODE_OPT_GSOF||kConf.mode_opt==MODE_OPT_SOL||kConf.mode_opt==MODE_OPT_SIM)){
         Config::Ptr_ config=Config::GetInstance();
         string file=config->Get<string>("imu");
-        if((access(file.c_str(),0))==-1){
-            LOG(ERROR)<<"IMU FILE NO EXIST path="<<f;
-            return 0;
-        }
+//        if((access(file.c_str(),0))==-1){
+//            LOG(ERROR)<<"IMU FILE NO EXIST path="<<f;
+//            return 0;
+//        }
         kConf.fileC.imu=file;
         if(kConf.mode_opt==MODE_OPT_GSOF){
             file=config->Get<string>("gsof");
@@ -389,7 +402,11 @@ static int Processer()
         kConf.fileC.gsof=file;
         kConf.fileC.sol=config->Get<string>("rslt");
 
+        long t1=clock();
         solver->SolverProcess(kConf,0);
+        long t2=clock();
+        double t=(double)(t2-t1)/CLOCKS_PER_SEC;
+        cout<<"total(s): "<<t<<endl;
 
         return true;
     }

@@ -96,17 +96,33 @@ namespace PPPLib {
             for(j=0;j<nl;j++) H_(i,j)=H(zip_idx[i],j);
         }
 
-#if 0
-        cout<<X_.transpose()<<endl;
-        cout<<H_.transpose()<<endl;
-        cout<<Px_.transpose()<<endl;
-#endif
+
 
         MatrixXd Kk=(H_.transpose()*Px_*H_+R);
         if(MatInv(Kk.data(),Kk.cols())==-1) return 0;
         MatrixXd K=Px_*H_*Kk;
 
         dx_=K*L;
+
+#if 1
+        cout<<"X:"<<endl;
+        cout<<X_.transpose()<<endl<<endl;
+        cout<<"H:"<<endl;
+        cout<<H_.transpose()<<endl<<endl;
+        cout<<"R:"<<endl;
+        cout<<R<<endl<<endl;
+        cout<<"Px:"<<endl;
+        cout<<Px_.transpose()<<endl<<endl;
+        cout<<"HPH'+R:"<<endl;
+        cout<<Kk.transpose()<<endl<<endl;
+        cout<<"K:"<<endl;
+        cout<<K.transpose()<<endl<<endl;
+        cout<<"L:"<<endl;
+        cout<<L.transpose()<<endl<<endl;
+        cout<<"dx:"<<endl;
+        cout<<dx_.transpose()<<endl<<endl;
+#endif
+
         for(int i=0;i<zip_idx.size();i++) X_[i]+=dx_[i];
         MatrixXd I=MatrixXd::Identity(zip_idx.size(),zip_idx.size());
         Px_=(I-K*H_.transpose())*Px_;

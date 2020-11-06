@@ -394,16 +394,16 @@ namespace PPPLib{
                 }
 
                 for(i=0;i<2;i++) token=strtok(NULL,seps);
-                imu_data.acce[2]=atof(token)*a_scale;
+                imu_data.acce[2]=atof(token)*a_scale;     //U-Z
                 token=strtok(NULL,seps);
-                imu_data.acce[1]=-atof(token)*a_scale;
+                imu_data.acce[1]=-atof(token)*a_scale;   // F-Y
                 token=strtok(NULL,seps);
-                imu_data.acce[0]=atof(token)*a_scale;
+                imu_data.acce[0]=atof(token)*a_scale;    // R-X
 
                 token=strtok(NULL,seps);
                 imu_data.gyro[2]=atof(token)*g_scale;
                 token=strtok(NULL,seps);
-                imu_data.gyro[1]=atof(token)*g_scale;
+                imu_data.gyro[1]=-atof(token)*g_scale;
                 token=strtok(NULL,seps);
                 imu_data.gyro[0]=atof(token)*g_scale; //RFU,increment
 

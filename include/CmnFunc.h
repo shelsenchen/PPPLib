@@ -143,39 +143,7 @@ namespace PPPLib{
         tTime t_;
     };
 
-#if 0
-    class cCoord{
-    public:
-        cCoord();
-        cCoord(const Vector3d& coord, const COORDINATE_TYPE coord_type);
-        cCoord(const double *coord, const COORDINATE_TYPE coord_type);
-        ~cCoord();
 
-    public:
-        Vector3d GetCoordEnu(cCoord ref_coord);
-        Vector3d GetCoordXyz();
-        Vector3d GetCoordBlh();
-        Vector3d GetCoordNed(cCoord ref_coord);
-        Matrix3d GetCne(const COORDINATE_TYPE type);
-
-    private:
-        void Xyz2Blh();
-        void Blh2Xyz();
-        void Xyz2Enu(cCoord ref_coord);
-        void Enu2Xyz(cCoord ref_coord);
-        void Enu2Ned();
-        void Ned2Enu();
-        void CalcCne(const COORDINATE_TYPE type);
-        double CalcLat();
-
-    private:
-        Vector3d coord_XYZ_;
-        Vector3d coord_BLH_;
-        Vector3d coord_ENU_;
-        Vector3d coord_NED_;
-        Matrix3d Cne_;
-    };
-#endif
     Vector3d Xyz2Blh(Vector3d& coord_xyz);
     Vector3d Blh2Xyz(Vector3d& coord_blh);
     Vector3d Xyz2Enu(Vector3d& coord_blh,Vector3d& coord_xyz);
@@ -241,9 +209,13 @@ namespace PPPLib{
         INS_ALIGN ins_align;
         double sample_rate;
         int sample_number;
+        double dttol;
         Vector3d lever;
         double correction_time_ba;
         double correction_time_bg;
+        Vector3d init_pos_err;
+        Vector3d init_vel_err;
+        Vector3d init_att_err;
         Vector3d init_pos_unc;
         Vector3d init_vel_unc;
         Vector3d init_att_unc;
@@ -260,10 +232,10 @@ namespace PPPLib{
         bool clp_ba;
         bool clp_bg;
         double clp_fact;
-        double psd_ba;
-        double psd_bg;
         double psd_vrw;
         double psd_arw;
+        double psd_ba;
+        double psd_bg;
         Vector3d gyr_bias,acc_bias;
         bool err_model;
         bool est_sa;
@@ -336,8 +308,8 @@ namespace PPPLib{
         int valid_sat_num;
         Vector3d pos;               // xyz
         Vector3d vel;               // xyz
-        double q_pos[6];
-        double q_vel[6];
+        double q_pos[6];            // (m)
+        double q_vel[6];            // (m/s)
         double clk_error[NSYS+1]; //clock+isb
         double rec_dcb[NSYS+1];
         double rec_ifcb[NSYS+1];   // inter-frequency code bias
@@ -348,7 +320,7 @@ namespace PPPLib{
         int num_ar_sat;
         double sigma;
 
-        Vector3d att{0,0,0};  //roll pitch yaw
+        Vector3d att{0,0,0};  //roll pitch yaw of body w.r.t NED
         double q_att[6];
         Vector3d gyro_bias{0,0,0};
         Vector3d accl_bias{0,0,0};
