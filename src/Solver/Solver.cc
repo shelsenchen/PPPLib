@@ -444,20 +444,20 @@ namespace PPPLib{
         int ia=para_.IndexAtt();
         int iba=para_.IndexBa();
         int ibg=para_.IndexBg();
-#if 0
+#if 1
 
         SetPsd(C.insC.psd_vrw,dt,iv,iv,Q);
         SetPsd(C.insC.psd_arw,dt,ia,ia,Q);
-        SetPsd(SQRT(C.insC.psd_ba),dt,iba,iba,Q);
-        SetPsd(SQRT(C.insC.psd_bg),dt,ibg,ibg,Q);
+        SetPsd(C.insC.psd_ba,dt,iba,iba,Q);
+        SetPsd(C.insC.psd_bg,dt,ibg,ibg,Q);
 
-//        MatrixXd G(nx,nx);
-//        G=MatrixXd::Zero(nx,nx);
-//        G.block<3,3>(iv,iv)=-Cbe;
-//        G.block<3,3>(ia,ia)=Cbe;
-//        G.block<3,3>(iba,iba)=Matrix3d::Identity();
-//        G.block<3,3>(ibg,ibg)=Matrix3d::Identity();
-//        Q=G*Q*G.transpose();
+        MatrixXd G(nx,nx);
+        G=MatrixXd::Zero(nx,nx);
+        G.block<3,3>(iv,iv)=-Cbe;
+        G.block<3,3>(ia,ia)=Cbe;
+        G.block<3,3>(iba,iba)=Matrix3d::Identity();
+        G.block<3,3>(ibg,ibg)=Matrix3d::Identity();
+        Q=G*Q*G.transpose();
 #else
         SetPsd(SQRT(4.687E-7),dt,iv,iv,Q);         /// 7
         SetPsd(SQRT(8.28159E-10),dt,ia,ia,Q);     /// 10
@@ -584,7 +584,7 @@ namespace PPPLib{
             for(int i=0;i<3;i++) x[iba+i]=(fact==1.0?1E-20:x[iba+i]-fact*x[iba+i]);
         }
         else{
-            for(int i=0;i<3;i++) imu_info_corr->ba[i]=x[iba+i];
+//            for(int i=0;i<3;i++) imu_info_corr->ba[i]=x[iba+i];
         }
 
         int ibg=para_.IndexBg();
@@ -600,7 +600,7 @@ namespace PPPLib{
             for(int i=0;i<3;i++) x[ibg+i]=(fact==1.0?1E-20:x[ibg+i]-fact*x[ibg+i]);
         }
         else{
-            for(int i=0;i<3;i++) imu_info_corr->bg[i]=x[ibg+i];
+//            for(int i=0;i<3;i++) imu_info_corr->bg[i]=x[ibg+i];
         }
     }
 
@@ -4092,6 +4092,7 @@ namespace PPPLib{
         static int ref_sat[NSYS][2*MAX_GNSS_USED_FRQ_NUM]={0};
         VectorXd x;
         tImuInfoUnit cor_imu_info;
+        tImuInfoUnit raw_imu_info=cur_imu_info_;
         qc_iter_=0;
         for(int iter=0;iter<5;iter++){
             cor_imu_info=cur_imu_info_;
@@ -4157,9 +4158,19 @@ namespace PPPLib{
         if(ppplib_sol_.stat==SOL_FLOAT){
             if(ResolvePpkAmb(cmn_sat_no,para_.GetGnssUsedFrqs(),xa.data())){
 
+//                if(tc_mode_){
+//                    CloseLoopState(C,xa,&cur_imu_info_);
+//                    RemoveLever(C,cur_imu_info_,C.insC.lever,rover_xyz,ve);
+//                }
+//                else{
+//                    rover_xyz<<x[0],x[1],x[2];
+//                }
                 if(GnssZeroRes(C,REC_ROVER,ir,xa.data(),rover_xyz)){
                     GnssDdRes(5,C,ir,ib,cmn_sat_no,xa.data(),ref_sat);
                     ppplib_sol_.stat=SOL_FIX;
+                    if(tc_mode_){
+                        ppplib_sol_.ins_stat=SOL_IG_TC;
+                    }
                 }
 
                 if(++num_continuous_fix_>=C.gnssC.min_fix2hold){
@@ -5226,6 +5237,11 @@ namespace PPPLib{
 
                 MatrixXd Qb_=Qb.inverse();
                 db=Qb_*fix_float_diff; //db=Qb^-1*(b0-b)
+//                if(tc_mode_){
+//                    cout<<fix_float_diff.transpose()<<endl<<endl;
+//                    cout<<real_x_fix_.transpose()<<endl<<endl;
+//                    cout<<(Qab*db).transpose()<<endl<<endl;
+//                }
                 real_x_fix_=real_x_fix_-Qab*db;   //xa=x-Qab-db
                 QQ=Qab*Qb_;            // QQ=Qab*Qb^-1
                 real_Px_fix_=real_Px_fix_-QQ*Qab.transpose();  //Pa=P-QQ*Qab^T

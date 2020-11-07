@@ -243,8 +243,6 @@ static void LoadConf()
 
         insC->psd_vrw=config->Get<double>("psd_vel_rw")*UG_PER_SQRT_HZ;        /// m/s^{2.5} ==>    m^2/s^3
         insC->psd_arw=config->Get<double>("psd_ang_rw")*ARC_DEG_PER_SQRT_HOUR; /// rad/s^{-0.5} ==> rad^2/s
-        double a=SQR(insC->psd_vrw);
-        double b=SQR(insC->psd_arw);
         insC->psd_ba=config->Get<double>("psd_ba");                            /// accelerometer bias random walk PSD (m^2/s^(-5))
         insC->psd_bg=config->Get<double>("psd_bg");                            /// gyro bias random walk PSD (rad^2/s^(-3))
     }
