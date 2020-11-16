@@ -462,8 +462,11 @@ namespace PPPLib{
                 continue;
             }
 
-            if(el>20.0) thres_mw=C.gnssC.cs_thres[0];
-            else thres_mw=-C.gnssC.cs_thres[0]*0.1*el+3.0*C.gnssC.cs_thres[0];
+            if(C.mode==MODE_PPK||C.mode_opt==MODE_OPT_PPK){
+                if(el>20.0) thres_mw=C.gnssC.cs_thres[0];
+                else thres_mw=-C.gnssC.cs_thres[0]*0.1*el+3.0*C.gnssC.cs_thres[0];
+            }
+
             if(el<C.gnssC.ele_min) continue;
             double dmw=w1-w0;
             if(fabs(dmw)>thres_mw){

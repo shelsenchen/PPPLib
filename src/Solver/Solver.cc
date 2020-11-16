@@ -426,7 +426,6 @@ namespace PPPLib{
     void cSolver::InitX(double xi, double var, int idx,double *x,double *p) {
         x[idx]=xi;
         for(int j=0;j<num_full_x_;j++){
-//            full_Px_(idx,j)=full_Px_(j,idx)=idx==j?var:0.0;
             p[idx+j*num_full_x_]=p[j+idx*num_full_x_]=idx==j?var:0.0;
         }
     }
@@ -2212,7 +2211,7 @@ namespace PPPLib{
             sat_info=&epoch_sat_info_collect_.at(i);
 
             // LLI 探测周跳
-            // gnss_obs_operator_.LliCycleSlip(C,*sat_info,previous_sat_info_[sat_info->sat.sat_.no-1],para_.GetGnssUsedFrqs(),dt,REC_ROVER);
+//             gnss_obs_operator_.LliCycleSlip(C,*sat_info,previous_sat_info_[sat_info->sat.sat_.no-1],para_.GetGnssUsedFrqs(),dt,REC_ROVER);
 
             if(ppp_conf_.gnssC.frq_opt==FRQ_SINGLE){
                 // 单频使用伪距－相位
@@ -2665,9 +2664,9 @@ namespace PPPLib{
             double el=epoch_sat_info_collect_[idxs[idx_max_omc]].el_az[0]*R2D;
             epoch_sat_info_collect_[idxs[idx_max_omc]].stat=types[idx_max_omc]==GNSS_OBS_CODE?SAT_POS_RES_C:SAT_POS_RES_P;
             epoch_sat_info_collect_[idxs[idx_max_omc]].rejc[frqs[idx_max_omc]]++;
-            LOG(WARNING)<<epoch_sat_info_collect_[idxs[idx_max_omc]].t_tag.GetTimeStr(1)<<" "<<epoch_sat_info_collect_[idxs[idx_max_omc]].sat.sat_.id
-                        <<" "<<(types[idx_max_omc]==GNSS_OBS_CODE?"P":"L")<<frqs[idx_max_omc]+1<<" EXCLUDED BY POST RESIDUAL res="<<larger_omcs[idx_max_omc]<<" el="<<el;
-            have_larger_res=true;
+//            LOG(WARNING)<<epoch_sat_info_collect_[idxs[idx_max_omc]].t_tag.GetTimeStr(1)<<" "<<epoch_sat_info_collect_[idxs[idx_max_omc]].sat.sat_.id
+//                        <<" "<<(types[idx_max_omc]==GNSS_OBS_CODE?"P":"L")<<frqs[idx_max_omc]+1<<" EXCLUDED BY POST RESIDUAL res="<<larger_omcs[idx_max_omc]<<" el="<<el;
+//            have_larger_res=true;
         }
 
         if(!have_larger_res&&post&&num_valid_sat_>4&&ppp_conf_.gnssC.res_qc&&!(C.gnssC.frq_opt==FRQ_SINGLE&&C.gnssC.ion_opt==ION_IF)){
