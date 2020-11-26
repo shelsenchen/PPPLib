@@ -27,7 +27,7 @@ namespace PPPLib{
         if(!MatchProd()){
             return 0;
         }
-        if((C_->mode==MODE_PPP||C_->mode_opt==MODE_OPT_PPP)&&!MatchPrec()){
+        if((C_->mode==MODE_PPP||C_->mode_opt==MODE_OPT_PPP||C_->gnssC.eph_opt==EPH_PRE)&&!MatchPrec()){
             return 0;
         }
         if((C_->mode==MODE_PPP||C_->mode_opt==MODE_OPT_PPP)&&!MatchCmn()){

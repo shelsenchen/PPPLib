@@ -26,7 +26,7 @@ static int AutoMatchFile(string rover_path)
     int dgps_flag=kConf.mode==MODE_DGNSS||kConf.mode==MODE_PPK||kConf.mode_opt==MODE_OPT_PPK;
     int ins=kConf.mode>=MODE_INS;
 
-    if(dgps_flag){
+    if(dgps_flag||kConf.mode==MODE_TDCP||kConf.mode_opt==MODE_OPT_TDCP){
         vector<string> splits=MultiSplitStr(rover_path,".");
         sprintf(f,"%s_base.%s",splits[0].c_str(),splits[1].c_str());
         if((access(f,0))==-1){
@@ -368,6 +368,7 @@ static int Processer()
     cSolver *solver;
     switch(kConf.mode){
         case MODE_SPP:  solver=new cSppSolver(kConf);break;
+        case MODE_TDCP: solver=new cTdcpSolver(kConf);break;
         case MODE_PPP:  solver=new cPppSolver(kConf);break;
         case MODE_PPK:  solver=new cPpkSolver(kConf);break;
         case MODE_INS:

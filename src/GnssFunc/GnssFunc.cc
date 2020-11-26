@@ -321,7 +321,7 @@ namespace PPPLib{
         }
         else if(type==COMB_TDCP){
             //time-difference carrier phase
-            if(previous_sat_info.cor_L[0]!=0.0){
+            if(previous_sat_info.cor_L[0]!=0.0&&sat_info->cor_L[0]!=0.0){
                 sat_info->tdcp=GnssObsTdComb(sat_info->cor_L[0],previous_sat_info.cor_L[0]);
             }
         }

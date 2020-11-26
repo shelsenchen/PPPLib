@@ -624,6 +624,7 @@ namespace PPPLib {
 
     enum PPPLIB_MODE {
         MODE_SPP=0,
+        MODE_TDCP,
         MODE_PPP,
         MODE_DGNSS,
         MODE_PPK,
@@ -633,7 +634,7 @@ namespace PPPLib {
     };
 
     const string kPpplibModeStr[]={
-            "SPP","PPP","DGPS","PPK","INS","IGLC","IGTC"
+            "SPP","TDCP","PPP","DGPS","PPK","INS","IGLC","IGTC"
     };
 
 
@@ -645,12 +646,13 @@ namespace PPPLib {
         MODE_OPT_GSOF,
         MODE_OPT_SOL,
         MODE_OPT_SPP,
+        MODE_OPT_TDCP,
         MODE_OPT_PPP,
         MODE_OPT_PPK,
     };
 
     const string kPpplibModeOptStr[]={
-            "STATIC","KINE_SIM","KINE","SIM","GSOF","SOL","SPP","PPP","PPK"
+            "STATIC","KINE_SIM","KINE","SIM","GSOF","SOL","SPP","TDCP","PPP","PPK"
     };
 
     enum SOL_STAT {
@@ -660,6 +662,7 @@ namespace PPPLib {
         SOL_SBAS,
         SOL_DGPS,
         SOL_SPP,
+        SOL_TDCP,
         SOL_PPP,
         SOL_REF,
         SOL_SIM,

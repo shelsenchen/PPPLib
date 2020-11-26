@@ -128,9 +128,12 @@ namespace PPPLib{
 
     private:
         int iter_=10;
+
     public:
         tPPPLibConf spp_conf_;
     };
+
+    class cPpkSolver;
 
     class cTdcpSolver:public cSolver {
     public:
@@ -138,8 +141,30 @@ namespace PPPLib{
         cTdcpSolver(tPPPLibConf conf);
         ~cTdcpSolver();
 
+    private:
+        bool AlignTdcpPos(int rover_idx);
+        void InitSppSolver();
+        void Spp2Tdcp();
+
+    public:
+        int GnssObsRes(int post,tPPPLibConf C,double* x) override;
+        void InitSolver(tPPPLibConf C) override;
+        bool SolverProcess(tPPPLibConf C,int idx) override;
+        bool SolverStart(int i,int idx) override ;
+        bool SolverEpoch() override;
+        bool Estimator(tPPPLibConf C) override;
+        bool SolutionUpdate() override;
+
     public:
         tPPPLibConf  tdcp_conf_;
+        tPPPLibConf  gnss_conf_;
+
+    private:
+        cSppSolver *spp_solver_;
+        cPpkSolver *ppk_solver_;
+        int iter_=10;
+        cTime filter_start_;
+        Vector3d init_rover_pos_;
     };
 
     class cPppSolver:public cSolver {

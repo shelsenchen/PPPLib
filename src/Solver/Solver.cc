@@ -176,8 +176,6 @@ namespace PPPLib{
             sat_info.sat=epoch_sat_obs.epoch_data.at(i).sat;
             if(sat_info.sat.sat_.no==4) continue;
             if(sat_info.sat.sat_.no==50) continue;
-            if(sat_info.sat.sat_.no>=33&&sat_info.sat.sat_.no<=37) continue;
-            if(!C.gnssC.use_bd3&&sat_info.sat.sat_.sys==SYS_BDS&&sat_info.sat.sat_.prn>18) continue;
             sat_info.stat=SAT_USED;
             switch(sys){
                 case SYS_BDS:
@@ -234,8 +232,6 @@ namespace PPPLib{
     }
 
     void cSolver::CorrGnssObs(tPPPLibConf C,Vector3d& rr) {
-
-
         tSatInfoUnit *sat_info= nullptr;
         double pcv_dants[MAX_GNSS_USED_FRQ_NUM]={0},dantr[MAX_GNSS_USED_FRQ_NUM]={0};
         for(int i=0;i<epoch_sat_info_collect_.size();i++){
@@ -266,8 +262,12 @@ namespace PPPLib{
                     sat_info->cor_P[j]-=sat_info->bd2_mp[j];
                 }
             }
-            if(C.gnssC.ion_opt==ION_IF||C.gnssC.ion_opt==ION_IF_DUAL)
+            if(C.gnssC.ion_opt==ION_IF||C.gnssC.ion_opt==ION_IF_DUAL){
                 gnss_obs_operator_.MakeGnssObsComb(C,COMB_IF,sat_info,previous_sat_info_[sat_info->sat.sat_.no-1]);
+            }
+            if(C.mode==MODE_TDCP||C.mode_opt==MODE_OPT_TDCP){
+                gnss_obs_operator_.MakeGnssObsComb(C,COMB_TDCP,sat_info,previous_sat_info_[sat_info->sat.sat_.no-1]);
+            }
         }
     }
 
@@ -1296,11 +1296,341 @@ namespace PPPLib{
 
     cTdcpSolver::cTdcpSolver() {}
 
-    cTdcpSolver::cTdcpSolver(tPPPLibConf conf) {
-        tdcp_conf_=conf;
+    cTdcpSolver::cTdcpSolver(tPPPLibConf C) {
+        tdcp_conf_=C;
+        para_=cParSetting(tdcp_conf_);
+        num_full_x_=para_.GetPPPLibPar(tdcp_conf_);
+        full_x_=VectorXd::Zero(num_full_x_);
+        full_Px_=MatrixXd::Zero(num_full_x_,num_full_x_);
     }
 
     cTdcpSolver::~cTdcpSolver() {}
+
+    bool cTdcpSolver::AlignTdcpPos(int rover_idx) {
+        static vector<tSolInfoUnit>sols;
+        int num_sols=3;
+
+        if(ppk_solver_->SolverProcess(gnss_conf_,rover_idx)){
+            LOG(DEBUG)<<"USING PPK TO ALIGN TDCP: "<<ppk_solver_->ppplib_sol_.pos.transpose();
+            if(ppk_solver_->ppplib_sol_.stat==SOL_FIX){
+                sols.push_back(ppk_solver_->ppplib_sol_);
+            }
+        }
+        else{
+            sols.clear();
+            return false;
+        }
+
+        if(sols.size()<num_sols) return false;
+
+        for(int i=0;i<sols.size()-1;i++){
+            if(sols[i+1].t_tag.TimeDiff(sols[i].t_tag.t_)>tdcp_conf_.gnssC.sample_rate){
+                sols.clear();
+                return false;
+            }
+        }
+
+        init_rover_pos_=sols[num_sols-1].pos;
+        epoch_idx_=0;
+        for(int i=0;i<3;i++) full_x_[i]=sols[num_sols-1].pos[i];
+        for(int i=0;i<MAX_SAT_NUM;i++) previous_sat_info_[i]=ppk_solver_->previous_sat_info_[i];
+        LOG(DEBUG)<<sols[num_sols-1].t_tag.GetTimeStr(1)<<" TDCP SOLVER INIT SUCCESS,"<<" ROVER POSITION: "<<sols[num_sols-1].pos.transpose();
+
+        return true;
+    }
+
+    void cTdcpSolver::InitSppSolver() {
+        spp_solver_->epoch_idx_=epoch_idx_;
+        spp_solver_->epoch_sat_info_collect_=epoch_sat_info_collect_;
+        spp_solver_->cur_imu_info_=cur_imu_info_;
+        spp_solver_->tc_mode_=tc_mode_;
+    }
+
+    void cTdcpSolver::Spp2Tdcp() {
+        spp_solver_->SolutionUpdate();
+        epoch_sat_info_collect_.clear();
+        epoch_sat_info_collect_=spp_solver_->epoch_sat_info_collect_;
+        spp_solver_->epoch_sat_info_collect_.clear();
+        for(int i=0;i<para_.NumClk();i++) sys_mask_[i]=spp_solver_->sys_mask_[i];
+    }
+
+    bool cTdcpSolver::SolverProcess(tPPPLibConf C, int idx) {
+        bool stat=false,init=false;
+        double rate=0.0;
+        if(idx==-1) InitSolver(C);
+
+        int i=0,num_epochs=rover_obs_.epoch_num;
+        if(idx!=-1){
+            num_epochs=idx+1;
+        }
+
+        if(C.site_idx!=1){
+            epoch_ok_=0;
+            epoch_idx_=0;
+            epoch_fail_=0;
+//            ReInitPppSolver(C);
+        }
+
+        if(C.filter_type==FILTER_FORWARD){
+            for(i=idx==-1?0:idx;i<num_epochs;i++){
+                if(!init){
+                    init=AlignTdcpPos(i);
+                    continue;
+                }
+                stat=SolverStart(i,idx);
+                if(idx!=-1) return stat;
+            }
+            LOG(INFO)<<" TOTAL EPOCH (FORWARD): "<<rover_obs_.epoch_num<<", SOLVE SUCCESS EPOCH: "<<epoch_ok_<<", SOLVE FAILED EPOCH: "<<epoch_fail_;
+        }
+        else if(C.filter_type==FILTER_BACKWARD){
+            for(i=idx==-1?num_epochs-1:idx;i>=0;i--){
+                if(!init){
+                    init=AlignTdcpPos(i);
+                    continue;
+                }
+                stat=SolverStart(i,idx);
+                if(idx!=-1) return stat;
+            }
+            LOG(INFO)<<" TOTAL EPOCH (BACKWARD): "<<rover_obs_.epoch_num<<", SOLVE SUCCESS EPOCH: "<<epoch_ok_<<", SOLVE FAILED EPOCH: "<<epoch_fail_;
+        }
+        else if(C.filter_type==FILTER_COMBINED){
+            for(i=idx==-1?0:idx;i<num_epochs;i++){
+                SolverStart(i,idx);
+                solf_.push_back(ppplib_sol_);
+            }
+
+            epoch_ok_=0;
+            epoch_idx_=0;
+            epoch_fail_=0;
+            ReinitSolver(C);
+            for(i=idx==-1?num_epochs-1:idx;i>=0;i--){
+                SolverStart(i,idx);
+                solb_.push_back(ppplib_sol_);
+            }
+
+            CombFbSol(C);
+            solf_.clear();
+            solb_.clear();
+            LOG(INFO)<<" TOTAL EPOCH (COMBINED): "<<rover_obs_.epoch_num<<", SOLVE SUCCESS EPOCH: "<<epoch_ok_<<", SOLVE FAILED EPOCH: "<<epoch_fail_;
+        }
+    }
+
+    bool cTdcpSolver::SolverStart(int i, int idx) {
+        char buff[MAX_BUFF]={'\0'};
+
+        epoch_idx_+=1;
+        epoch_sat_obs_=rover_obs_.GetGnssObs().at(i);
+        LOG(DEBUG)<<"START "<<(tdcp_conf_.filter_type==FILTER_FORWARD?"FORWARD ":"BACKWARD ") <<" TDCP SOLVING "<<epoch_idx_<<"th EPOCH, ROVER SATELLITE NUMBER "<<epoch_sat_obs_.sat_num;
+
+        if(epoch_idx_==1) filter_start_=epoch_sat_obs_.obs_time;
+        UpdateGnssObs(tdcp_conf_,epoch_sat_obs_,REC_ROVER);
+        ppplib_sol_.observed_sat_num=epoch_sat_obs_.sat_num;
+        InitEpochSatInfo(epoch_sat_info_collect_);
+
+        if(SolverEpoch()){
+            SolutionUpdate();
+            sprintf(buff,"%s TDCP SOLVE SUCCESS POS: %14.3f %14.3f %14.3f VEL: %6.3f %6.3f %6.3f PDOP: %3.1f TOTAL SAT: %3d USED SAT: %3d",
+                    ppplib_sol_.t_tag.GetTimeStr(1).c_str(),ppplib_sol_.pos[0],ppplib_sol_.pos[1],ppplib_sol_.pos[2],ppplib_sol_.vel[0],ppplib_sol_.vel[1],ppplib_sol_.vel[2],
+                    ppplib_sol_.dops[1],epoch_sat_obs_.sat_num,num_valid_sat_);
+            LOG(DEBUG)<<buff;
+            if(idx!=-1){
+                epoch_sat_info_collect_.clear();
+                return true;
+            }
+        }
+        if(idx!=-1) {
+            epoch_sat_info_collect_.clear();
+            return false;
+        }
+        epoch_sat_info_collect_.clear();
+    }
+
+    bool cTdcpSolver::SolverEpoch() {
+        InitSppSolver();
+        if(spp_solver_->SolverEpoch()){
+            Spp2Tdcp();
+            LOG(DEBUG)<<"TDCP-SPP SOLVE SUCCESS ROVER, SPP POS "<<spp_solver_->ppplib_sol_.pos.transpose()<<" DOPPLER  VEL "<<spp_solver_->ppplib_sol_.vel.transpose();
+
+            if(tdcp_conf_.gnssC.eph_opt==EPH_PRE){
+                gnss_err_corr_.eph_model_.EphCorr(epoch_sat_info_collect_);
+            }
+
+            CorrGnssObs(tdcp_conf_,spp_solver_->ppplib_sol_.pos);
+
+            if(Estimator(tdcp_conf_)){
+                epoch_ok_++;
+                LOG(DEBUG)<<epoch_sat_obs_.obs_time.GetTimeStr(1)<<" TDCP SOLVE SUCCESS ";
+                return true;
+            }
+            else{
+                epoch_fail_++;
+                ppplib_sol_=spp_solver_->ppplib_sol_;
+                LOG(WARNING)<<epoch_sat_obs_.obs_time.GetTimeStr(1)<<" TDCP SOLVE FAILED ";
+                return false;
+            }
+        }
+        else{
+            epoch_fail_++;
+            ppplib_sol_.stat=SOL_NONE;
+            if(epoch_sat_info_collect_.size()) ppplib_sol_.t_tag=epoch_sat_info_collect_[0].t_tag;
+            LOG(DEBUG)<<epoch_sat_obs_.obs_time.GetTimeStr(1)<<" TDCP-SPP SOLVE FAILED ";
+            spp_solver_->epoch_sat_info_collect_.clear();
+            return false;
+        }
+    }
+
+    bool cTdcpSolver::Estimator(tPPPLibConf C) {
+        bool stat;
+        bool valid_flag=false;
+        ppplib_sol_.stat=SOL_NONE;
+        tSatInfoUnit* sat_info= nullptr;
+
+        VectorXd x=full_x_;
+        MatrixXd Px=full_Px_;
+        Vector3d re,ve;
+        for(int i=0;i<iter_;i++){
+
+            if(GnssObsRes(0,tdcp_conf_,x.data())) continue;
+            if(num_valid_sat_<4){
+                LOG(WARNING)<<"SPP NO ENOUGH VALID SATELLITE "<<num_valid_sat_;
+                return false;
+            }
+            ppplib_sol_.valid_sat_num=num_valid_sat_;
+            stat=lsq_.Adjustment(omc_L_,H_,R_,x,Px,num_L_,num_full_x_);
+
+            if(GnssObsRes(i+1,tdcp_conf_,x.data())){
+                x=full_x_;
+                continue;
+            }
+
+            if(stat){
+                full_x_=x;
+                full_Px_=Px;
+//                valid_flag = ValidateSol(C);
+                if(valid_flag){
+                    ppplib_sol_.stat=SOL_SPP;
+                    ppplib_sol_.sigma=lsq_.unit_weight_STD_;
+                }
+                else{
+                    ppplib_sol_.stat=SOL_NONE;
+                }
+                break;
+            }
+            if(i>=iter_){
+                LOG(WARNING)<<"SPP ITER OVERRUN";
+            }
+        }
+
+        return valid_flag;
+    }
+
+    int cTdcpSolver::GnssObsRes(int post, tPPPLibConf C, double *x) {
+        num_L_=0;
+        num_valid_sat_=0;
+        if(vflag_.size()) vflag_.clear();
+        char buff[MAX_BUFF]={'\0'};
+
+        int num_used_frq=para_.GetGnssUsedFrqs();
+        int num_used_obs_type=para_.GetNumObsType();
+        if(num_used_frq<=0) return false;
+
+        int nf=num_used_frq*num_used_obs_type,ref_sat_idx,j;
+        int frq,nobs[NSYS][nf];
+        tSatInfoUnit *sat_info=nullptr,*ref_sat_info= nullptr;
+        double omc=0.0,r=0.0,r_ref=0.0;
+        Vector3d rover_xyz,sig_vec,sig_vec_ref,rover_blh;
+        if(tc_mode_){
+
+        }
+        else{
+            rover_xyz=spp_solver_->ppplib_sol_.pos;
+            rover_blh=Xyz2Blh(rover_xyz);
+        }
+
+        /// system loop
+        for(int isys=0;isys<NSYS;isys++){
+
+            /// frequency loop
+            for(int ifrq=0;ifrq<nf;ifrq++){
+
+                frq=ifrq>=num_used_frq?ifrq-num_used_frq:ifrq;
+            }
+        }
+    }
+
+    void cTdcpSolver::InitSolver(tPPPLibConf C) {
+        tdcp_conf_=C;
+
+        if(C.site_idx==1&&C.gnssC.eph_opt==EPH_PRE){
+            cReadGnssPreEph clk_reader(C.fileC.clk,nav_);
+            clk_reader.Reading(1);
+
+            cReadGnssPreEph orb_reader(C.fileC.sp3[1], nav_);
+            for(int i=0;i<3;i++){
+                if(C.fileC.sp3[i].empty()) continue;
+                orb_reader.file_=C.fileC.sp3[i];
+                orb_reader.Reading(0);
+            }
+
+            if(C.gnssC.tid_opt){
+                cReadGnssErp erp_reader(C.fileC.erp,nav_);
+                erp_reader.Reading();
+
+                cReadGnssOcean blq_reader(C.fileC.blq, nav_,C.site_name,REC_ROVER);
+                blq_reader.Reading();
+            }
+
+            para_=cParSetting(C);
+        }
+
+//        cReadGnssAntex atx_reader(C.fileC.atx,nav_);
+//        atx_reader.Reading();
+//        atx_reader.AlignAntPar2Sat(C,*rover_obs_.GetStartTime(),nav_.sta_paras,nav_.sat_ant,nav_.rec_ant);
+
+        gnss_err_corr_.InitGnssErrCorr(C,&nav_);
+
+        if(out_) delete out_;
+        out_=new cOutSol(tdcp_conf_);
+        out_->InitOutSol(tdcp_conf_,tdcp_conf_.fileC.sol);
+        out_->WriteHead();
+        out_->ref_sols_=ref_sols_;
+        if(tdcp_conf_.solC.out_err_fmt&&!tdcp_conf_.fileC.snx.empty()){
+            if(!GetRefPosFrmSnx(tdcp_conf_,tdcp_conf_.fileC.snx,out_->ref_sol_.pos)){
+                tdcp_conf_.solC.out_err_fmt=false;
+            }
+        }
+
+        tPPPLibConf spp_conf=C;
+        spp_conf.mode=MODE_SPP;
+        spp_conf.mode_opt=MODE_OPT_KINEMATIC;
+        spp_conf.gnssC.ion_opt=ION_KLB;
+        spp_conf.gnssC.trp_opt=TRP_SAAS;
+        spp_conf.gnssC.frq_opt=FRQ_SINGLE;
+        spp_conf.gnssC.eph_opt=EPH_BRD;
+        if(spp_solver_) delete spp_solver_;
+        spp_solver_=new cSppSolver(spp_conf);
+        spp_solver_->spp_conf_=spp_conf;
+        spp_solver_->nav_=nav_;
+        spp_solver_->ref_sols_=ref_sols_;
+        spp_solver_->InitSolver(spp_conf);
+        spp_solver_->spp_conf_.gnssC.res_qc=false;
+
+        gnss_conf_=C;
+        gnss_conf_.mode=MODE_PPK;
+        gnss_conf_.mode_opt=MODE_OPT_KINEMATIC;
+        gnss_conf_.gnssC.eph_opt=EPH_BRD;
+        gnss_conf_.gnssC.trp_opt=TRP_OFF;
+        gnss_conf_.gnssC.ion_opt=ION_OFF;
+        gnss_conf_.gnssC.ar_mode=AR_CONT;
+        ppk_solver_=new cPpkSolver(gnss_conf_);
+        ppk_solver_->nav_=nav_;
+        ppk_solver_->rover_obs_=rover_obs_;
+        ppk_solver_->InitSolver(gnss_conf_);
+    }
+
+    bool cTdcpSolver::SolutionUpdate() {
+
+    }
 
     cPppSolver::cPppSolver() {}
 
