@@ -109,7 +109,7 @@ mode and INS/GNSS loosely coupled mode for real kinematic scene. Detailed inform
   
 **ACKNOWLEDGEMENT**
 
- First of all, I pay tribute to Mr. Tomoji Tkasu, the author of [RTKLIB](https://github.com/tomojitakasu/RTKLIB) software. I admire him for his 
+ First of all, I pay tribute to Mr. Tomoji Takasu, the author of [RTKLIB](https://github.com/tomojitakasu/RTKLIB) software. I admire him for his 
  selfless open source spirit and elegant programming. The most functions of PPPLib are refer to
  RTKLIB. The software is also refers to [rtkexplorer](http://rtkexplorer.com/), HPRTK of Mowen Li from Shandong university,
  the carvig software of Jinlan Su from Wuhan University, the GAMP software of Feng Zhou from
