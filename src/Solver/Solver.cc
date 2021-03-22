@@ -292,7 +292,7 @@ namespace PPPLib{
             int i,j,n,mon=C.prc_date.GetEpoch()[1],m;
             char *ex_files[36]={nullptr};
             string file_name,sep;
-#if WIN32
+#ifdef WIN32
             sep="//.";
 #else
             sep="/.";
@@ -308,7 +308,7 @@ namespace PPPLib{
             if(n>0){
                 cReadGnssCodeBias dcb_reader(C.fileC.cod_dcb, nav_,0);
                 for(i=0;i<n;i++){
-#if WIN32
+#ifdef WIN32
                     vector<string> splits=MultiSplitStr(ex_files[i],sep);
                 string a=((splits[0]).substr(splits[0].length()-2,2));
                 m=atoi(a.c_str());

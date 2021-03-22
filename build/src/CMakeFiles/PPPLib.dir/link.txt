@@ -1,0 +1,2 @@
+C:\mingw64\bin\ar.exe qc ..\..\bin\libPPPLib.a CMakeFiles/PPPLib.dir/PPPLib.cc.obj
+C:\mingw64\bin\ranlib.exe ..\..\bin\libPPPLib.a

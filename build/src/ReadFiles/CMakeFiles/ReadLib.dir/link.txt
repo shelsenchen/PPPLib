@@ -1,0 +1,2 @@
+C:\mingw64\bin\ar.exe qc ..\..\..\bin\libReadLib.a CMakeFiles/ReadLib.dir/ReadFiles.cc.obj
+C:\mingw64\bin\ranlib.exe ..\..\..\bin\libReadLib.a

@@ -1,0 +1,2 @@
+C:\mingw64\bin\ar.exe qc ..\..\..\bin\libAdjLib.a CMakeFiles/AdjLib.dir/AdjFunc.cc.obj
+C:\mingw64\bin\ranlib.exe ..\..\..\bin\libAdjLib.a

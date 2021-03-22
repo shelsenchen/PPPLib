@@ -1,0 +1,2 @@
+C:\mingw64\bin\ar.exe qc ..\..\..\bin\libGnssLib.a CMakeFiles/GnssLib.dir/GnssAR.cc.obj CMakeFiles/GnssLib.dir/GnssErrorModel.cc.obj CMakeFiles/GnssLib.dir/GnssFunc.cc.obj
+C:\mingw64\bin\ranlib.exe ..\..\..\bin\libGnssLib.a

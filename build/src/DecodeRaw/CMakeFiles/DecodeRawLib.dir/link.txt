@@ -1,0 +1,2 @@
+C:\mingw64\bin\ar.exe qc ..\..\..\bin\libDecodeRawLib.a CMakeFiles/DecodeRawLib.dir/DecodeRaw.cc.obj
+C:\mingw64\bin\ranlib.exe ..\..\..\bin\libDecodeRawLib.a

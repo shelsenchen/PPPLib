@@ -1,0 +1,1 @@
+ ../../bin/libPPPLib.a ../../bin/libSolverLib.a ../../bin/libReadLib.a ../../bin/libDecodeRawLib.a ../../bin/libGnssLib.a ../../bin/libInsLib.a ../../bin/libAdjLib.a ../../bin/libOutLib.a ../../bin/libCmnLib.a ../../bin/libLogLib.a -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 

@@ -1,0 +1,3 @@
+C:\cmake-3.19.6-win64-x64\bin\cmake.exe -E rm -f CMakeFiles\PPPLibMain.dir/objects.a
+C:\mingw64\bin\ar.exe cr CMakeFiles\PPPLibMain.dir/objects.a @CMakeFiles\PPPLibMain.dir\objects1.rsp
+C:\mingw64\bin\x86_64-w64-mingw32-g++.exe -std=c++17 -fPIC -g -Wl,--whole-archive CMakeFiles\PPPLibMain.dir/objects.a -Wl,--no-whole-archive -o ..\..\bin\PPPLibMain.exe -Wl,--out-implib,..\..\bin\libPPPLibMain.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\PPPLibMain.dir\linklibs.rsp

@@ -1,0 +1,441 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						11
+					],
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8"
+					},
+					"projectIndex" : 0,
+					"source" : "."
+				},
+				{
+					"build" : "src",
+					"childIndexes" : 
+					[
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10
+					],
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "src",
+					"targetIndexes" : 
+					[
+						7
+					]
+				},
+				{
+					"build" : "src/CmnFunc",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 2,
+					"source" : "src/CmnFunc",
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"build" : "src/LogInfo",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 3,
+					"source" : "src/LogInfo",
+					"targetIndexes" : 
+					[
+						5
+					]
+				},
+				{
+					"build" : "src/ReadFiles",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 4,
+					"source" : "src/ReadFiles",
+					"targetIndexes" : 
+					[
+						9
+					]
+				},
+				{
+					"build" : "src/DecodeRaw",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 5,
+					"source" : "src/DecodeRaw",
+					"targetIndexes" : 
+					[
+						2
+					]
+				},
+				{
+					"build" : "src/GnssFunc",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 6,
+					"source" : "src/GnssFunc",
+					"targetIndexes" : 
+					[
+						3
+					]
+				},
+				{
+					"build" : "src/InsFunc",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 7,
+					"source" : "src/InsFunc",
+					"targetIndexes" : 
+					[
+						4
+					]
+				},
+				{
+					"build" : "src/Solver",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 8,
+					"source" : "src/Solver",
+					"targetIndexes" : 
+					[
+						10
+					]
+				},
+				{
+					"build" : "src/AdjFunc",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 9,
+					"source" : "src/AdjFunc",
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"build" : "src/OutSol",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 10,
+					"source" : "src/OutSol",
+					"targetIndexes" : 
+					[
+						6
+					]
+				},
+				{
+					"build" : "exe",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 11,
+					"source" : "exe",
+					"targetIndexes" : 
+					[
+						8
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						11
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "PPPLib"
+				},
+				{
+					"childIndexes" : 
+					[
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10
+					],
+					"directoryIndexes" : 
+					[
+						1
+					],
+					"name" : "PPPLib_v2.0",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						7
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2
+					],
+					"name" : "CmnLib",
+					"parentIndex" : 1,
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						3
+					],
+					"name" : "LogLib",
+					"parentIndex" : 1,
+					"targetIndexes" : 
+					[
+						5
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						4
+					],
+					"name" : "ReadLib",
+					"parentIndex" : 1,
+					"targetIndexes" : 
+					[
+						9
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						5
+					],
+					"name" : "DecodeRawLib",
+					"parentIndex" : 1,
+					"targetIndexes" : 
+					[
+						2
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						6
+					],
+					"name" : "GnssLib",
+					"parentIndex" : 1,
+					"targetIndexes" : 
+					[
+						3
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						7
+					],
+					"name" : "InsLib",
+					"parentIndex" : 1,
+					"targetIndexes" : 
+					[
+						4
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						8
+					],
+					"name" : "SolverLib",
+					"parentIndex" : 1,
+					"targetIndexes" : 
+					[
+						10
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						9
+					],
+					"name" : "AdjLib",
+					"parentIndex" : 1,
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						10
+					],
+					"name" : "OutLib",
+					"parentIndex" : 1,
+					"targetIndexes" : 
+					[
+						6
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						11
+					],
+					"name" : "test_main",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						8
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 9,
+					"id" : "AdjLib::@963db1228e68ec64df1b",
+					"jsonFile" : "target-AdjLib-Debug-14f36f1548009abc2ceb.json",
+					"name" : "AdjLib",
+					"projectIndex" : 9
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "CmnLib::@e2097fa71a6df62eff18",
+					"jsonFile" : "target-CmnLib-Debug-d64568741a3ec1937453.json",
+					"name" : "CmnLib",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "DecodeRawLib::@43537be5b2fec139cc0d",
+					"jsonFile" : "target-DecodeRawLib-Debug-fbb889db64d117b3eb8c.json",
+					"name" : "DecodeRawLib",
+					"projectIndex" : 5
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "GnssLib::@e88ebab3e250fff48605",
+					"jsonFile" : "target-GnssLib-Debug-fe4a6f541951d5e341c4.json",
+					"name" : "GnssLib",
+					"projectIndex" : 6
+				},
+				{
+					"directoryIndex" : 7,
+					"id" : "InsLib::@9bddeef66d220003fdb1",
+					"jsonFile" : "target-InsLib-Debug-b6d2662f3decd01dfaf9.json",
+					"name" : "InsLib",
+					"projectIndex" : 7
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "LogLib::@4f9c61e9722533f525b4",
+					"jsonFile" : "target-LogLib-Debug-b75f80d0dbc1239fa9b1.json",
+					"name" : "LogLib",
+					"projectIndex" : 3
+				},
+				{
+					"directoryIndex" : 10,
+					"id" : "OutLib::@bc80f4e1a1463769db20",
+					"jsonFile" : "target-OutLib-Debug-f1b9f9ee6d8348463ad4.json",
+					"name" : "OutLib",
+					"projectIndex" : 10
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "PPPLib::@145eef247bfb46b6828c",
+					"jsonFile" : "target-PPPLib-Debug-dc3483512e07cf77aae8.json",
+					"name" : "PPPLib",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 11,
+					"id" : "PPPLibMain::@1adb794e6196958d9c49",
+					"jsonFile" : "target-PPPLibMain-Debug-9575e64cd8f8e0872e32.json",
+					"name" : "PPPLibMain",
+					"projectIndex" : 11
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "ReadLib::@3f4d9a6744336f73abe7",
+					"jsonFile" : "target-ReadLib-Debug-6029676356da00559e8a.json",
+					"name" : "ReadLib",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "SolverLib::@9d53d9d3aee30c8878f5",
+					"jsonFile" : "target-SolverLib-Debug-7e56b9aea2c472fdf08b.json",
+					"name" : "SolverLib",
+					"projectIndex" : 8
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "G:/code/git/PPP/PPPLib/build",
+		"source" : "G:/code/git/PPP/PPPLib"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 2
+	}
+}

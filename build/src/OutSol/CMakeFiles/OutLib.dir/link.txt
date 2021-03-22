@@ -1,0 +1,2 @@
+C:\mingw64\bin\ar.exe qc ..\..\..\bin\libOutLib.a CMakeFiles/OutLib.dir/OutSol.cc.obj
+C:\mingw64\bin\ranlib.exe ..\..\..\bin\libOutLib.a

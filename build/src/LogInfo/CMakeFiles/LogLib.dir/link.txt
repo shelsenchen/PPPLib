@@ -1,0 +1,2 @@
+C:\mingw64\bin\ar.exe qc ..\..\..\bin\libLogLib.a CMakeFiles/LogLib.dir/LogInfo.cc.obj CMakeFiles/LogLib.dir/easylogging++.cc.obj
+C:\mingw64\bin\ranlib.exe ..\..\..\bin\libLogLib.a

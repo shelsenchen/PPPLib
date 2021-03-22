@@ -1,0 +1,2 @@
+C:\mingw64\bin\ar.exe qc ..\..\..\bin\libCmnLib.a CMakeFiles/CmnLib.dir/CmnFunc.cc.obj
+C:\mingw64\bin\ranlib.exe ..\..\..\bin\libCmnLib.a
