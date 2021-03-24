@@ -13,6 +13,7 @@ set(CMAKE_C_COMPILE "gcc")
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+set(DEFAULT_BUILD_TYPE "Debug")  #修改处，讲release改为debug，也可以直接删除
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
@@ -23,3 +24,4 @@ ENDIF()
 
 add_subdirectory(src)
 add_subdirectory(exe)
+add_compile_options(-g)

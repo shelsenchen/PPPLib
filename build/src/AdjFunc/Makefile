@@ -66,10 +66,10 @@ RM = C:\cmake-3.19.6-win64-x64\bin\cmake.exe -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = G:\code\git\PPP\PPPLib
+CMAKE_SOURCE_DIR = I:\code\git\PPP\PPPLib
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = G:\code\git\PPP\PPPLib\build
+CMAKE_BINARY_DIR = I:\code\git\PPP\PPPLib\build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -98,14 +98,14 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /d G:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -E cmake_progress_start G:\code\git\PPP\PPPLib\build\CMakeFiles G:\code\git\PPP\PPPLib\build\src\AdjFunc\\CMakeFiles\progress.marks
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/AdjFunc/all
-	$(CMAKE_COMMAND) -E cmake_progress_start G:\code\git\PPP\PPPLib\build\CMakeFiles 0
+	cd /d I:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -E cmake_progress_start I:\code\git\PPP\PPPLib\build\CMakeFiles I:\code\git\PPP\PPPLib\build\src\AdjFunc\\CMakeFiles\progress.marks
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/AdjFunc/all
+	$(CMAKE_COMMAND) -E cmake_progress_start I:\code\git\PPP\PPPLib\build\CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/AdjFunc/clean
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/AdjFunc/clean
 .PHONY : clean
 
 # The main clean target
@@ -115,22 +115,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/AdjFunc/preinstall
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/AdjFunc/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/AdjFunc/preinstall
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/AdjFunc/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /d G:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 1
+	cd /d I:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/AdjFunc/CMakeFiles/AdjLib.dir/rule:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/AdjFunc/CMakeFiles/AdjLib.dir/rule
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/AdjFunc/CMakeFiles/AdjLib.dir/rule
 .PHONY : src/AdjFunc/CMakeFiles/AdjLib.dir/rule
 
 # Convenience name for target.
@@ -140,7 +140,7 @@ AdjLib: src/AdjFunc/CMakeFiles/AdjLib.dir/rule
 
 # fast build rule for target.
 AdjLib/fast:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\AdjFunc\CMakeFiles\AdjLib.dir\build.make src/AdjFunc/CMakeFiles/AdjLib.dir/build
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\AdjFunc\CMakeFiles\AdjLib.dir\build.make src/AdjFunc/CMakeFiles/AdjLib.dir/build
 .PHONY : AdjLib/fast
 
 AdjFunc.obj: AdjFunc.cc.obj
@@ -149,7 +149,7 @@ AdjFunc.obj: AdjFunc.cc.obj
 
 # target to build an object file
 AdjFunc.cc.obj:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\AdjFunc\CMakeFiles\AdjLib.dir\build.make src/AdjFunc/CMakeFiles/AdjLib.dir/AdjFunc.cc.obj
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\AdjFunc\CMakeFiles\AdjLib.dir\build.make src/AdjFunc/CMakeFiles/AdjLib.dir/AdjFunc.cc.obj
 .PHONY : AdjFunc.cc.obj
 
 AdjFunc.i: AdjFunc.cc.i
@@ -158,7 +158,7 @@ AdjFunc.i: AdjFunc.cc.i
 
 # target to preprocess a source file
 AdjFunc.cc.i:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\AdjFunc\CMakeFiles\AdjLib.dir\build.make src/AdjFunc/CMakeFiles/AdjLib.dir/AdjFunc.cc.i
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\AdjFunc\CMakeFiles\AdjLib.dir\build.make src/AdjFunc/CMakeFiles/AdjLib.dir/AdjFunc.cc.i
 .PHONY : AdjFunc.cc.i
 
 AdjFunc.s: AdjFunc.cc.s
@@ -167,7 +167,7 @@ AdjFunc.s: AdjFunc.cc.s
 
 # target to generate assembly for a file
 AdjFunc.cc.s:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\AdjFunc\CMakeFiles\AdjLib.dir\build.make src/AdjFunc/CMakeFiles/AdjLib.dir/AdjFunc.cc.s
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\AdjFunc\CMakeFiles\AdjLib.dir\build.make src/AdjFunc/CMakeFiles/AdjLib.dir/AdjFunc.cc.s
 .PHONY : AdjFunc.cc.s
 
 # Help Target
@@ -193,6 +193,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /d G:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 0
+	cd /d I:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

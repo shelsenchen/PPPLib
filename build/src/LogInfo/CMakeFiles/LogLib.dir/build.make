@@ -61,10 +61,10 @@ RM = C:\cmake-3.19.6-win64-x64\bin\cmake.exe -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = G:\code\git\PPP\PPPLib
+CMAKE_SOURCE_DIR = I:\code\git\PPP\PPPLib
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = G:\code\git\PPP\PPPLib\build
+CMAKE_BINARY_DIR = I:\code\git\PPP\PPPLib\build
 
 # Include any dependencies generated for this target.
 include src/LogInfo/CMakeFiles/LogLib.dir/depend.make
@@ -78,30 +78,30 @@ include src/LogInfo/CMakeFiles/LogLib.dir/flags.make
 src/LogInfo/CMakeFiles/LogLib.dir/LogInfo.cc.obj: src/LogInfo/CMakeFiles/LogLib.dir/flags.make
 src/LogInfo/CMakeFiles/LogLib.dir/LogInfo.cc.obj: src/LogInfo/CMakeFiles/LogLib.dir/includes_CXX.rsp
 src/LogInfo/CMakeFiles/LogLib.dir/LogInfo.cc.obj: ../src/LogInfo/LogInfo.cc
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=G:\code\git\PPP\PPPLib\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object src/LogInfo/CMakeFiles/LogLib.dir/LogInfo.cc.obj"
-	cd /d G:\code\git\PPP\PPPLib\build\src\LogInfo && C:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles\LogLib.dir\LogInfo.cc.obj -c G:\code\git\PPP\PPPLib\src\LogInfo\LogInfo.cc
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=I:\code\git\PPP\PPPLib\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object src/LogInfo/CMakeFiles/LogLib.dir/LogInfo.cc.obj"
+	cd /d I:\code\git\PPP\PPPLib\build\src\LogInfo && C:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles\LogLib.dir\LogInfo.cc.obj -c I:\code\git\PPP\PPPLib\src\LogInfo\LogInfo.cc
 
 src/LogInfo/CMakeFiles/LogLib.dir/LogInfo.cc.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/LogLib.dir/LogInfo.cc.i"
-	cd /d G:\code\git\PPP\PPPLib\build\src\LogInfo && C:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E G:\code\git\PPP\PPPLib\src\LogInfo\LogInfo.cc > CMakeFiles\LogLib.dir\LogInfo.cc.i
+	cd /d I:\code\git\PPP\PPPLib\build\src\LogInfo && C:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E I:\code\git\PPP\PPPLib\src\LogInfo\LogInfo.cc > CMakeFiles\LogLib.dir\LogInfo.cc.i
 
 src/LogInfo/CMakeFiles/LogLib.dir/LogInfo.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/LogLib.dir/LogInfo.cc.s"
-	cd /d G:\code\git\PPP\PPPLib\build\src\LogInfo && C:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S G:\code\git\PPP\PPPLib\src\LogInfo\LogInfo.cc -o CMakeFiles\LogLib.dir\LogInfo.cc.s
+	cd /d I:\code\git\PPP\PPPLib\build\src\LogInfo && C:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S I:\code\git\PPP\PPPLib\src\LogInfo\LogInfo.cc -o CMakeFiles\LogLib.dir\LogInfo.cc.s
 
 src/LogInfo/CMakeFiles/LogLib.dir/easylogging++.cc.obj: src/LogInfo/CMakeFiles/LogLib.dir/flags.make
 src/LogInfo/CMakeFiles/LogLib.dir/easylogging++.cc.obj: src/LogInfo/CMakeFiles/LogLib.dir/includes_CXX.rsp
 src/LogInfo/CMakeFiles/LogLib.dir/easylogging++.cc.obj: ../src/LogInfo/easylogging++.cc
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=G:\code\git\PPP\PPPLib\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object src/LogInfo/CMakeFiles/LogLib.dir/easylogging++.cc.obj"
-	cd /d G:\code\git\PPP\PPPLib\build\src\LogInfo && C:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles\LogLib.dir\easylogging++.cc.obj -c G:\code\git\PPP\PPPLib\src\LogInfo\easylogging++.cc
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=I:\code\git\PPP\PPPLib\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object src/LogInfo/CMakeFiles/LogLib.dir/easylogging++.cc.obj"
+	cd /d I:\code\git\PPP\PPPLib\build\src\LogInfo && C:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles\LogLib.dir\easylogging++.cc.obj -c I:\code\git\PPP\PPPLib\src\LogInfo\easylogging++.cc
 
 src/LogInfo/CMakeFiles/LogLib.dir/easylogging++.cc.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/LogLib.dir/easylogging++.cc.i"
-	cd /d G:\code\git\PPP\PPPLib\build\src\LogInfo && C:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E G:\code\git\PPP\PPPLib\src\LogInfo\easylogging++.cc > CMakeFiles\LogLib.dir\easylogging++.cc.i
+	cd /d I:\code\git\PPP\PPPLib\build\src\LogInfo && C:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E I:\code\git\PPP\PPPLib\src\LogInfo\easylogging++.cc > CMakeFiles\LogLib.dir\easylogging++.cc.i
 
 src/LogInfo/CMakeFiles/LogLib.dir/easylogging++.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/LogLib.dir/easylogging++.cc.s"
-	cd /d G:\code\git\PPP\PPPLib\build\src\LogInfo && C:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S G:\code\git\PPP\PPPLib\src\LogInfo\easylogging++.cc -o CMakeFiles\LogLib.dir\easylogging++.cc.s
+	cd /d I:\code\git\PPP\PPPLib\build\src\LogInfo && C:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S I:\code\git\PPP\PPPLib\src\LogInfo\easylogging++.cc -o CMakeFiles\LogLib.dir\easylogging++.cc.s
 
 # Object files for target LogLib
 LogLib_OBJECTS = \
@@ -115,9 +115,9 @@ LogLib_EXTERNAL_OBJECTS =
 ../bin/libLogLib.a: src/LogInfo/CMakeFiles/LogLib.dir/easylogging++.cc.obj
 ../bin/libLogLib.a: src/LogInfo/CMakeFiles/LogLib.dir/build.make
 ../bin/libLogLib.a: src/LogInfo/CMakeFiles/LogLib.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=G:\code\git\PPP\PPPLib\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX static library ..\..\..\bin\libLogLib.a"
-	cd /d G:\code\git\PPP\PPPLib\build\src\LogInfo && $(CMAKE_COMMAND) -P CMakeFiles\LogLib.dir\cmake_clean_target.cmake
-	cd /d G:\code\git\PPP\PPPLib\build\src\LogInfo && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles\LogLib.dir\link.txt --verbose=$(VERBOSE)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=I:\code\git\PPP\PPPLib\build\CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX static library ..\..\..\bin\libLogLib.a"
+	cd /d I:\code\git\PPP\PPPLib\build\src\LogInfo && $(CMAKE_COMMAND) -P CMakeFiles\LogLib.dir\cmake_clean_target.cmake
+	cd /d I:\code\git\PPP\PPPLib\build\src\LogInfo && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles\LogLib.dir\link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
 src/LogInfo/CMakeFiles/LogLib.dir/build: ../bin/libLogLib.a
@@ -125,10 +125,10 @@ src/LogInfo/CMakeFiles/LogLib.dir/build: ../bin/libLogLib.a
 .PHONY : src/LogInfo/CMakeFiles/LogLib.dir/build
 
 src/LogInfo/CMakeFiles/LogLib.dir/clean:
-	cd /d G:\code\git\PPP\PPPLib\build\src\LogInfo && $(CMAKE_COMMAND) -P CMakeFiles\LogLib.dir\cmake_clean.cmake
+	cd /d I:\code\git\PPP\PPPLib\build\src\LogInfo && $(CMAKE_COMMAND) -P CMakeFiles\LogLib.dir\cmake_clean.cmake
 .PHONY : src/LogInfo/CMakeFiles/LogLib.dir/clean
 
 src/LogInfo/CMakeFiles/LogLib.dir/depend:
-	$(CMAKE_COMMAND) -E cmake_depends "MinGW Makefiles" G:\code\git\PPP\PPPLib G:\code\git\PPP\PPPLib\src\LogInfo G:\code\git\PPP\PPPLib\build G:\code\git\PPP\PPPLib\build\src\LogInfo G:\code\git\PPP\PPPLib\build\src\LogInfo\CMakeFiles\LogLib.dir\DependInfo.cmake --color=$(COLOR)
+	$(CMAKE_COMMAND) -E cmake_depends "MinGW Makefiles" I:\code\git\PPP\PPPLib I:\code\git\PPP\PPPLib\src\LogInfo I:\code\git\PPP\PPPLib\build I:\code\git\PPP\PPPLib\build\src\LogInfo I:\code\git\PPP\PPPLib\build\src\LogInfo\CMakeFiles\LogLib.dir\DependInfo.cmake --color=$(COLOR)
 .PHONY : src/LogInfo/CMakeFiles/LogLib.dir/depend
 

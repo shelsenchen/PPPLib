@@ -4,8 +4,8 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "G:/code/git/PPP/PPPLib/src/LogInfo/LogInfo.cc" "G:/code/git/PPP/PPPLib/build/src/LogInfo/CMakeFiles/LogLib.dir/LogInfo.cc.obj"
-  "G:/code/git/PPP/PPPLib/src/LogInfo/easylogging++.cc" "G:/code/git/PPP/PPPLib/build/src/LogInfo/CMakeFiles/LogLib.dir/easylogging++.cc.obj"
+  "I:/code/git/PPP/PPPLib/src/LogInfo/LogInfo.cc" "I:/code/git/PPP/PPPLib/build/src/LogInfo/CMakeFiles/LogLib.dir/LogInfo.cc.obj"
+  "I:/code/git/PPP/PPPLib/src/LogInfo/easylogging++.cc" "I:/code/git/PPP/PPPLib/build/src/LogInfo/CMakeFiles/LogLib.dir/easylogging++.cc.obj"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

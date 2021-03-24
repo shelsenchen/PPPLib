@@ -232,17 +232,17 @@ static int ParsePara(int arc,char *arv[], string& conf_file)
     int level=128;
 
     for(int i=0;i<arc;i++){
-        if(!strcmp(arv[i],"-C")&&i+1<arc){
+        if(!strcmp(arv[i],"-C")&&i+1<=arc){
             conf_file=arv[++i];
             if(conf_file.empty()){
                 fprintf(stderr,"CONFIGURATION FILE REQUIRED\n");
                 return 0;
             }
         }
-        else if(!strcmp(arv[i],"-M")&&i+1<arc){
+        else if(!strcmp(arv[i],"-M")&&i+1<=arc){
             mode=arv[++i];
         }
-        else if(!strcmp(arv[i],"-S")&&i+1<arc){
+        else if(!strcmp(arv[i],"-S")&&i+1<=arc){
             p=arv[++i];
             for(;*p&&*p!=' ';p++){
                 switch(*p){
@@ -257,7 +257,7 @@ static int ParsePara(int arc,char *arv[], string& conf_file)
                 fprintf(stderr,"SATELLITE SYSTEM SET ERROR: %s\n", p);
             }
         }
-        else if(!strcmp(arv[i],"-L")&&i+1<arc){
+        else if(!strcmp(arv[i],"-L")&&i+1<=arc){
             level=atoi(arv[++i]);
         }
     }

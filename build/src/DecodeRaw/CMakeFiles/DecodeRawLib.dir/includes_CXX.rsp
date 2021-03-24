@@ -1,1 +1,1 @@
--IG:/code/git/PPP/PPPLib/include -IG:/code/git/PPP/PPPLib/3rdparty -IG:/code/git/PPP/PPPLib/3rdparty/Eigen -IG:/code/git/PPP/PPPLib/windows
+-II:/code/git/PPP/PPPLib/include -II:/code/git/PPP/PPPLib/3rdparty -II:/code/git/PPP/PPPLib/3rdparty/Eigen -II:/code/git/PPP/PPPLib/windows

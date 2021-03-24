@@ -66,10 +66,10 @@ RM = C:\cmake-3.19.6-win64-x64\bin\cmake.exe -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = G:\code\git\PPP\PPPLib
+CMAKE_SOURCE_DIR = I:\code\git\PPP\PPPLib
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = G:\code\git\PPP\PPPLib\build
+CMAKE_BINARY_DIR = I:\code\git\PPP\PPPLib\build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -98,14 +98,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /d G:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -E cmake_progress_start G:\code\git\PPP\PPPLib\build\CMakeFiles G:\code\git\PPP\PPPLib\build\src\\CMakeFiles\progress.marks
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/all
-	$(CMAKE_COMMAND) -E cmake_progress_start G:\code\git\PPP\PPPLib\build\CMakeFiles 0
+	cd /d I:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -E cmake_progress_start I:\code\git\PPP\PPPLib\build\CMakeFiles I:\code\git\PPP\PPPLib\build\src\\CMakeFiles\progress.marks
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/all
+	$(CMAKE_COMMAND) -E cmake_progress_start I:\code\git\PPP\PPPLib\build\CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/clean
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/clean
 .PHONY : clean
 
 # The main clean target
@@ -115,22 +115,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/preinstall
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/preinstall
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /d G:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 1
+	cd /d I:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/CMakeFiles/PPPLib.dir/rule:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/PPPLib.dir/rule
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/PPPLib.dir/rule
 .PHONY : src/CMakeFiles/PPPLib.dir/rule
 
 # Convenience name for target.
@@ -140,7 +140,7 @@ PPPLib: src/CMakeFiles/PPPLib.dir/rule
 
 # fast build rule for target.
 PPPLib/fast:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\PPPLib.dir\build.make src/CMakeFiles/PPPLib.dir/build
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\PPPLib.dir\build.make src/CMakeFiles/PPPLib.dir/build
 .PHONY : PPPLib/fast
 
 PPPLib.obj: PPPLib.cc.obj
@@ -149,7 +149,7 @@ PPPLib.obj: PPPLib.cc.obj
 
 # target to build an object file
 PPPLib.cc.obj:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\PPPLib.dir\build.make src/CMakeFiles/PPPLib.dir/PPPLib.cc.obj
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\PPPLib.dir\build.make src/CMakeFiles/PPPLib.dir/PPPLib.cc.obj
 .PHONY : PPPLib.cc.obj
 
 PPPLib.i: PPPLib.cc.i
@@ -158,7 +158,7 @@ PPPLib.i: PPPLib.cc.i
 
 # target to preprocess a source file
 PPPLib.cc.i:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\PPPLib.dir\build.make src/CMakeFiles/PPPLib.dir/PPPLib.cc.i
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\PPPLib.dir\build.make src/CMakeFiles/PPPLib.dir/PPPLib.cc.i
 .PHONY : PPPLib.cc.i
 
 PPPLib.s: PPPLib.cc.s
@@ -167,7 +167,7 @@ PPPLib.s: PPPLib.cc.s
 
 # target to generate assembly for a file
 PPPLib.cc.s:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\PPPLib.dir\build.make src/CMakeFiles/PPPLib.dir/PPPLib.cc.s
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\PPPLib.dir\build.make src/CMakeFiles/PPPLib.dir/PPPLib.cc.s
 .PHONY : PPPLib.cc.s
 
 # Help Target
@@ -193,6 +193,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /d G:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 0
+	cd /d I:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

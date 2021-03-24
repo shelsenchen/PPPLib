@@ -6,14 +6,21 @@
     "configurations": [
         {
             "name": "PPPLib",
-            "type": "cppvsdbg",
+            "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/PPPLibMain.exe",
-            "args": ["PPPLibMain -C ../conf/PPPLib_PPP.ini -M PPP-KINE -S G -L 128"],
-            "stopAtEntry": true,
+            "args": ["-C","${workspaceFolder}\\conf\\SPP\\PPPLib_SPP_my.ini","-M","SPP-KINE","-S","G","-L","1"],
+            "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
-            "console": "externalTerminal"
+            "externalConsole":false,//将此处的true改为false,不然他会调用系统的终端进行现实
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
         }
     ]
 }

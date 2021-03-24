@@ -66,10 +66,10 @@ RM = C:\cmake-3.19.6-win64-x64\bin\cmake.exe -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = G:\code\git\PPP\PPPLib
+CMAKE_SOURCE_DIR = I:\code\git\PPP\PPPLib
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = G:\code\git\PPP\PPPLib\build
+CMAKE_BINARY_DIR = I:\code\git\PPP\PPPLib\build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -98,14 +98,14 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /d G:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -E cmake_progress_start G:\code\git\PPP\PPPLib\build\CMakeFiles G:\code\git\PPP\PPPLib\build\src\GnssFunc\\CMakeFiles\progress.marks
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/GnssFunc/all
-	$(CMAKE_COMMAND) -E cmake_progress_start G:\code\git\PPP\PPPLib\build\CMakeFiles 0
+	cd /d I:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -E cmake_progress_start I:\code\git\PPP\PPPLib\build\CMakeFiles I:\code\git\PPP\PPPLib\build\src\GnssFunc\\CMakeFiles\progress.marks
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/GnssFunc/all
+	$(CMAKE_COMMAND) -E cmake_progress_start I:\code\git\PPP\PPPLib\build\CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/GnssFunc/clean
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/GnssFunc/clean
 .PHONY : clean
 
 # The main clean target
@@ -115,22 +115,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/GnssFunc/preinstall
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/GnssFunc/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/GnssFunc/preinstall
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/GnssFunc/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /d G:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 1
+	cd /d I:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/GnssFunc/CMakeFiles/GnssLib.dir/rule:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/GnssFunc/CMakeFiles/GnssLib.dir/rule
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/GnssFunc/CMakeFiles/GnssLib.dir/rule
 .PHONY : src/GnssFunc/CMakeFiles/GnssLib.dir/rule
 
 # Convenience name for target.
@@ -140,7 +140,7 @@ GnssLib: src/GnssFunc/CMakeFiles/GnssLib.dir/rule
 
 # fast build rule for target.
 GnssLib/fast:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/build
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/build
 .PHONY : GnssLib/fast
 
 GnssAR.obj: GnssAR.cc.obj
@@ -149,7 +149,7 @@ GnssAR.obj: GnssAR.cc.obj
 
 # target to build an object file
 GnssAR.cc.obj:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssAR.cc.obj
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssAR.cc.obj
 .PHONY : GnssAR.cc.obj
 
 GnssAR.i: GnssAR.cc.i
@@ -158,7 +158,7 @@ GnssAR.i: GnssAR.cc.i
 
 # target to preprocess a source file
 GnssAR.cc.i:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssAR.cc.i
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssAR.cc.i
 .PHONY : GnssAR.cc.i
 
 GnssAR.s: GnssAR.cc.s
@@ -167,7 +167,7 @@ GnssAR.s: GnssAR.cc.s
 
 # target to generate assembly for a file
 GnssAR.cc.s:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssAR.cc.s
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssAR.cc.s
 .PHONY : GnssAR.cc.s
 
 GnssErrorModel.obj: GnssErrorModel.cc.obj
@@ -176,7 +176,7 @@ GnssErrorModel.obj: GnssErrorModel.cc.obj
 
 # target to build an object file
 GnssErrorModel.cc.obj:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssErrorModel.cc.obj
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssErrorModel.cc.obj
 .PHONY : GnssErrorModel.cc.obj
 
 GnssErrorModel.i: GnssErrorModel.cc.i
@@ -185,7 +185,7 @@ GnssErrorModel.i: GnssErrorModel.cc.i
 
 # target to preprocess a source file
 GnssErrorModel.cc.i:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssErrorModel.cc.i
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssErrorModel.cc.i
 .PHONY : GnssErrorModel.cc.i
 
 GnssErrorModel.s: GnssErrorModel.cc.s
@@ -194,7 +194,7 @@ GnssErrorModel.s: GnssErrorModel.cc.s
 
 # target to generate assembly for a file
 GnssErrorModel.cc.s:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssErrorModel.cc.s
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssErrorModel.cc.s
 .PHONY : GnssErrorModel.cc.s
 
 GnssFunc.obj: GnssFunc.cc.obj
@@ -203,7 +203,7 @@ GnssFunc.obj: GnssFunc.cc.obj
 
 # target to build an object file
 GnssFunc.cc.obj:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssFunc.cc.obj
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssFunc.cc.obj
 .PHONY : GnssFunc.cc.obj
 
 GnssFunc.i: GnssFunc.cc.i
@@ -212,7 +212,7 @@ GnssFunc.i: GnssFunc.cc.i
 
 # target to preprocess a source file
 GnssFunc.cc.i:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssFunc.cc.i
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssFunc.cc.i
 .PHONY : GnssFunc.cc.i
 
 GnssFunc.s: GnssFunc.cc.s
@@ -221,7 +221,7 @@ GnssFunc.s: GnssFunc.cc.s
 
 # target to generate assembly for a file
 GnssFunc.cc.s:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssFunc.cc.s
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\GnssFunc\CMakeFiles\GnssLib.dir\build.make src/GnssFunc/CMakeFiles/GnssLib.dir/GnssFunc.cc.s
 .PHONY : GnssFunc.cc.s
 
 # Help Target
@@ -253,6 +253,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /d G:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 0
+	cd /d I:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

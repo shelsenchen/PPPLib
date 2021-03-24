@@ -66,10 +66,10 @@ RM = C:\cmake-3.19.6-win64-x64\bin\cmake.exe -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = G:\code\git\PPP\PPPLib
+CMAKE_SOURCE_DIR = I:\code\git\PPP\PPPLib
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = G:\code\git\PPP\PPPLib\build
+CMAKE_BINARY_DIR = I:\code\git\PPP\PPPLib\build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -98,14 +98,14 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /d G:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -E cmake_progress_start G:\code\git\PPP\PPPLib\build\CMakeFiles G:\code\git\PPP\PPPLib\build\src\Solver\\CMakeFiles\progress.marks
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/Solver/all
-	$(CMAKE_COMMAND) -E cmake_progress_start G:\code\git\PPP\PPPLib\build\CMakeFiles 0
+	cd /d I:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -E cmake_progress_start I:\code\git\PPP\PPPLib\build\CMakeFiles I:\code\git\PPP\PPPLib\build\src\Solver\\CMakeFiles\progress.marks
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/Solver/all
+	$(CMAKE_COMMAND) -E cmake_progress_start I:\code\git\PPP\PPPLib\build\CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/Solver/clean
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/Solver/clean
 .PHONY : clean
 
 # The main clean target
@@ -115,22 +115,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/Solver/preinstall
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/Solver/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/Solver/preinstall
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/Solver/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /d G:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 1
+	cd /d I:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/Solver/CMakeFiles/SolverLib.dir/rule:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/Solver/CMakeFiles/SolverLib.dir/rule
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/Solver/CMakeFiles/SolverLib.dir/rule
 .PHONY : src/Solver/CMakeFiles/SolverLib.dir/rule
 
 # Convenience name for target.
@@ -140,7 +140,7 @@ SolverLib: src/Solver/CMakeFiles/SolverLib.dir/rule
 
 # fast build rule for target.
 SolverLib/fast:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\Solver\CMakeFiles\SolverLib.dir\build.make src/Solver/CMakeFiles/SolverLib.dir/build
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\Solver\CMakeFiles\SolverLib.dir\build.make src/Solver/CMakeFiles/SolverLib.dir/build
 .PHONY : SolverLib/fast
 
 Solver.obj: Solver.cc.obj
@@ -149,7 +149,7 @@ Solver.obj: Solver.cc.obj
 
 # target to build an object file
 Solver.cc.obj:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\Solver\CMakeFiles\SolverLib.dir\build.make src/Solver/CMakeFiles/SolverLib.dir/Solver.cc.obj
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\Solver\CMakeFiles\SolverLib.dir\build.make src/Solver/CMakeFiles/SolverLib.dir/Solver.cc.obj
 .PHONY : Solver.cc.obj
 
 Solver.i: Solver.cc.i
@@ -158,7 +158,7 @@ Solver.i: Solver.cc.i
 
 # target to preprocess a source file
 Solver.cc.i:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\Solver\CMakeFiles\SolverLib.dir\build.make src/Solver/CMakeFiles/SolverLib.dir/Solver.cc.i
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\Solver\CMakeFiles\SolverLib.dir\build.make src/Solver/CMakeFiles/SolverLib.dir/Solver.cc.i
 .PHONY : Solver.cc.i
 
 Solver.s: Solver.cc.s
@@ -167,7 +167,7 @@ Solver.s: Solver.cc.s
 
 # target to generate assembly for a file
 Solver.cc.s:
-	cd /d G:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\Solver\CMakeFiles\SolverLib.dir\build.make src/Solver/CMakeFiles/SolverLib.dir/Solver.cc.s
+	cd /d I:\code\git\PPP\PPPLib\build && $(MAKE) $(MAKESILENT) -f src\Solver\CMakeFiles\SolverLib.dir\build.make src/Solver/CMakeFiles/SolverLib.dir/Solver.cc.s
 .PHONY : Solver.cc.s
 
 # Help Target
@@ -193,6 +193,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /d G:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 0
+	cd /d I:\code\git\PPP\PPPLib\build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles\Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

@@ -1,4 +1,4 @@
-# Install script for directory: G:/code/git/PPP/PPPLib/src
+# Install script for directory: I:/code/git/PPP/PPPLib/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,15 +39,15 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("G:/code/git/PPP/PPPLib/build/src/CmnFunc/cmake_install.cmake")
-  include("G:/code/git/PPP/PPPLib/build/src/LogInfo/cmake_install.cmake")
-  include("G:/code/git/PPP/PPPLib/build/src/ReadFiles/cmake_install.cmake")
-  include("G:/code/git/PPP/PPPLib/build/src/DecodeRaw/cmake_install.cmake")
-  include("G:/code/git/PPP/PPPLib/build/src/GnssFunc/cmake_install.cmake")
-  include("G:/code/git/PPP/PPPLib/build/src/InsFunc/cmake_install.cmake")
-  include("G:/code/git/PPP/PPPLib/build/src/Solver/cmake_install.cmake")
-  include("G:/code/git/PPP/PPPLib/build/src/AdjFunc/cmake_install.cmake")
-  include("G:/code/git/PPP/PPPLib/build/src/OutSol/cmake_install.cmake")
+  include("I:/code/git/PPP/PPPLib/build/src/CmnFunc/cmake_install.cmake")
+  include("I:/code/git/PPP/PPPLib/build/src/LogInfo/cmake_install.cmake")
+  include("I:/code/git/PPP/PPPLib/build/src/ReadFiles/cmake_install.cmake")
+  include("I:/code/git/PPP/PPPLib/build/src/DecodeRaw/cmake_install.cmake")
+  include("I:/code/git/PPP/PPPLib/build/src/GnssFunc/cmake_install.cmake")
+  include("I:/code/git/PPP/PPPLib/build/src/InsFunc/cmake_install.cmake")
+  include("I:/code/git/PPP/PPPLib/build/src/Solver/cmake_install.cmake")
+  include("I:/code/git/PPP/PPPLib/build/src/AdjFunc/cmake_install.cmake")
+  include("I:/code/git/PPP/PPPLib/build/src/OutSol/cmake_install.cmake")
 
 endif()
 

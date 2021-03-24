@@ -1,4 +1,4 @@
-# Install script for directory: G:/code/git/PPP/PPPLib/src/Solver
+# Install script for directory: I:/code/git/PPP/PPPLib/src/Solver
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
